@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TODO</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<h1>TODO</h1>
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <div class="flashes">
+      {% for message in messages %}
+        <div>{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<div id="container">
+</div>
+
+<div id="actions">
+  <button onclick="getGraphs()">Run experiment</button>
+  <button onclick="cleanGraphs()">Clean view</button>
+</div>
+
+</body>
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</html>
