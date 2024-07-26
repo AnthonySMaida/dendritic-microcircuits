@@ -335,7 +335,8 @@ def run_pilot_exp_1b_concat_2b(layer1: Layer, layer2: Layer, layer3: Layer, step
     return data1, data2
 
 
-def generate_plot(data: np.array):
+def generate_plot(values: list[list[float]]):
+    data = np.array(values)
     x_axis = np.arange(data.shape[0])
     fig, ax = plt.subplots()
     args = []
@@ -353,7 +354,7 @@ def generate_plot(data: np.array):
 def main():
     """ Do an experiment """
     layer1, layer2, layer3 = build_small_three_layer_network()  # build the network
-    print_ff_and_fb_wts_last_layer(layer2, layer3)
+    # print_ff_and_fb_wts_last_layer(layer2, layer3)
     # run_pilot_experiment_1a(layer1, layer2, layer3)
     # run_pilot_experiment_1b(layer1, layer2, layer3)
     # run_pilot_experiment_2_rule_16b_only(layer1, layer2, layer3)
@@ -361,13 +362,10 @@ def main():
 
     # p_Exp 3: steps_to_self_pred = 150.
     # p_Exp 3b: steps_to_self_pred = 250.
-    data1, data2 = run_pilot_exp_1b_concat_2b(layer1, layer2, layer3, steps_to_self_pred=400)
+    datasets = run_pilot_exp_1b_concat_2b(layer1, layer2, layer3, steps_to_self_pred=400)
 
     print_ff_and_fb_wts_last_layer(layer2, layer3)
-    return {
-        "data1": generate_plot(np.array(data1)),
-        "data2": generate_plot(np.array(data2))
-    }
+    return datasets
 
 
 if __name__ == '__main__':

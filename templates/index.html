@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TODO</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 </head>
 <body>
 <h1>TODO</h1>
@@ -18,12 +20,12 @@
   {% endif %}
 {% endwith %}
 
-<div id="container">
-</div>
+<div id="container"></div>
 
 <div id="actions">
-  <button onclick="getGraphs()">Run experiment</button>
-  <button onclick="cleanGraphs()">Clean view</button>
+  <button onclick="getGraphs()">Run experiment (image graph)</button>
+  <button onclick="getData()">Run experiment (raw data)</button>
+  <button onclick="cleanContainer()">Clean view</button>
 </div>
 
 </body>
