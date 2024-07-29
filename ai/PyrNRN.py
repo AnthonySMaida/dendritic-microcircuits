@@ -1,6 +1,6 @@
 import numpy as np
 
-from ai.config import beta, logsig
+from ai.config import beta, logsig, v_hat_B_P_coeff
 
 
 class PyrNRN:
@@ -17,10 +17,12 @@ class PyrNRN:
         self.soma_mp = 0.0  # somatic membrane potential
         self.apical_mp = 0.0  # apical membrane potential
         self.basal_mp = 0.0  # basal membrane potential
+        self.basal_hat = 0.0  # predicted basal membrane potential
+        self.basal_hat_act = 0.0  # predicted basal activation
         self.soma_act = 0.0  # activation value for soma
         self.apical_act = 0.0  # activation for apical dendrite
-        self.apical_pred = 0.0  # predictied apical activation
-        self.apical_pred_act = 0.0  # used in W_PP_ff learning rule
+        # self.apical_hat = 0.0  # predictied apical membrane potential
+        # self.apical_hat_act = 0.0  # used in W_PP_ff learning rule
         # Below: feedforward wts
         # self.W_PP_ff     = rng.normal(wt_mu, wt_sig, (n_ff_wt,))     if n_ff_wt else None
         self.W_PP_ff = rng.exponential(beta, (n_ff_wt,)) if n_ff_wt else None
@@ -39,16 +41,18 @@ class PyrNRN:
     soma_mp:           {self.soma_mp}, 
     apical_mp:         {self.apical_mp},
     basal_mp:          {self.basal_mp},
+    basal_hat:         {self.basal_hat},
+    basal_hat_act:     {self.basal_hat_act},
     soma_activation:   {self.soma_act},
-    apical_activation: {self.apical_act}
-    apical_predicted:  {self.apical_pred}
-    apical_pred_act:   {self.apical_pred_act}
+    apical_act:        {self.apical_act},
     incoming W_PP_ff:  {self.W_PP_ff},
     incoming W_PP_fb:  {self.W_PP_fb},
     incoming W_PI_lat: {self.W_PI_lat}
     """
 
     # simplified update. See Section 5.3 of paper, point 1.
-    def update_pyr_soma_forward(self):
-        self.soma_mp = self.basal_mp
-        self.soma_act = logsig(self.soma_mp)
+    def update_pyr_soma_ff(self):
+        self.soma_mp = self.basal_mp  # start from basal_mp
+        self.basal_hat = v_hat_B_P_coeff * self.basal_mp
+        self.basal_hat_act = logsig(self.basal_hat)
+        self.soma_act = logsig(self.soma_mp)  # propagate to soma

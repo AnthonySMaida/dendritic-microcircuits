@@ -1,18 +1,32 @@
 import numpy as np
 
 
-def get_rng(seed=42):
-    return np.random.default_rng(seed=seed)  # seed needed for reproducibility
+def get_rng():
+    return np.random.default_rng(seed=wt_init_seed)  # seed needed for reproducibility
 
 
+wt_init_seed = 42
+
+wt_mu, wt_sig = 0.0, 0.1  # initialize wts according to N(u, sig) if using Gaussian.
 beta = 1.0 / 3.0  # beta = 1/lambda => lambda = 3. beta is scale param for rng.exponential.
 learning_rate = 0.05
 
-wt_mu, wt_sig = 0.0, 0.1  # initialize wts according to N(u, sig) if using Gaussian.
+nudge1 = 0.0
+nudge2 = 1.0
 
 n_input_pyr_nrns = 2
 n_hidden_pyr_nrns = 3
 n_output_pyr_nrns = 2
+
+rule13_post_data = np.array([[0, 0, 0, 0, 0]])
+
+# conductance default values
+g_lk = 0.1
+g_A = 0.8
+g_B = 1.0
+g_D = g_B
+v_hat_B_P_coeff = 1.0 / (g_lk + g_A + g_B)  # used in adjust_wts_PP_ff()
+v_hat_I_coeff = 1.0 / (g_lk + g_D)  # used in
 
 
 def logsig(x, alpha=1.0):

@@ -12,8 +12,10 @@ class InhibNRN:
         self.type = "inhib"
         self.soma_mp = 0.0
         self.dend_mp = 0.0
+        self.dend_hat_mp = 0.0
         self.soma_act = 0.0
-        # self.W_IP_lat   = rng.normal(wt_mu, wt_sig, (n_lat_wt,))
+        self.dend_hat_mp_act = 0.0
+        # self.W_IP_lat = rng.normal(wt_mu, wt_sig, (n_lat_wt,))
         self.W_IP_lat = -rng.exponential(beta, (n_lat_wt,)) if n_lat_wt else None
         InhibNRN.next_id += 1
 
@@ -27,6 +29,6 @@ class InhibNRN:
     incoming W_IP_lat: {self.W_IP_lat}
     """
 
-    def update_inhib_soma_forward(self):  # there is no backward soma update for inhib
+    def update_inhib_soma_ff(self):  # there is no backward soma update for inhib
         self.soma_mp = self.dend_mp
         self.soma_act = logsig(self.soma_mp)

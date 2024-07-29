@@ -28,21 +28,25 @@ class Layer:
 
         return temp
 
-    def apply_inputs_to_test_self_predictive_convergence(self):
-        """apply uniform inputs of 0.5 to get the system running"""
-        for i in range(len(self.pyrs)):
-            self.pyrs[i].basal_mp = 0.5
-            self.pyrs[i].update_pyr_soma_forward()
+    def pyr_soma_mps(self):
+        return np.array([x.soma_mp for x in self.pyrs])
 
-    def pyr_soma_activations(self):  # retrieve pyramid activations for layer
-        """returns array of pyramid activations from current layer"""
+    def pyr_basal_mps(self):
+        return np.array([x.basal_mp for x in self.pyrs])
+
+    def pyr_soma_acts(self):  # retrieve pyramid activations for layer
+        """returns array of pyramid soma activations from current layer"""
         return np.array([x.soma_act for x in self.pyrs])
 
-    def pyr_apical_activations(self):  # retrieve pyramid activations for layer
-        """returns array of pyramid activations from current layer"""
+    def pyr_apical_acts(self):  # retrieve pyramid activations for layer
+        """returns array of pyramid apical from current layer"""
         return np.array([x.apical_act for x in self.pyrs])
 
-    def inhib_soma_activations(self):  # retrieve pyramid activations for layer
+    def pyr_basal_hat_acts(self):
+        """returns array of pyramid basal predicted activations from current layer"""
+        return np.array([x.basal_hat_act for x in self.pyrs])
+
+    def inhib_soma_acts(self):  # retrieve pyramid activations for layer
         """returns array of inhib activations from current layer"""
         return np.array([x.soma_act for x in self.inhibs])
 
@@ -50,20 +54,42 @@ class Layer:
         """returns array of dendritic membrane potentials"""
         return np.array([x.dend_mp for x in self.inhibs])
 
+    ######################################
+    # FF and FB neuron update mechanisms #
+    ######################################
+
+    def apply_inputs_to_test_self_predictive_convergence(self):
+        """apply uniform inputs of 0.5 to get the system running"""
+        for i in range(len(self.pyrs)):
+            self.pyrs[i].basal_mp = 0.5
+            self.pyrs[i].update_pyr_soma_ff()  # updates soma mp and activation
+
     def update_dend_mps_via_ip(self):  # update dendritic membrane potentials
         """update inhibs via lateral IP wts"""
-        temp = self.pyr_soma_activations()  # for current layer
+        temp = self.pyr_soma_acts()  # for current layer
         for i in range(len(self.inhibs)):
             self.inhibs[i].dend_mp = np.dot(self.inhibs[i].W_IP_lat, temp)
-            self.inhibs[i].update_inhib_soma_forward()
+            self.inhibs[i].update_inhib_soma_ff()
 
-    def print_ff_wts(self):
-        for nrn in self.pyrs:
-            print(nrn.W_PP_ff)
+    def update_pyrs_basal_and_soma_ff(self, prev_layer):
+        """update pyrs bottom up from prev layer"""
+        temp = prev_layer.pyr_soma_acts()  # get activations from prev layer
+        for i in range(len(self.pyrs)):  # update each pyramid in current layer
+            self.pyrs[i].basal_mp = np.dot(self.pyrs[i].W_PP_ff, temp)
+            self.pyrs[i].update_pyr_soma_ff()
 
-    def print_fb_wts(self):
-        for nrn in self.pyrs:
-            print(nrn.W_PP_fb)
+    def update_pyrs_apical_soma_fb(self, higher_layer):
+        """propagates input from apical dends to soma"""
+        fb_acts = higher_layer.pyr_soma_acts()
+        inhib_acts = self.inhib_soma_acts()
+        for i in range(len(self.pyrs)):
+            self.pyrs[i].apical_mp = np.dot(self.pyrs[i].W_PP_fb, fb_acts) + np.dot(self.pyrs[i].W_PI_lat, inhib_acts)
+            self.pyrs[i].apical_act = logsig(self.pyrs[i].apical_mp)
+            self.pyrs[i].apical_hat = 0.5 * self.pyrs[i].apical_mp  # approximation to Eqn (14)
+            self.pyrs[i].apical_hat_act = logsig(self.pyrs[i].apical_hat)
+            self.pyrs[i].soma_mp = ((self.pyrs[i].basal_mp - self.pyrs[i].soma_mp)
+                                    + (self.pyrs[i].apical_mp - self.pyrs[i].soma_mp))
+            self.pyrs[i].soma_act = logsig(self.pyrs[i].soma_mp)
 
     ########################
     # Output layer nudging #
@@ -79,48 +105,58 @@ class Layer:
         self.pyrs[1].soma_mp = (1 - lambda_nudge) * self.pyrs[1].basal_mp + lambda_nudge * targ_val2
         self.pyrs[1].soma_act = logsig(self.pyrs[1].soma_mp)
 
-    def update_pyrs_basal_and_soma_ff(self, prev_layer):
-        """update pyrs bottom up from prev layer"""
-        temp = prev_layer.pyr_soma_activations()  # get activations from prev layer
-        for i in range(len(self.pyrs)):  # update each pyramid in current layer
-            self.pyrs[i].basal_mp = np.dot(self.pyrs[i].W_PP_ff, temp)
-            self.pyrs[i].update_pyr_soma_forward()
+    #############
+    # print wts #
+    #############
 
-    def update_pyrs_apical_soma_fb(self, higher_layer):
-        fb_acts = higher_layer.pyr_soma_activations()
-        inhib_acts = self.inhib_soma_activations()
-        for i in range(len(self.pyrs)):
-            self.pyrs[i].apical_mp = np.dot(self.pyrs[i].W_PP_fb, fb_acts) + np.dot(self.pyrs[i].W_PI_lat, inhib_acts)
-            self.pyrs[i].apical_act = logsig(self.pyrs[i].apical_mp)
-            self.pyrs[i].apical_pred = 0.5 * self.pyrs[i].apical_mp  # approximation to Eqn (14)
-            self.pyrs[i].apical_pred_act = logsig(self.pyrs[i].apical_pred)
-            self.pyrs[i].soma_mp = (self.pyrs[i].basal_mp - self.pyrs[i].soma_mp) + (
-                    self.pyrs[i].apical_mp - self.pyrs[i].soma_mp)
-            self.pyrs[i].soma_act = logsig(self.pyrs[i].soma_mp)
+    def print_ff_wts(self):
+        for nrn in self.pyrs:
+            print(nrn.W_PP_ff)
 
-    ########################
-    # Three learning rules #
-    ########################
+    def print_fb_wts(self):
+        for nrn in self.pyrs:
+            print(nrn.W_PP_fb)
 
-    def adjust_wts_lat_pi(self):  # adjust PI wts for layer. Equation 16b
+    ###########################################################################
+    #                           Three learning rules                          #
+    # The rules use doubly nested for loops to iterate over the pre- and      #
+    # postsynaptic neurons to adjust the weights connecting them.             #
+    # Vectorization of this code would require moving weight storage from the #
+    # individual neurons to the layer.                                        #
+    ###########################################################################
+
+    def adjust_wts_lat_pi(self):  # adjust PI wts for layer. Eqn 16b
         for i in range(len(self.pyrs)):
             for j in range(len(self.inhibs)):  # V_rest is not include below b/c its value is zero.
                 self.pyrs[i].W_PI_lat[j] -= learning_rate * self.pyrs[i].apical_mp * self.inhibs[j].soma_act
                 # change for wt projecting to pyr i from inhib j.
 
-    def adjust_wts_pp_ff(self, prev_layer):  # Adjust FF wts for layer. Equation 13
-        pre_temp = prev_layer.pyr_soma_activations()  # Need activations from prev layer.
-        post_temp = self.pyr_soma_activations() - self.pyr_apical_activations()
-        for i in range(post_temp.size):
-            for j in range(pre_temp.size):
-                self.pyrs[i].W_PP_ff[j] += learning_rate * post_temp[i] * pre_temp[j]
+    def adjust_wts_pp_ff(self, prev_layer):  # Adjust FF wts for layer. Eqn 13
+        """This rule uses the basal predicted activation, NOT the apical."""
+        pre = prev_layer.pyr_soma_acts()  # Need activations from prev layer.
+        # post_a        = self.pyr_soma_acts()
+        post_soma_mp = self.pyr_soma_mps()
+        # post_b        = self.pyr_basal_hat_acts()
+        post_basal_mp = self.pyr_basal_mps()
+        post = post_soma_mp - post_basal_mp  # use unprocessed raw mps.
+        # post          = post_a - post_b
+        # post         = self.pyr_soma_acts() - self.pyr_basal_hat_acts() # original
+        data_pt = np.array([[self.pyr_soma_acts()[0],
+                             self.pyr_basal_hat_acts()[0],
+                             post[0],
+                             post_soma_mp[0],
+                             post_basal_mp[0]]])
+        for i in range(post.size):
+            for j in range(pre.size):
+                self.pyrs[i].W_PP_ff[j] += learning_rate * post[i] * pre[j]
+        return data_pt
 
     def adjust_wts_lat_ip(self):  # Equation 16a
-        pre_temp = self.pyr_soma_activations()
-        post_temp = self.inhib_soma_activations() - self.inhib_dend_mps()
-        for i in range(post_temp.size):
-            for j in range(pre_temp.size):
-                self.inhibs[i].W_IP_lat[j] += learning_rate * post_temp[i] * pre_temp[j]
+        pre = self.pyr_soma_acts()
+        post = self.inhib_soma_acts() - self.inhib_dend_mps()
+        for i in range(post.size):
+            for j in range(pre.size):
+                self.inhibs[i].W_IP_lat[j] += learning_rate * post[i] * pre[j]
 
     ########################
     # Printing information #
