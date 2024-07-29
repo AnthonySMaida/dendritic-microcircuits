@@ -1,10 +1,10 @@
-from ai.config import logsig, rng, beta
+from ai.config import logsig, beta
 
 
 class InhibNRN:
     next_id = 1
 
-    def __init__(self, n_lat_wt):
+    def __init__(self, rng, n_lat_wt):
         """
         :param n_lat_wt: lateral weight count
         """

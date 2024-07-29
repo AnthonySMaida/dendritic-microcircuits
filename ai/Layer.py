@@ -11,10 +11,10 @@ from ai.config import learning_rate, logsig
 class Layer:
     next_id = 1
 
-    def __init__(self, n_pyrs, n_inhibs, n_pyr_ff_wt, n_ip_lat_wt, n_pyr_fb_wt, n_pi_lat_wt):
+    def __init__(self, rng, n_pyrs, n_inhibs, n_pyr_ff_wt, n_ip_lat_wt, n_pyr_fb_wt, n_pi_lat_wt):
         self.id_num = Layer.next_id
-        self.pyrs = [PyrNRN(n_pyr_ff_wt, n_pi_lat_wt, n_pyr_fb_wt) for _ in range(n_pyrs)]
-        self.inhibs = [InhibNRN(n_ip_lat_wt) for _ in range(n_inhibs)]
+        self.pyrs = [PyrNRN(rng, n_pyr_ff_wt, n_pi_lat_wt, n_pyr_fb_wt) for _ in range(n_pyrs)]
+        self.inhibs = [InhibNRN(rng, n_ip_lat_wt) for _ in range(n_inhibs)]
         Layer.next_id += 1
 
     def __repr__(self):

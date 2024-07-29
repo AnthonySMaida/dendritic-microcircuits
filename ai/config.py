@@ -1,6 +1,10 @@
 import numpy as np
 
-rng = np.random.default_rng(seed=42)  # seed needed for reproducibility
+
+def get_rng(seed=42):
+    return np.random.default_rng(seed=seed)  # seed needed for reproducibility
+
+
 beta = 1.0 / 3.0  # beta = 1/lambda => lambda = 3. beta is scale param for rng.exponential.
 learning_rate = 0.05
 

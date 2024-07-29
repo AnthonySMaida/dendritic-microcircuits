@@ -31,17 +31,17 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 from ai.Layer import Layer
-from ai.config import n_input_pyr_nrns, n_hidden_pyr_nrns, n_output_pyr_nrns
-
-""" Build 3-layer network """
+from ai.config import get_rng, n_input_pyr_nrns, n_hidden_pyr_nrns, n_output_pyr_nrns
 
 
 def build_small_three_layer_network():
+    """Build 3-layer network"""
+    rng = get_rng()
     # Layer 1 is the input layer w/ 2 pyrs and 1 inhib cell.
     # No FF connections in input layer. They are postponed to receiving layer.
     # Each pyramid projects a FF connection to each of 3 pyrs in Layer 2 (hidden).
     # wts are always incoming weights.
-    l1 = Layer(n_input_pyr_nrns, 1, None, 2, 3, 1)
+    l1 = Layer(rng, n_input_pyr_nrns, 1, None, 2, 3, 1)
     print(f"""Building model
     Layer 1:
     ========
@@ -50,13 +50,13 @@ def build_small_three_layer_network():
     # Layer 2 is hidden layer w/ 3 pyrs.
     # Also has 3 inhib neurons.
     # Has feedback connections to Layer 1
-    l2 = Layer(n_hidden_pyr_nrns, 3, 2, 3, 2, 3)
+    l2 = Layer(rng, n_hidden_pyr_nrns, 3, 2, 3, 2, 3)
     print(f"""Layer 2:
     ========
     {l2}""")
 
     # Layer 3 is output layer w/ 2 pyrs. No inhib neurons.
-    l3 = Layer(n_output_pyr_nrns, 0, 3, None, None, None)
+    l3 = Layer(rng, n_output_pyr_nrns, 0, 3, None, None, None)
     print(f"""Layer3:
     =======
     {l3}""")

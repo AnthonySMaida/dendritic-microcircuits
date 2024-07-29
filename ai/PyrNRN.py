@@ -1,12 +1,12 @@
 import numpy as np
 
-from ai.config import rng, beta, logsig
+from ai.config import beta, logsig
 
 
 class PyrNRN:
     next_id: np.int32 = 1  # You can declare data types.
 
-    def __init__(self, n_ff_wt, n_pi_lat_wt, n_fb_wt):  # wt_counts
+    def __init__(self, rng, n_ff_wt, n_pi_lat_wt, n_fb_wt):  # wt_counts
         """
         :param n_ff_wt: num of incoming feedforward wts
         :param n_pi_lat_wt: num of incoming lateral wts
