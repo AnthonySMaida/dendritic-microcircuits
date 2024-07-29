@@ -25,14 +25,21 @@ Implemented in numpy. The code is not vectorized but the
 data structures used closely mimic the neural anatomy given in the paper.
 """
 
-from neuron_layer_classes import Layer # imports numpy, numpy.random
+import numpy as np
+import matplotlib.pylab as plt
+from neuron_layer_classes import Layer, wt_init_seed # imports numpy, numpy.random
 
 wt_mu, wt_sig = 0.0, 0.1 # initialize wts according to N(u, sig) if using Gaussian.
 learning_rate = 0.05
 
+nudge1 = 0.0
+nudge2 = 1.0
+
 n_input_pyr_nrns  = 2
 n_hidden_pyr_nrns = 3
 n_output_pyr_nrns = 2
+
+rule13_post_data = np.array([[0, 0, 0, 0, 0]])
 
 """ Build 3-layer network """
 def build_small_three_layer_network():
@@ -70,60 +77,64 @@ def build_small_three_layer_network():
 
 """ Define training and control funcions to run network """
 """ Standard FF sweep with option to print network layer state after each step """
-def do_FF_sweep(layer1, layer2, layer3, print_p = True): # the 'p' suffix means predicate
+def do_FF_sweep(l1, l2, l3, print_p = True): # the 'p' suffix means predicate
     if print_p:
         print("Starting FF sweep")
-    layer1.apply_inputs_to_test_self_predictive_convergence()
-    layer1.update_dend_mps_via_IP()
+    l1.apply_inputs_to_test_self_predictive_convergence()
+    l1.update_dend_mps_via_IP() # update inhib dendrites
     if print_p:
         print(f"""Layer1_is_given_input_and_updated:
         ===============
-        {layer1}""")
+        {l1}""")
     
-    layer2.update_pyrs_basal_and_soma_ff(layer1)
-    layer2.update_dend_mps_via_IP()
+    l2.update_pyrs_basal_and_soma_FF(l1) # update l2 using inputs from l1
+    l2.update_dend_mps_via_IP()
     if print_p:
         print(f"""Layer2_FF_update_finished:
         ===============
-        {layer2}""")
+        {l2}""")
 
-    layer3.update_pyrs_basal_and_soma_ff(layer2)
+    l3.update_pyrs_basal_and_soma_FF(l2) # update l3 using inputs from l2
+    # in this model, there are no inhib neurons in the output layer
     if print_p:
         print(f"""Layer3_FF_update_finished:
         ===============
-        {layer3}""")
+        {l3}""")
 
 """ Standard FB sweep with option to print network layer state after each step """
-def do_FB_sweep(layer1, layer2, layer3, print_p = True):
+def do_FB_sweep(l1, l2, l3, print_p = True):
     if print_p:
         print("Starting FB sweep")
-    layer2.update_pyrs_apical_soma_fb(layer3)
+    # update l2 pyrs using somatic pyr acts from l3 and inhib acts from l2
+    l2.update_pyrs_apical_soma_FB(l3)
     if print_p:
         print(f"""Layer2_w_apical_update_fb:
         ===============
-        {layer2}""")
-
-    layer1.update_pyrs_apical_soma_fb(layer2)
+        {l2}""")
+    # update l1 pyrs using somatic pyr acts from l2 and inhib acts from l1
+    l1.update_pyrs_apical_soma_FB(l2)
     if print_p:
         print(f"""Layer1_w_apical_update_fb:
         ===============
-        {layer1}""")
+        {l1}""")
     
 """ Prints the pyr activations for all layers in the network, starting with the top layer. """
 def print_pyr_activations_all_layers_topdown(layer1, layer2, layer3):
     layer3.print_pyr_activations() # before learning
     layer2.print_pyr_activations()
     layer1.print_pyr_activations()
+    print("")
     
 def print_FF_and_FB_wts_last_layer(layer2, layer3):
     print("FF wts coming into Layer 3")
     layer3.print_FF_wts()
     print("FB wts coming into Layer 2")
     layer2.print_FB_wts()
+    print("")
 
 """ Learning sweep that only uses Rule 16b """
 # Set 'nudge_p = True' to assess supervised learning.
-def learn_1_cycle_rule_16b_only(layer1, layer2, layer3, nudge_p = False): # does one learning step
+def train_1_step_rule_16b_only(layer1, layer2, layer3, nudge_p = False): # does one learning step
     layer2.adjust_wts_lat_PI()      # adjust lateral PI wts in Layer 2
     layer1.adjust_wts_lat_PI()      # adjust lateral PI wts in Layer 1
     """ Do FF and FB sweeps so wt changes show their effects. """
@@ -133,14 +144,20 @@ def learn_1_cycle_rule_16b_only(layer1, layer2, layer3, nudge_p = False): # does
     do_FB_sweep(layer1, layer2, layer3, print_p = False)
 
 """ Learning sweep that uses both rules 16b and 13 """
-# does one learning step
-def learn_1_cycle_rule_16b_and_rule_13(layer1, layer2, layer3, nudge_p = False):
+# does one training step
+def train_1_step_rule_16b_and_rule_13(layer1, layer2, layer3, nudge_p = False):
     layer2.adjust_wts_lat_PI()      # adjust lateral PI wts in Layer 2
     #layer2.adjust_wts_lat_IP()      # adjust lateral IP wts in Layer 2
-    layer3.adjust_wts_PP_ff(layer2) # adjust FF wts projecting to Layer 3
+    data_pt = layer3.adjust_wts_PP_FF(layer2) # adjust FF wts projecting to Layer 3
+    
+    # save data point: [soma_act, apical_hat_act, post_val[]
+    global rule13_post_data
+    rule13_post_data = np.concatenate((rule13_post_data, data_pt), axis = 0)
+    
+    # continue learning
     layer1.adjust_wts_lat_PI()      # adjust lateral PI wts in Layer 1
     #layer1.adjust_wts_lat_IP()      # adjust lateral IP wts in Layer 1
-    layer2.adjust_wts_PP_ff(layer1) # adjust FF wts projecting to Layer 2
+    layer2.adjust_wts_PP_FF(layer1) # adjust FF wts projecting to Layer 2
     """ Do FF and FB sweeps so wt changes show their effects. """
     do_FF_sweep(layer1, layer2, layer3, print_p = False)
     if nudge_p:
@@ -153,7 +170,7 @@ def train_to_self_predictive_state(n_steps = 40):
     do_FF_sweep(layer1, layer2, layer3, print_p = False)
     do_FB_sweep(layer1, layer2, layer3, print_p = False)
     for _ in range(n_steps): 
-        learn_1_cycle_rule_16b_only(layer1, layer2, layer3) 
+        train_1_step_rule_16b_only(layer1, layer2, layer3) 
     print(f"Trained to self pred state: {n_steps} steps.")
     layer2.print_apical_mps()
     layer1.print_apical_mps()
@@ -168,8 +185,8 @@ def run_pilot_experiment_1a(layer1, layer2, layer3):
     print("Finished 1st FF sweep: pilot_exp_1")
     do_FB_sweep(layer1, layer2, layer3) # prints state
     print("Finished 1st FB sweep: pilot_exp_1")
-    n_of_learning_steps = 150
-    print(f"Starting learning {n_of_learning_steps} steps for p_exp 1")
+    n_of_training_steps = 150
+    print(f"Starting training {n_of_training_steps} steps for p_exp 1")
     with open('results_apical_layer2.py', 'w') as file_layer2, open('results_apical_layer1.py', 'w') as file_layer1:
         file_layer2.write("import numpy as np\n")
         file_layer2.write("import matplotlib.pyplot as plt\n")
@@ -177,8 +194,8 @@ def run_pilot_experiment_1a(layer1, layer2, layer3):
         file_layer1.write("import numpy as np\n")
         file_layer1.write("import matplotlib.pyplot as plt\n")
         file_layer1.write("layer1_apical_2D = np.array([")
-        for _ in range(n_of_learning_steps): 
-            learn_1_cycle_rule_16b_only(layer1, layer2, layer3)                 # <== only 1 learning rule is used.
+        for _ in range(n_of_training_steps): 
+            train_1_step_rule_16b_only(layer1, layer2, layer3)                 # <== only 1 learning rule is used.
             # Look at apical mps to see if converging to self-predictive state
             file_layer2.write(f"[{layer2.pyrs[0].apical_mp}, {layer2.pyrs[1].apical_mp}, {layer2.pyrs[2].apical_mp}], \n")
             file_layer1.write(f"[{layer1.pyrs[0].apical_mp}, {layer1.pyrs[1].apical_mp}], \n")
@@ -190,7 +207,7 @@ def run_pilot_experiment_1a(layer1, layer2, layer3):
         file_layer1.write("])\n")
         file_layer1.write("x_axis = np.arange(layer1_apical_2D.shape[0])\n")
         file_layer1.write("plt.plot(x_axis, layer1_apical_2D[:,0],x_axis, layer1_apical_2D[:,1])\n")
-    print(f"Finished learning {n_of_learning_steps} steps for p_exp 1")
+    print(f"Finished learning {n_of_training_steps} steps for p_exp 1")
     print_pyr_activations_all_layers_topdown(layer1, layer2, layer3)
 
 """ Script to run the 1st pilot experiment, version 1b, using Rules 16b and 13 """
@@ -201,8 +218,8 @@ def run_pilot_experiment_1b(layer1, layer2, layer3):
     print("Finished 1st FF sweep: pilot_exp_1")
     do_FB_sweep(layer1, layer2, layer3) # prints state
     print("Finished 1st FB sweep: pilot_exp_1")
-    n_of_learning_steps = 150
-    print(f"Starting learning {n_of_learning_steps} steps for p_exp 1b")
+    n_of_training_steps = 150
+    print(f"Starting learning {n_of_training_steps} steps for p_exp 1b")
     with open('results_apical_16b_and_13_layer2.py', 'w') as file_layer2, open('results_apical_16b_and_13_layer1.py', 'w') as file_layer1:
         file_layer2.write("import numpy as np\n")
         file_layer2.write("import matplotlib.pyplot as plt\n")
@@ -210,8 +227,8 @@ def run_pilot_experiment_1b(layer1, layer2, layer3):
         file_layer1.write("import numpy as np\n")
         file_layer1.write("import matplotlib.pyplot as plt\n")
         file_layer1.write("layer1_apical_2D = np.array([")
-        for _ in range(n_of_learning_steps): 
-            learn_1_cycle_rule_16b_and_rule_13(layer1, layer2, layer3)                 # <== uses TWO learning rule is used.
+        for _ in range(n_of_training_steps): 
+            train_1_step_rule_16b_and_rule_13(layer1, layer2, layer3)                 # <== uses TWO learning rule is used.
             # Look at apical mps to see if converging to self-predictive state
             file_layer2.write(f"[{layer2.pyrs[0].apical_mp}, {layer2.pyrs[1].apical_mp}, {layer2.pyrs[2].apical_mp}], \n")
             file_layer1.write(f"[{layer1.pyrs[0].apical_mp}, {layer1.pyrs[1].apical_mp}], \n")
@@ -223,7 +240,7 @@ def run_pilot_experiment_1b(layer1, layer2, layer3):
         file_layer1.write("])\n")
         file_layer1.write("x_axis = np.arange(layer1_apical_2D.shape[0])\n")
         file_layer1.write("plt.plot(x_axis, layer1_apical_2D[:,0],x_axis, layer1_apical_2D[:,1])\n")
-    print(f"Finished learning {n_of_learning_steps} steps for p_exp 1")
+    print(f"Finished training {n_of_training_steps} steps for p_exp 1")
     print_pyr_activations_all_layers_topdown(layer1, layer2, layer3)
 
 """ Script to run the 2nd pilot experiment: 2a """
@@ -238,14 +255,14 @@ def run_pilot_experiment_2_rule_16b_only(layer1, layer2, layer3):
     do_FB_sweep(layer1, layer2, layer3) # prints state
     print("Finished 1st FB sweep after nudge: pilot_exp_2") # shows effect of nudge in earlier layers
     print_pyr_activations_all_layers_topdown(layer1, layer2, layer3) # displays in topdown order
-    n_of_learning_steps = 40
-    print(f"Starting learning {n_of_learning_steps} steps for p_exp 2a")
-    for _ in range(n_of_learning_steps): # train with rule 16b and maintain nudging
-        learn_1_cycle_rule_16b_only(layer1, layer2, layer3, nudge_p = True) 
+    n_of_training_steps = 40
+    print(f"Starting training {n_of_training_steps} steps for p_exp 2a")
+    for _ in range(n_of_training_steps): # train with rule 16b and maintain nudging
+        train_1_step_rule_16b_only(layer1, layer2, layer3, nudge_p = True) 
         # Check apical mps to see if converging to self-predictive state
         #layer2.print_apical_mps()
         #layer1.print_apical_mps()
-    print(f"Finished learning {n_of_learning_steps} steps for p_exp 2a")
+    print(f"Finished training {n_of_training_steps} steps for p_exp 2a")
     print_pyr_activations_all_layers_topdown(layer1, layer2, layer3) # print activations while nudging is still on
     do_FF_sweep(layer1, layer2, layer3, print_p = False) # to get new activations without nudging
     print("Final activations after nudging is removed")
@@ -263,8 +280,8 @@ def run_pilot_experiment_2b_rule_16b_and_rule_13(layer1, layer2, layer3):
     do_FB_sweep(layer1, layer2, layer3) # prints state
     print("Finished 1st FB sweep after nudge: pilot_exp_2b") # shows effect of nudge in earlier layers
     print_pyr_activations_all_layers_topdown(layer1, layer2, layer3) # displays in topdown order
-    n_of_learning_steps = 200
-    print(f"Starting learning {n_of_learning_steps} steps for p_exp 3b")
+    n_of_training_steps = 200
+    print(f"Starting training {n_of_training_steps} steps for p_exp 3b")
     with open('results_apical_16b_and_13_layer2_exp_2b.py', 'w') as file_layer2, open('results_apical_16b_and_13_layer1_exp_2b.py', 'w') as file_layer1:
         file_layer2.write("import numpy as np\n")
         file_layer2.write("import matplotlib.pyplot as plt\n")
@@ -272,8 +289,8 @@ def run_pilot_experiment_2b_rule_16b_and_rule_13(layer1, layer2, layer3):
         file_layer1.write("import numpy as np\n")
         file_layer1.write("import matplotlib.pyplot as plt\n")
         file_layer1.write("layer1_apical_2D_exp_2b = np.array([")
-        for _ in range(n_of_learning_steps): # train with rule 16b and maintain nudging
-            learn_1_cycle_rule_16b_and_rule_13(layer1, layer2, layer3, nudge_p = True) 
+        for _ in range(n_of_training_steps): # train with rule 16b and maintain nudging
+            train_1_step_rule_16b_and_rule_13(layer1, layer2, layer3, nudge_p = True) 
             # Check apical mps to see if converging to self-predictive state
             file_layer2.write(f"[{layer2.pyrs[0].apical_mp}, {layer2.pyrs[1].apical_mp}, {layer2.pyrs[2].apical_mp}], \n")
             file_layer1.write(f"[{layer1.pyrs[0].apical_mp}, {layer1.pyrs[1].apical_mp}], \n")
@@ -282,10 +299,12 @@ def run_pilot_experiment_2b_rule_16b_and_rule_13(layer1, layer2, layer3):
         file_layer2.write("])\n")
         file_layer2.write("x_axis = np.arange(layer2_apical_2D.shape[0])\n")
         file_layer2.write("plt.plot(x_axis, layer2_apical_2D[:,0], x_axis, layer2_apical_2D[:,1], x_axis, layer2_apical_2D[:,2])\n")
+        file_layer2.write("plt.show()\n")
         file_layer1.write("])\n")
         file_layer1.write("x_axis = np.arange(layer1_apical_2D.shape[0])\n")
         file_layer1.write("plt.plot(x_axis, layer1_apical_2D[:,0],x_axis, layer1_apical_2D[:,1])\n")
-    print(f"Finished learning {n_of_learning_steps} steps for p_exp 3b")
+        file_layer1.write("plt.show()\n")
+    print(f"Finished training {n_of_training_steps} steps for p_exp 3b\n")
     print_pyr_activations_all_layers_topdown(layer1, layer2, layer3) # print activations while nudging is still on
     do_FF_sweep(layer1, layer2, layer3, print_p = False) # to get new activations without nudging
     print("Final activations after nudging is removed")
@@ -297,8 +316,8 @@ def run_pilot_exp_1b_concat_2b(layer1, layer2, layer3, steps_to_self_pred = 150)
     print("Finished 1st FF sweep: pilot_exp_1")
     do_FB_sweep(layer1, layer2, layer3) # prints state
     print("Finished 1st FB sweep: pilot_exp_1")
-    n_of_learning_steps_to_self_predictive = steps_to_self_pred
-    print(f"Starting learning {n_of_learning_steps_to_self_predictive} steps to 1b self predictive.")
+    n_of_training_steps_to_self_predictive = steps_to_self_pred
+    print(f"Starting training {n_of_training_steps_to_self_predictive} steps to 1b self predictive.")
     with open('results_apical_16b_and_13_concat_layer2.py', 'w') as file_layer2, \
          open('results_apical_16b_and_13_concat_layer1.py', 'w') as file_layer1:
         file_layer2.write("import numpy as np\n")
@@ -307,34 +326,37 @@ def run_pilot_exp_1b_concat_2b(layer1, layer2, layer3, steps_to_self_pred = 150)
         file_layer1.write("import numpy as np\n")
         file_layer1.write("import matplotlib.pyplot as plt\n")
         file_layer1.write("layer1_apical_concat_2D = np.array([")
-        for _ in range(n_of_learning_steps_to_self_predictive): 
-            learn_1_cycle_rule_16b_and_rule_13(layer1, layer2, layer3)                 # <== uses TWO learning rule is used.
+        for _ in range(n_of_training_steps_to_self_predictive): 
+            train_1_step_rule_16b_and_rule_13(layer1, layer2, layer3)                 # <== uses TWO learning rule is used.
             # Look at apical mps to see if converging to self-predictive state
             file_layer2.write(f"[{layer2.pyrs[0].apical_mp}, {layer2.pyrs[1].apical_mp}, {layer2.pyrs[2].apical_mp}], \n")
             file_layer1.write(f"[{layer1.pyrs[0].apical_mp}, {layer1.pyrs[1].apical_mp}], \n")
             #layer2.print_apical_mps() # now that we are writing to a file, this code isn't necessary
             #layer1.print_apical_mps()
-        layer3.nudge_output_layer_neurons(2.0, -2.0, lambda_nudge = 0.8)
+        print_FF_and_FB_wts_last_layer(layer2, layer3)
+        layer3.nudge_output_layer_neurons(nudge1, nudge2, lambda_nudge = 0.8)
         print("Layer 3 activations after nudge.")    
         layer3.print_pyr_activations()
         print("Starting FB sweep")
         do_FB_sweep(layer1, layer2, layer3) # prints state
         print("Finished 1st FB sweep after nudge: pilot_exp_2b") # shows effect of nudge in earlier layers
         print_pyr_activations_all_layers_topdown(layer1, layer2, layer3) # displays in topdown order
-        n_of_learning_steps = 200
-        print(f"Starting learning {n_of_learning_steps} steps for p_exp 3b")
-        for _ in range(n_of_learning_steps): # train with rule 16b and maintain nudging
-            learn_1_cycle_rule_16b_and_rule_13(layer1, layer2, layer3, nudge_p = True) 
+        n_of_training_steps = 200
+        print(f"Starting training {n_of_training_steps} steps for p_exp 3b")
+        for _ in range(n_of_training_steps): # train with rule 16b and maintain nudging
+            train_1_step_rule_16b_and_rule_13(layer1, layer2, layer3, nudge_p = True) 
             # Check apical mps to see if converging to self-predictive state
             file_layer2.write(f"[{layer2.pyrs[0].apical_mp}, {layer2.pyrs[1].apical_mp}, {layer2.pyrs[2].apical_mp}], \n")
             file_layer1.write(f"[{layer1.pyrs[0].apical_mp}, {layer1.pyrs[1].apical_mp}], \n")
         file_layer2.write("])\n")
         file_layer2.write("x_axis = np.arange(layer2_apical_concat_2D.shape[0])\n")
         file_layer2.write("plt.plot(x_axis, layer2_apical_concat_2D[:,0], x_axis, layer2_apical_concat_2D[:,1], x_axis, layer2_apical_concat_2D[:,2])\n")
+        file_layer2.write("plt.show()\n")
         file_layer1.write("])\n")
         file_layer1.write("x_axis = np.arange(layer1_apical_concat_2D.shape[0])\n")
         file_layer1.write("plt.plot(x_axis, layer1_apical_concat_2D[:,0],x_axis, layer1_apical_concat_2D[:,1])\n")
-        print(f"Finished learning {n_of_learning_steps} steps for p_exp 3b")
+        file_layer1.write("plt.show()\n")
+        print(f"Finished training {n_of_training_steps} steps for p_exp 3b")
     print_pyr_activations_all_layers_topdown(layer1, layer2, layer3) # print activations while nudging is still on
     do_FF_sweep(layer1, layer2, layer3, print_p = False) # to get new activations without nudging
     print("Final activations after nudging is removed")
@@ -358,6 +380,15 @@ print_FF_and_FB_wts_last_layer(layer2, layer3)
 """
 run_pilot_exp_1b_concat_2b(layer1, layer2, layer3, steps_to_self_pred = 400)
 print_FF_and_FB_wts_last_layer(layer2, layer3)
+print(f"nudge1 = {nudge1}; nudge2 = {nudge2}\n")
+print(f"wt_init_seed = {wt_init_seed}")
+
+"""
+for i in range(100):print(rule13_post_data[i])
+x_axis=np.arange(rule13_post_data.shape[0])
+plt.plot(x_axis, rule13_post_data)
+plt.plot(x_axis, rule13_post_data[:,3:])
+"""
 
 """ End of program """
 
