@@ -304,8 +304,8 @@ def run_pilot_exp_1b_concat_2b(layer1: Layer, layer2: Layer, layer3: Layer, step
     data2 = []
     for _ in range(n_of_learning_steps_to_self_predictive):
         learn_1_cycle_rule_16b_and_rule_13(layer1, layer2, layer3)  # <== uses TWO learning rule is used.
-        data1.append([layer1.pyrs[0].apical_mp, layer1.pyrs[1].apical_mp])
-        data2.append([layer2.pyrs[0].apical_mp, layer2.pyrs[1].apical_mp, layer2.pyrs[2].apical_mp])
+        data1.append(list(map(lambda x: x.apical_mp, layer1.pyrs)))
+        data2.append(list(map(lambda x: x.apical_mp, layer2.pyrs)))
 
     layer3.nudge_output_layer_neurons(2.0, -2.0, lambda_nudge=0.8)
     print("Layer 3 activations after nudge.")

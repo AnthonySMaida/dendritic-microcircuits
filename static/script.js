@@ -27,42 +27,62 @@ function getData() {
         chart: {
           height: 400,
           width: 600,
-          type: 'line',
-          xaxis: {
-
-          },
-          yaxis: {
-            min: 0,
-            max: .1,
-            title: {
-              text: 'Loss'
-            },
-          },
+          type: 'line'
         },
         dataLabels: {
           enabled: false
         },
+        grid: {
+          row: {
+            colors: ['#f3f3f3', 'transparent'], // takes an array which will be repeated on columns
+            opacity: 0.5
+          },
+        },
         stroke: {
           curve: 'smooth'
+        },
+        xaxis: {
+          labels: {
+            formatter: val => val.toPrecision(3)
+          },
+          stepSize: 25,
+          type: 'numeric'
+        },
+        yaxis: {
+          labels: {
+            formatter: val => val.toPrecision(2)
+          },
+          title: {
+            text: 'Loss'
+          }
         }
       }
 
       const chart1 = new ApexCharts(canvas1, {
         ...options,
         series: [
-          { data: data1[0] },
-          { data: data1[1] }
+          { name: 'Apical MP 1', data: data1[0] },
+          { name: 'Apical MP 2', data: data1[1] }
         ],
+        title: {
+          text: 'Layer 1',
+          align: 'center'
+        },
+
       })
       chart1.render()
 
       const chart2 = new ApexCharts(canvas2, {
         ...options,
         series: [
-          { data: data2[0] },
-          { data: data2[1] },
-          { data: data2[2] }
+          { name: 'Apical MP 1', data: data2[0] },
+          { name: 'Apical MP 2', data: data2[1] },
+          { name: 'Apical MP 3', data: data2[2] }
         ],
+        title: {
+          text: 'Layer 2',
+          align: 'center'
+        }
       })
       chart2.render()
     })
