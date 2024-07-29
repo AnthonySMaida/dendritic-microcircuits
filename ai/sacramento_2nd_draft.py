@@ -141,7 +141,7 @@ def learn_1_cycle_rule_16b_only(layer1: Layer, layer2: Layer, layer3: Layer, nud
     do_fb_sweep(layer1, layer2, layer3, print_predicate=False)
 
 
-def learn_1_cycle_rule_16b_and_rule_13(layer1: Layer, layer2: Layer, layer3: Layer, nudge_predicate=True):
+def learn_1_cycle_rule_16b_and_rule_13(layer1: Layer, layer2: Layer, layer3: Layer, nudge_predicate=False):
     """
     Learning sweep that uses both rules 16b and 13
     does one learning step
@@ -182,9 +182,21 @@ def train_to_self_predictive_state(layer1: Layer, layer2: Layer, layer3: Layer, 
 
 def train_data(n_steps: int, learn_cb: Callable, *inputs: Tuple[list, Layer]):
     for _ in range(n_steps):
-        learn_cb(*map(lambda x: x[1], inputs))
+        learn_cb()
         for data, layer in inputs:
             data.append(list(map(lambda x: x.apical_mp, layer.pyrs)))
+
+
+def nudge_output_layer(layer1: Layer, layer2: Layer, layer3: Layer):
+    layer3.nudge_output_layer_neurons(2.0, -2.0, lambda_nudge=0.8)
+    print("Layer 3 activations after nudge.")
+    layer3.print_pyr_activations()
+
+    print("Starting FB sweep")
+    do_fb_sweep(layer1, layer2, layer3)  # prints state
+
+    print("Finished 1st FB sweep after nudge: pilot_exp_2b")  # shows effect of nudge in earlier layers
+    print_pyr_activations_all_layers_topdown(layer1, layer2, layer3)  # displays in topdown order
 
 
 def run_pilot_experiment_1a(layer1: Layer, layer2: Layer, layer3: Layer):
@@ -245,13 +257,7 @@ def run_pilot_experiment_2_rule_16b_only(layer1: Layer, layer2: Layer, layer3: L
 
     train_to_self_predictive_state(layer1, layer2, layer3)  # put network in self-predictive state
     # nudge the 1st neuron (index=0) in layer 3
-    layer3.nudge_output_layer_neurons(2.0, -2.0, lambda_nudge=0.8)
-    print("Layer 3 activations after nudge.")
-    layer3.print_pyr_activations()
-    print("Starting FB sweep")
-    do_fb_sweep(layer1, layer2, layer3)  # prints state
-    print("Finished 1st FB sweep after nudge: pilot_exp_2")  # shows effect of nudge in earlier layers
-    print_pyr_activations_all_layers_topdown(layer1, layer2, layer3)  # displays in topdown order
+    nudge_output_layer(layer1, layer2, layer3)
     n_of_learning_steps = 40
     print(f"Starting learning {n_of_learning_steps} steps for p_exp 2a")
     for _ in range(n_of_learning_steps):  # train with rule 16b and maintain nudging
@@ -274,24 +280,21 @@ def run_pilot_experiment_2b_rule_16b_and_rule_13(layer1: Layer, layer2: Layer, l
     """
 
     train_to_self_predictive_state(layer1, layer2, layer3, 150)  # put network in self-predictive state
-    layer3.nudge_output_layer_neurons(2.0, -2.0, lambda_nudge=0.8)
-    print("Layer 3 activations after nudge.")
-    layer3.print_pyr_activations()
-    print("Starting FB sweep")
-    do_fb_sweep(layer1, layer2, layer3)  # prints state
-    print("Finished 1st FB sweep after nudge: pilot_exp_2b")  # shows effect of nudge in earlier layers
-    print_pyr_activations_all_layers_topdown(layer1, layer2, layer3)  # displays in topdown order
+    nudge_output_layer(layer1, layer2, layer3)
+
     n_of_learning_steps = 200
     print(f"Starting learning {n_of_learning_steps} steps for p_exp 3b")
 
     data1 = []
     data2 = []
     data3 = []
-    train_data(n_of_learning_steps, learn_1_cycle_rule_16b_and_rule_13, *(
-        (data1, layer1),
-        (data2, layer2),
-        (data3, layer3)
-    ))
+    train_data(n_of_learning_steps,
+               lambda: learn_1_cycle_rule_16b_and_rule_13(layer1, layer2, layer3, nudge_predicate=True),
+               *(
+                   (data1, layer1),
+                   (data2, layer2),
+                   (data3, layer3)
+               ))
 
     print_pyr_activations_all_layers_topdown(layer1, layer2, layer3)  # print activations while nudging is still on
     do_ff_sweep(layer1, layer2, layer3, print_predicate=False)  # to get new activations without nudging
@@ -312,30 +315,26 @@ def run_pilot_exp_1b_concat_2b(layer1: Layer, layer2: Layer, layer3: Layer, step
     data1 = []
     data2 = []
     data3 = []
-    train_data(n_of_learning_steps_to_self_predictive, learn_1_cycle_rule_16b_and_rule_13, *(
-        (data1, layer1),
-        (data2, layer2),
-        (data3, layer3)
-    ))
+    train_data(n_of_learning_steps_to_self_predictive,
+               lambda: learn_1_cycle_rule_16b_and_rule_13(layer1, layer2, layer3),
+               *(
+                   (data1, layer1),
+                   (data2, layer2),
+                   (data3, layer3)
+               ))
 
-    layer3.nudge_output_layer_neurons(2.0, -2.0, lambda_nudge=0.8)
-    print("Layer 3 activations after nudge.")
+    nudge_output_layer(layer1, layer2, layer3)
 
-    layer3.print_pyr_activations()
-    print("Starting FB sweep")
-
-    do_fb_sweep(layer1, layer2, layer3)  # prints state
-    print("Finished 1st FB sweep after nudge: pilot_exp_2b")  # shows effect of nudge in earlier layers
-
-    print_pyr_activations_all_layers_topdown(layer1, layer2, layer3)  # displays in topdown order
     n_of_learning_steps = 200
     print(f"Starting learning {n_of_learning_steps} steps for p_exp 3b")
 
-    train_data(n_of_learning_steps, learn_1_cycle_rule_16b_and_rule_13, *(
-        (data1, layer1),
-        (data2, layer2),
-        (data3, layer3)
-    ))
+    train_data(n_of_learning_steps,
+               lambda: learn_1_cycle_rule_16b_and_rule_13(layer1, layer2, layer3, nudge_predicate=True),
+               *(
+                   (data1, layer1),
+                   (data2, layer2),
+                   (data3, layer3)
+               ))
 
     print(f"Finished learning {n_of_learning_steps} steps for p_exp 3b")
     print_pyr_activations_all_layers_topdown(layer1, layer2, layer3)  # print activations while nudging is still on
