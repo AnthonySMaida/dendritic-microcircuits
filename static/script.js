@@ -42,10 +42,6 @@ function getData() {
           curve: 'smooth'
         },
         xaxis: {
-          labels: {
-            formatter: val => val.toPrecision(3)
-          },
-          stepSize: 25,
           type: 'numeric'
         },
         yaxis: {
