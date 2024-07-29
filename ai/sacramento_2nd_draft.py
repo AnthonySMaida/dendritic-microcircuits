@@ -26,6 +26,7 @@ data structures used closely mimic the neural anatomy given in the paper.
 """
 from base64 import b64encode
 from io import BytesIO
+from typing import Callable, Tuple
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -140,7 +141,7 @@ def learn_1_cycle_rule_16b_only(layer1: Layer, layer2: Layer, layer3: Layer, nud
     do_fb_sweep(layer1, layer2, layer3, print_predicate=False)
 
 
-def learn_1_cycle_rule_16b_and_rule_13(layer1: Layer, layer2: Layer, layer3: Layer, nudge_predicate=False):
+def learn_1_cycle_rule_16b_and_rule_13(layer1: Layer, layer2: Layer, layer3: Layer, nudge_predicate=True):
     """
     Learning sweep that uses both rules 16b and 13
     does one learning step
@@ -177,6 +178,13 @@ def train_to_self_predictive_state(layer1: Layer, layer2: Layer, layer3: Layer, 
     layer1.print_apical_mps()
     print_pyr_activations_all_layers_topdown(layer1, layer2, layer3)
     print("Above shows network in self predictive state.")
+
+
+def train_data(n_steps: int, learn_cb: Callable, *inputs: Tuple[list, Layer]):
+    for _ in range(n_steps):
+        learn_cb(*map(lambda x: x[1], inputs))
+        for data, layer in inputs:
+            data.append(list(map(lambda x: x.apical_mp, layer.pyrs)))
 
 
 def run_pilot_experiment_1a(layer1: Layer, layer2: Layer, layer3: Layer):
@@ -278,11 +286,12 @@ def run_pilot_experiment_2b_rule_16b_and_rule_13(layer1: Layer, layer2: Layer, l
 
     data1 = []
     data2 = []
-    for _ in range(n_of_learning_steps):  # train with rule 16b and maintain nudging
-        learn_1_cycle_rule_16b_and_rule_13(layer1, layer2, layer3, nudge_predicate=True)
-        # Check apical mps to see if converging to self-predictive state
-        data1.append([layer1.pyrs[0].apical_mp, layer1.pyrs[1].apical_mp])
-        data2.append([layer2.pyrs[0].apical_mp, layer2.pyrs[1].apical_mp, layer2.pyrs[2].apical_mp])
+    data3 = []
+    train_data(n_of_learning_steps, learn_1_cycle_rule_16b_and_rule_13, *(
+        (data1, layer1),
+        (data2, layer2),
+        (data3, layer3)
+    ))
 
     print_pyr_activations_all_layers_topdown(layer1, layer2, layer3)  # print activations while nudging is still on
     do_ff_sweep(layer1, layer2, layer3, print_predicate=False)  # to get new activations without nudging
@@ -302,10 +311,12 @@ def run_pilot_exp_1b_concat_2b(layer1: Layer, layer2: Layer, layer3: Layer, step
 
     data1 = []
     data2 = []
-    for _ in range(n_of_learning_steps_to_self_predictive):
-        learn_1_cycle_rule_16b_and_rule_13(layer1, layer2, layer3)  # <== uses TWO learning rule is used.
-        data1.append(list(map(lambda x: x.apical_mp, layer1.pyrs)))
-        data2.append(list(map(lambda x: x.apical_mp, layer2.pyrs)))
+    data3 = []
+    train_data(n_of_learning_steps_to_self_predictive, learn_1_cycle_rule_16b_and_rule_13, *(
+        (data1, layer1),
+        (data2, layer2),
+        (data3, layer3)
+    ))
 
     layer3.nudge_output_layer_neurons(2.0, -2.0, lambda_nudge=0.8)
     print("Layer 3 activations after nudge.")
@@ -320,11 +331,11 @@ def run_pilot_exp_1b_concat_2b(layer1: Layer, layer2: Layer, layer3: Layer, step
     n_of_learning_steps = 200
     print(f"Starting learning {n_of_learning_steps} steps for p_exp 3b")
 
-    for _ in range(n_of_learning_steps):  # train with rule 16b and maintain nudging
-        learn_1_cycle_rule_16b_and_rule_13(layer1, layer2, layer3, nudge_predicate=True)
-        # Check apical mps to see if converging to self-predictive state
-        data1.append([layer1.pyrs[0].apical_mp, layer1.pyrs[1].apical_mp])
-        data2.append([layer2.pyrs[0].apical_mp, layer2.pyrs[1].apical_mp, layer2.pyrs[2].apical_mp])
+    train_data(n_of_learning_steps, learn_1_cycle_rule_16b_and_rule_13, *(
+        (data1, layer1),
+        (data2, layer2),
+        (data3, layer3)
+    ))
 
     print(f"Finished learning {n_of_learning_steps} steps for p_exp 3b")
     print_pyr_activations_all_layers_topdown(layer1, layer2, layer3)  # print activations while nudging is still on
