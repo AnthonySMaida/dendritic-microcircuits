@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dentritic microcircuits experiment</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+</head>
+<body>
+<h1>Dentritic microcircuits experiment</h1>
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <div class="flashes">
+      {% for message in messages %}
+        <div>{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<div id="container"></div>
+
+<div id="actions">
+  <button onclick="getGraphs()">Run experiment (image graph)</button>
+  <button onclick="getData()">Run experiment (raw data)</button>
+  <button onclick="cleanContainer()">Clean view</button>
+</div>
+
+</body>
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</html>
