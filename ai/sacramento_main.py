@@ -35,9 +35,12 @@ from ai.Layer import Layer
 from ai.config import get_rng, n_input_pyr_nrns, n_hidden_pyr_nrns, n_output_pyr_nrns, nudge1, nudge2, wt_init_seed
 
 
-def build_small_three_layer_network(seed: int):
+rule13_post_data = np.array([[0, 0, 0, 0, 0]])
+
+
+def build_small_three_layer_network():
     """Build 3-layer network"""
-    rng = get_rng(seed)
+    rng = get_rng()
     # Layer 1 is the input layer w/ 2 pyrs and 1 inhib cell.
     # No FF connections in input layer. They are postponed to receiving layer.
     # Each pyramid projects a FF connection to each of 3 pyrs in Layer 2 (hidden).

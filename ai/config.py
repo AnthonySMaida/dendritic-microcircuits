@@ -18,8 +18,6 @@ n_input_pyr_nrns = 2
 n_hidden_pyr_nrns = 3
 n_output_pyr_nrns = 2
 
-rule13_post_data = np.array([[0, 0, 0, 0, 0]])
-
 # conductance default values
 g_lk = 0.1
 g_A = 0.8
