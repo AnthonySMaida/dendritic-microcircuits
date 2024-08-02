@@ -14,18 +14,20 @@ def home():
 @app.route('/data')
 def data():
     data1, data2 = ai.main()
+    # Transpose datasets so that we have a list of series
+    # instead of a list of y-values
+    data1 = list(zip(*data1))
+    data2 = list(zip(*data2))
     return jsonify({
-        "data1": data1,
-        "data2": data2
-    })
-
-
-@app.route('/graphs')
-def graphs():
-    data1, data2 = ai.main()
-    return jsonify({
-        "data1": ai.generate_plot(data1),
-        "data2": ai.generate_plot(data2)
+        "Layer 1": [
+            {"title": "Apical MP 1", "data": data1[0]},
+            {"title": "Apical MP 2", "data": data1[1]}
+        ],
+        "Layer 2": [
+            {"title": "Apical MP 1", "data": data2[0]},
+            {"title": "Apical MP 2", "data": data2[1]},
+            {"title": "Apical MP 3", "data": data2[2]}
+        ]
     })
 
 

@@ -24,16 +24,12 @@ interneurons are called 'inhibs'
 Implemented in numpy. The code is not vectorized but the
 data structures used closely mimic the neural anatomy given in the paper.
 """
-from base64 import b64encode
-from io import BytesIO
 from typing import Callable, Tuple
 
 import numpy as np
-import matplotlib.pyplot as plt
 
 from ai.Layer import Layer
 from ai.config import get_rng, n_input_pyr_nrns, n_hidden_pyr_nrns, n_output_pyr_nrns, nudge1, nudge2, wt_init_seed
-
 
 rule13_post_data = np.array([[0, 0, 0, 0, 0]])
 
@@ -164,7 +160,7 @@ def train_1_step_rule_16b_and_rule_13(layer1: Layer, layer2: Layer, layer3: Laye
 
     # save data point: [soma_act, apical_hat_act, post_val[]
     global rule13_post_data
-    rule13_post_data = np.concatenate((rule13_post_data, data_pt), axis = 0)
+    rule13_post_data = np.concatenate((rule13_post_data, data_pt), axis=0)
 
     # continue learning
     layer1.adjust_wts_lat_pi()  # adjust lateral PI wts in Layer 1
@@ -365,22 +361,6 @@ def run_pilot_exp_1b_concat_2b(layer1: Layer, layer2: Layer, layer3: Layer, step
     print_pyr_activations_all_layers_topdown(layer1, layer2, layer3)  # shows the true effect of learning
 
     return data1, data2
-
-
-def generate_plot(values: list[list[float]]):
-    data = np.array(values)
-    x_axis = np.arange(data.shape[0])
-    fig, ax = plt.subplots()
-    args = []
-    for i in range(data.shape[1]):
-        args.extend((x_axis, data[:, i]))
-    ax.plot(*args)
-    buf = BytesIO()
-    fig.savefig(buf, format='png')
-    buf.seek(0)
-    img_str = b64encode(buf.read()).decode('utf-8')
-    plt.close(fig)
-    return img_str
 
 
 def main():
