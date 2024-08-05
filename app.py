@@ -24,7 +24,8 @@ def data():
     data1 = list(zip(*data1))
     data2 = list(zip(*data2))
     data3 = list(zip(*data3))
-    return "Layer 1 Apical MPs": [
+    return jsonify({
+        "Layer 1 Apical MPs": [
             {"title": "Apical MP 1", "data": data1[0]},
             {"title": "Apical MP 2", "data": data1[1]}
         ],

@@ -142,9 +142,9 @@ class Experiment:
 
 def print_FF_and_IP_wts_for_layers(l_k: Layer, l_k_plus_1: Layer):
     print(f"FF wts coming into Layer {l_k_plus_1.id_num}")
-    l_k_plus_1.print_FF_wts()
+    l_k_plus_1.print_ff_wts()
     print(f"IP wts within Layer {l_k.id_num}")
-    l_k.print_IP_wts()
+    l_k.print_ip_wts()
     print()
 
 ##########################################
@@ -397,7 +397,7 @@ def main():
     logger.info("nudge1 = %s; nudge2 = %s\n", nudge1, nudge2)
     logger.info("wt_init_seed = %d", wt_init_seed)
 
-    return *experiment.datasets[:2], rule13_post_data[1:].tolist()
+    return *experiment.datasets[:2], experiment.rule13_post_data[1:].tolist()
 
 
 if __name__ == '__main__':

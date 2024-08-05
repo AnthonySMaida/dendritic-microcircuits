@@ -4,7 +4,7 @@ from typing import Iterable, TypeVar, Tuple
 T = TypeVar('T')
 
 
-def iter_with_prev(it: Iterable[T]) -> Iterator[Tuple[T | None, T]]:
+def iter_with_prev(it: Iterable[T]):
     last_element = None
     for e in it:
         yield last_element, e

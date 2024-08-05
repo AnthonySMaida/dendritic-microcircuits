@@ -114,21 +114,21 @@ class Layer:
     # print wts #
     #############
 
-    def print_FF_wts(self):
+    def print_ff_wts(self):
         for nrn in self.pyrs:
             logger.info(nrn.W_PP_ff)
 
-    def print_FB_wts(self):
+    def print_fb_wts(self):
         for nrn in self.pyrs:
             logger.info(nrn.W_PP_fb)
 
-    def print_IP_wts(self):
+    def print_ip_wts(self):
         for nrn in self.inhibs:
-            print(nrn.W_IP_lat)
+            logger.info(nrn.W_IP_lat)
 
-    def print_PI_wts(self):
+    def print_pi_wts(self):
         for nrn in self.pyrs:
-            print(nrn.W_PI_lat)
+            logger.info(nrn.W_PI_lat)
     ###########################################################################
     #                           Three learning rules                          #
     # The rules use doubly nested for loops to iterate over the pre- and      #
