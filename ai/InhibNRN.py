@@ -26,8 +26,7 @@ class InhibNRN:
     soma_mp:           {self.soma_mp}, 
     dend_mp:           {self.dend_mp},
     soma_activation:   {self.soma_act},
-    incoming W_IP_lat: {self.W_IP_lat}
-    """
+    incoming W_IP_lat: {self.W_IP_lat}"""
 
     def update_inhib_soma_ff(self):  # there is no backward soma update for inhib
         self.soma_mp = self.dend_mp

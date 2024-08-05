@@ -47,8 +47,7 @@ class PyrNRN:
     apical_act:        {self.apical_act},
     incoming W_PP_ff:  {self.W_PP_ff},
     incoming W_PP_fb:  {self.W_PP_fb},
-    incoming W_PI_lat: {self.W_PI_lat}
-    """
+    incoming W_PI_lat: {self.W_PI_lat}"""
 
     # simplified update. See Section 5.3 of paper, point 1.
     def update_pyr_soma_ff(self):

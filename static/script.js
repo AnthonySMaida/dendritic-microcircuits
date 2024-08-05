@@ -5,14 +5,18 @@ function cleanContainer() {
 }
 
 function getData() {
+    /**
+     *  Fetch tells browser to send a request to the flask backend on the '/data' route.
+     *  What calls getData() ?
+     */
   fetch('/data').then(r => r.json())
     .then(json => {
       cleanContainer()
 
       const options = {
         chart: {
-          height: 400,
-          width: 600,
+          height: 334,
+          width: 500,
           type: 'line'
         },
         dataLabels: {
@@ -56,5 +60,5 @@ function getData() {
         })
         chart.render()
       }
-    })
+  })
 }

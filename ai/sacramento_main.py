@@ -14,11 +14,11 @@ This particular program studies the learning rules
 presented in that paper in a simplified context.
 
 3 Layer Architecture
-Layer 1: input  (2 pyramids, 1 interneron)
-Layer 2: hidden (3 pyramics, 3 interneurons)
+Layer 1: input  (2 pyramids, 1 interneuron)
+Layer 2: hidden (3 pyramids, 3 interneurons)
 Layer 3: output (2 pyramids)
 
-pyramical neurons are called "pyrs"
+pyramidal neurons are called "pyrs"
 interneurons are called 'inhibs'
 
 Implemented in numpy. The code is not vectorized but the
@@ -140,6 +140,13 @@ class Experiment:
         raise NotImplementedError
 
 
+def print_FF_and_IP_wts_for_layers(l_k: Layer, l_k_plus_1: Layer):
+    print(f"FF wts coming into Layer {l_k_plus_1.id_num}")
+    l_k_plus_1.print_FF_wts()
+    print(f"IP wts within Layer {l_k.id_num}")
+    l_k.print_IP_wts()
+    print()
+
 ##########################################
 # Learning sweep that only uses Rule 16b #
 ##########################################
@@ -216,7 +223,7 @@ def run_pilot_experiment_1a(layer1: Layer, layer2: Layer, layer3: Layer):
     logger.info("Finished 1st FF sweep: pilot_exp_1")
 
     do_fb_sweep(layer1, layer2, layer3)  # prints state
-    logger.info("Finished 1st FB sweep: pilot_exp_1")
+    logger.info("Finished 1st FB sweep: pilot_exp_1a")
 
     n_of_training_steps = 150
     logger.info("Starting training %d steps for p_exp 1", n_of_training_steps)
@@ -240,7 +247,7 @@ def run_pilot_experiment_1b(layer1: Layer, layer2: Layer, layer3: Layer):
     """
 
     do_ff_sweep(layer1, layer2, layer3)  # prints state
-    logger.info("Finished 1st FF sweep: pilot_exp_1")
+    logger.info("Finished 1st FF sweep: pilot_exp_1b")
     do_fb_sweep(layer1, layer2, layer3)  # prints state
     logger.info("Finished 1st FB sweep: pilot_exp_1")
     n_of_training_steps = 150
@@ -256,7 +263,7 @@ def run_pilot_experiment_1b(layer1: Layer, layer2: Layer, layer3: Layer):
 
     logger.info("Finished training %d steps for p_exp 1", n_of_training_steps)
     print_pyr_activations_all_layers_topdown(layer1, layer2, layer3)
-    return data1, data2
+    return data1, data2, rule13_post_data
 
 
 def run_pilot_experiment_2_rule_16b_only(layer1: Layer, layer2: Layer, layer3: Layer):
@@ -293,7 +300,7 @@ def run_pilot_experiment_2b_rule_16b_and_rule_13(layer1: Layer, layer2: Layer, l
     nudge_output_layer(layer1, layer2, layer3)
 
     n_of_training_steps = 200
-    logger.info("Starting training %d steps for p_exp 3b", n_of_training_steps)
+    logger.info("Starting training %d steps for p_exp 2b.", n_of_training_steps)
 
     data1 = []
     data2 = []
@@ -306,7 +313,7 @@ def run_pilot_experiment_2b_rule_16b_and_rule_13(layer1: Layer, layer2: Layer, l
                    (data3, layer3)
                ))
 
-    logger.info("Finished training %d steps for p_exp 3b", n_of_training_steps)
+    logger.info("Finished training %d steps for p_exp 2b.", n_of_training_steps)
     print_pyr_activations_all_layers_topdown(layer1, layer2, layer3)  # print activations while nudging is still on
     do_ff_sweep(layer1, layer2, layer3, print_predicate=False)  # to get new activations without nudging
     logger.info("Final activations after nudging is removed")
@@ -390,7 +397,7 @@ def main():
     logger.info("nudge1 = %s; nudge2 = %s\n", nudge1, nudge2)
     logger.info("wt_init_seed = %d", wt_init_seed)
 
-    return experiment.datasets
+    return *experiment.datasets[:2], rule13_post_data[1:].tolist()
 
 
 if __name__ == '__main__':

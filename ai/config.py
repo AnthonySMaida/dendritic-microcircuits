@@ -4,6 +4,7 @@ import numpy as np
 def get_rng():
     return np.random.default_rng(seed=wt_init_seed)  # seed needed for reproducibility
 
+def prRed(skk): print("\033[91m {}\033[00m" .format(skk))
 
 wt_init_seed = 42
 
@@ -11,8 +12,8 @@ wt_mu, wt_sig = 0.0, 0.1  # initialize wts according to N(u, sig) if using Gauss
 beta = 1.0 / 3.0  # beta = 1/lambda => lambda = 3. beta is scale param for rng.exponential.
 learning_rate = 0.05
 
-nudge1 = 0.0
-nudge2 = 1.0
+nudge1 = 1.0
+nudge2 = 0.0
 
 n_input_pyr_nrns = 2
 n_hidden_pyr_nrns = 3
