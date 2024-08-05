@@ -1,8 +1,13 @@
+import logging
+
 import numpy as np
 
 from ai.InhibNRN import InhibNRN
 from ai.PyrNRN import PyrNRN
 from ai.config import learning_rate, logsig
+
+logger = logging.getLogger("ai.Layer")
+logger.setLevel(logging.INFO)
 
 
 # Allocate storage, then allocate objects
@@ -111,11 +116,11 @@ class Layer:
 
     def print_ff_wts(self):
         for nrn in self.pyrs:
-            print(nrn.W_PP_ff)
+            logger.info(nrn.W_PP_ff)
 
     def print_fb_wts(self):
         for nrn in self.pyrs:
-            print(nrn.W_PP_fb)
+            logger.info(nrn.W_PP_fb)
 
     ###########################################################################
     #                           Three learning rules                          #
@@ -164,12 +169,12 @@ class Layer:
 
     def print_apical_mps(self):  # need to know if these are converging to 0 to assess self-predictive state
         """print the apical membrane potentials for the layer"""
-        print(f"Layer {self.id_num}")
+        logger.info(f"Layer {self.id_num}")
         for i in range(len(self.pyrs)):
-            print(f"apical_mp: {self.pyrs[i].apical_mp}")
+            logger.info(f"apical_mp: {self.pyrs[i].apical_mp}")
 
     def print_pyr_activations(self):
         """print the pyramical activation levels for a layer"""
-        print(f"Layer {self.id_num} pyr activations")
+        logger.info(f"Layer {self.id_num} pyr activations")
         for i in range(len(self.pyrs)):
-            print(f"soma act: {self.pyrs[i].soma_act}")
+            logger.info(f"soma act: {self.pyrs[i].soma_act}")

@@ -13,7 +13,7 @@ def home():
 
 @app.route('/data')
 def data():
-    data1, data2 = ai.main()
+    data1, data2, _ = ai.main()
     # Transpose datasets so that we have a list of series
     # instead of a list of y-values
     data1 = list(zip(*data1))

@@ -4,10 +4,6 @@ function cleanContainer() {
   Array.from(container.children).forEach(n => n.remove())
 }
 
-function transpose(matrix) {
-  return matrix[0].map((col, c) => matrix.map((row, r) => matrix[r][c]));
-}
-
 function getData() {
   fetch('/data').then(r => r.json())
     .then(json => {
