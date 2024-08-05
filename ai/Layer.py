@@ -6,7 +6,7 @@ from ai.config import learning_rate, logsig
 
 
 # Allocate storage, then allocate objects
-# wt_counts are are per neuron. Thus, 'pyr_ff_wt_cnt' is the num of ff wts
+# wt_counts are per neuron. Thus, 'pyr_ff_wt_cnt' is the num of ff wts
 # per neuron in the layer.
 class Layer:
     next_id = 1
@@ -39,7 +39,7 @@ class Layer:
         return np.array([x.soma_act for x in self.pyrs])
 
     def pyr_apical_acts(self):  # retrieve pyramid activations for layer
-        """returns array of pyramid apical from current layer"""
+        """returns array of pyramid apical activations from current layer"""
         return np.array([x.apical_act for x in self.pyrs])
 
     def pyr_basal_hat_acts(self):
@@ -109,14 +109,21 @@ class Layer:
     # print wts #
     #############
 
-    def print_ff_wts(self):
+    def print_FF_wts(self):
         for nrn in self.pyrs:
             print(nrn.W_PP_ff)
 
-    def print_fb_wts(self):
+    def print_FB_wts(self):
         for nrn in self.pyrs:
             print(nrn.W_PP_fb)
 
+    def print_IP_wts(self):
+        for nrn in self.inhibs:
+            print(nrn.W_IP_lat)
+
+    def print_PI_wts(self):
+        for nrn in self.pyrs:
+            print(nrn.W_PI_lat)
     ###########################################################################
     #                           Three learning rules                          #
     # The rules use doubly nested for loops to iterate over the pre- and      #
