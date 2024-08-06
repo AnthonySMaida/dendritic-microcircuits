@@ -19,8 +19,13 @@ p {
 
 #container {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   background-color: #fff;
+  margin: 16px 0;
   padding: 20px;
   border-radius: 5px;
   box-shadow: 0 0 10px rgba(0,0,0,0.1);
@@ -37,10 +42,10 @@ label {
   color: red;
 }
 
-canvas {
+div.apexcharts-canvas {
   border: 1px solid black;
 }
 
 #actions {
-  margin-top: 24px;
+  margin: 24px 0;
 }
