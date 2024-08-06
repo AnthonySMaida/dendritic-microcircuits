@@ -129,6 +129,19 @@ class Layer:
     def print_pi_wts(self):
         for nrn in self.pyrs:
             logger.info(nrn.W_PI_lat)
+
+    def print_fb_and_pi_wts_layer(self):
+        logger.info(f"FB wts coming into Layer {self.id_num}")
+        self.print_fb_wts()
+        logger.info(f"PI wts within Layer {self.id_num}")
+        self.print_pi_wts()
+
+    def print_ff_and_ip_wts_for_layers(self, l_k_plus_1: "Layer"):
+        logger.info(f"FF wts coming into Layer {l_k_plus_1.id_num}")
+        l_k_plus_1.print_ff_wts()
+        logger.info(f"IP wts within Layer {self.id_num}")
+        self.print_ip_wts()
+
     ###########################################################################
     #                           Three learning rules                          #
     # The rules use doubly nested for loops to iterate over the pre- and      #
