@@ -15,6 +15,7 @@ logger.setLevel(logging.INFO)
 class Experiment:
     def __init__(self):
         self.rule13_post_data = np.array([[0, 0, 0, 0, 0]])
+        self.rule13_wt_data = np.array([[0]])
         self.rng = get_rng()
         self.datasets: List[List[float]] = []
         self.layers: List[Layer] = []
@@ -39,7 +40,7 @@ class Experiment:
         l3 = Layer(self.rng, n_output_pyr_nrns, 0, 3, None, None, None)
         logger.debug("""Layer 3:\n========\n%s""", l3)
 
-        self.datasets = [[], [], []]
+        self.datasets = [[], [], []] # why three elements long? Separate data for each layer?
         self.layers = [l1, l2, l3]
 
         logger.info("Finished building model.")
@@ -109,17 +110,20 @@ class Experiment:
 
     def train_1_step_rule_16b_and_rule_13(self, nudge_predicate=False):
         """
-        Learning sweep that uses both rules 16b and 13
-        does one training step
+        Learning step that uses both rules 16b and 13.
+        Does one training step.
         """
         l1, l2, l3 = self.layers
         l2.adjust_wts_lat_pi()  # adjust lateral PI wts in Layer 2
         # l2.adjust_wts_lat_IP()      # adjust lateral IP wts in Layer 2
 
-        data_pt = l3.adjust_wts_pp_ff(l2)  # adjust FF wts projecting to Layer 3
+        # Adjust FF wts projecting to Layer 3.
+        trigger_data_pt, wt_data_pt = l3.adjust_wts_pp_ff(l2)  # adjust FF wts projecting to Layer 3
 
-        # save data point: [soma_act, apical_hat_act, post_val[]
-        self.rule13_post_data = np.concatenate((self.rule13_post_data, data_pt), axis=0)
+        # save data point: [soma_act, basal_hat_act, post_val, soma_mp, basal_mp]
+        self.rule13_post_data = np.concatenate((self.rule13_post_data, trigger_data_pt), axis=0)
+        # save data point: [FF_wt_value]
+        self.rule13_wt_data = np.concatenate((self.rule13_wt_data, wt_data_pt), axis=0)
 
         # continue learning
         l1.adjust_wts_lat_pi()  # adjust lateral PI wts in Layer 1
@@ -130,17 +134,29 @@ class Experiment:
         # Do FF and FB sweeps so wt changes show their effects.
         self.do_ff_sweep()
         if nudge_predicate:
-            l3.nudge_output_layer_neurons(2.0, -2.0, lambda_nudge=0.8)
+            l3.nudge_output_layer_neurons(nudge1, nudge2, lambda_nudge=0.8)
         self.do_fb_sweep()
 
-    def train_data(self, n_steps: int, *args, **kwargs):
+    def train_and_save_apical_data(self, n_steps: int, *args, **kwargs):
+        """
+        Formerly called: train_data
+        Train 1 step. Wt updates are preserved by call-by-ref side-effect.
+        Save apical dendrite membrane potentials for each layer in 'dataset' attribute.
+        :param n_steps: int num of training steps
+        :param args: No args.
+        :param kwargs: nudge_predicate (True or False), to indicate if nudging happens.
+        :return:
+        """
         for _ in range(n_steps):
-            self.train(*args, **kwargs)
+            self.train_1_step(*args, **kwargs)  # do training. Results stored using call by reference.
             for data, layer in zip(self.datasets, self.layers):
-                data.append(list(map(lambda x: x.apical_mp, layer.pyrs)))
+                data.append(list(map(lambda x: x.apical_mp, layer.pyrs)))  # map(func, iterable)
 
     @abstractmethod
-    def train(self, *args, **kwargs):
+    def train_1_step(self, *args, **kwargs): # I would have never figured out the signature.
+    """
+         Formerly called "train()"
+    """
         raise NotImplementedError
 
     @abstractmethod

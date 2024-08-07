@@ -18,12 +18,13 @@ def home():
 @app.route('/data')
 def data():
     """ Right half """
-    data1, data2, data3 = ai.main()
+    data1, data2, data3, data4 = ai.main()
     # Transpose datasets so that we have a list of series
     # instead of a list of y-values
     data1 = list(zip(*data1))
     data2 = list(zip(*data2))
     data3 = list(zip(*data3))
+    data4 = list(zip(*data4))
     return jsonify({
         "Layer 1 Apical MPs": [
             {"title": "Apical MP 1", "data": data1[0]},
@@ -34,12 +35,15 @@ def data():
             {"title": "Apical MP 2", "data": data2[1]},
             {"title": "Apical MP 3", "data": data2[2]}
         ],
-        "Learning Rule PP_FF": [
+        "Learning Rule PP_FF Triggers": [
           {"title": "Soma act", "data": data3[0]},
           {"title": "Basal act", "data": data3[1]},
           {"title": "Post value", "data": data3[2]},
           {"title": "Soma mp", "data": data3[3]},
           {"title": "Basal mp", "data": data3[4]},
+        ],
+        "Learning Rule PP_FF wts": [
+            {"title": "Weight value", "data": data4[0]},
         ]
     })
 
