@@ -19,20 +19,28 @@ def home():
 def data():
     """ Right half """
     data1, data2, data3 = ai.main()
+    # Transpose datasets so that we have a list of series
+    # instead of a list of y-values
+    data1 = list(zip(*data1))
+    data2 = list(zip(*data2))
+    data3 = list(zip(*data3))
     return jsonify({
-        "data1": data1,
-        "data2": data2,
-        "data3": data3
-    })
-
-
-@app.route('/graphs')
-def graphs():
-    """ Left half. """
-    data1, data2 = ai.main()
-    return jsonify({
-        "data1": ai.generate_plot(data1),
-        "data2": ai.generate_plot(data2)
+        "Layer 1 Apical MPs": [
+            {"title": "Apical MP 1", "data": data1[0]},
+            {"title": "Apical MP 2", "data": data1[1]}
+        ],
+        "Layer 2 Apical MPs": [
+            {"title": "Apical MP 1", "data": data2[0]},
+            {"title": "Apical MP 2", "data": data2[1]},
+            {"title": "Apical MP 3", "data": data2[2]}
+        ],
+        "Learning Rule PP_FF": [
+          {"title": "Soma act", "data": data3[0]},
+          {"title": "Basal act", "data": data3[1]},
+          {"title": "Post value", "data": data3[2]},
+          {"title": "Soma mp", "data": data3[3]},
+          {"title": "Basal mp", "data": data3[4]},
+        ]
     })
 
 

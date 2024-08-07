@@ -1,8 +1,13 @@
+import logging
+
 import numpy as np
 
 from ai.InhibNRN import InhibNRN
 from ai.PyrNRN import PyrNRN
 from ai.config import learning_rate, logsig
+
+logger = logging.getLogger("ai.Layer")
+logger.setLevel(logging.INFO)
 
 
 # Allocate storage, then allocate objects
@@ -109,21 +114,34 @@ class Layer:
     # print wts #
     #############
 
-    def print_FF_wts(self):
+    def print_ff_wts(self):
         for nrn in self.pyrs:
-            print(nrn.W_PP_ff)
+            logger.info(nrn.W_PP_ff)
 
-    def print_FB_wts(self):
+    def print_fb_wts(self):
         for nrn in self.pyrs:
-            print(nrn.W_PP_fb)
+            logger.info(nrn.W_PP_fb)
 
-    def print_IP_wts(self):
+    def print_ip_wts(self):
         for nrn in self.inhibs:
-            print(nrn.W_IP_lat)
+            logger.info(nrn.W_IP_lat)
 
-    def print_PI_wts(self):
+    def print_pi_wts(self):
         for nrn in self.pyrs:
-            print(nrn.W_PI_lat)
+            logger.info(nrn.W_PI_lat)
+
+    def print_fb_and_pi_wts_layer(self):
+        logger.info(f"FB wts coming into Layer {self.id_num}")
+        self.print_fb_wts()
+        logger.info(f"PI wts within Layer {self.id_num}")
+        self.print_pi_wts()
+
+    def print_ff_and_ip_wts_for_layers(self, l_k_plus_1: "Layer"):
+        logger.info(f"FF wts coming into Layer {l_k_plus_1.id_num}")
+        l_k_plus_1.print_ff_wts()
+        logger.info(f"IP wts within Layer {self.id_num}")
+        self.print_ip_wts()
+
     ###########################################################################
     #                           Three learning rules                          #
     # The rules use doubly nested for loops to iterate over the pre- and      #
@@ -171,12 +189,12 @@ class Layer:
 
     def print_apical_mps(self):  # need to know if these are converging to 0 to assess self-predictive state
         """print the apical membrane potentials for the layer"""
-        print(f"Layer {self.id_num}")
+        logger.info(f"Layer {self.id_num}")
         for i in range(len(self.pyrs)):
-            print(f"apical_mp: {self.pyrs[i].apical_mp}")
+            logger.info(f"apical_mp: {self.pyrs[i].apical_mp}")
 
     def print_pyr_activations(self):
         """print the pyramical activation levels for a layer"""
-        print(f"Layer {self.id_num} pyr activations")
+        logger.info(f"Layer {self.id_num} pyr activations")
         for i in range(len(self.pyrs)):
-            print(f"soma act: {self.pyrs[i].soma_act}")
+            logger.info(f"soma act: {self.pyrs[i].soma_act}")

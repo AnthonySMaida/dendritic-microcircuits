@@ -4,7 +4,6 @@ import numpy as np
 def get_rng():
     return np.random.default_rng(seed=wt_init_seed)  # seed needed for reproducibility
 
-def prRed(skk): print("\033[91m {}\033[00m" .format(skk))
 
 wt_init_seed = 42
 
@@ -18,7 +17,6 @@ nudge2 = 0.0
 n_input_pyr_nrns = 2
 n_hidden_pyr_nrns = 3
 n_output_pyr_nrns = 2
-
 
 # conductance default values
 g_lk = 0.1

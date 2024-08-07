@@ -1,7 +1,7 @@
 const container = document.getElementById('container')
 
-function generateImgNodeFromBase64(b64) {
-  return Object.assign(document.createElement('img'), { src: `data:image/png;base64,${b64}`})
+function cleanContainer() {
+  Array.from(container.children).forEach(n => n.remove())
 }
 
 function getData() {
@@ -10,31 +10,8 @@ function getData() {
      *  What calls getData() ?
      */
   fetch('/data').then(r => r.json())
-    .then(data => {
+    .then(json => {
       cleanContainer()
-      const canvas1 = Object.assign(document.createElement('div'), { id: 'graph1' })
-      container.appendChild(canvas1)
-      const canvas2 = Object.assign(document.createElement('div'), { id: 'graph2' })
-      container.appendChild(canvas2)
-      const canvas3 = Object.assign(document.createElement('div'), { id: 'graph3' })
-      container.appendChild(canvas3)
-
-      const data1 = data.data1.reduce((prev, curr) => [
-        [...prev[0], curr[0]],
-        [...prev[1], curr[1]]
-      ], [[], []])
-      const data2 = data.data2.reduce((prev, curr) => [
-        [...prev[0], curr[0]],
-        [...prev[1], curr[1]],
-        [...prev[2], curr[2]]
-      ], [[], [], []])
-      const data3 = data.data3.reduce((prev, curr) => [
-        [...prev[0], curr[0]],
-        [...prev[1], curr[1]],
-        [...prev[2], curr[2]],
-        [...prev[3], curr[3]],
-        [...prev[4], curr[4]]
-      ], [[], [], [], [], []])
 
       const options = {
         chart: {
@@ -67,66 +44,21 @@ function getData() {
         }
       }
 
-      const chart1 = new ApexCharts(canvas1, {
-        ...options,
-        series: [
-          { name: 'Apical MP 1', data: data1[0] },
-          { name: 'Apical MP 2', data: data1[1] }
-        ],
-        title: {
-          text: 'Layer 1 Apical MPs',
-          align: 'center'
-        },
+      for (const [title, data] of Object.entries(json)) {
+        if (!Array.isArray(data)) continue;
 
-      })
-      chart1.render()
+        const canvas = document.createElement('div')
+        container.appendChild(canvas)
 
-
-      const chart2 = new ApexCharts(canvas2, {
-        ...options,
-        series: [
-          { name: 'Apical MP 1', data: data2[0] },
-          { name: 'Apical MP 2', data: data2[1] },
-          { name: 'Apical MP 3', data: data2[2]}
-        ],
-        title: {
-          text: 'Layer 2 Apical MPs',
-          align: 'center'
-        },
-
-      })
-      chart2.render()
-
-
-      const chart3 = new ApexCharts(canvas3, {
-        ...options,
-        series: [
-          { name: 'Soma act', data: data3[0] },
-          { name: 'Basal Act', data: data3[1] },
-          { name: 'Post value', data: data3[2] },
-          { name: 'Soma mp', data: data3[3] },
-          { name: 'Basal mp', data: data3[4] }
-        ],
-        title: {
-          text: 'Learning Rule PP_FF',
-          align: 'center'
-        }
-      })
-      chart3.render()
-    })
-}
-
-function getGraphs() {
-  fetch('/graphs').then(r => r.json())
-    .then(data => {
-      cleanContainer()
-      container.appendChild(generateImgNodeFromBase64(data.data1))
-      container.appendChild(generateImgNodeFromBase64(data.data2))
-      container.appendChild(generateImgNodeFromBase64(data.data3))
-    })
-    .catch(error => console.error(error))
-}
-
-function cleanContainer() {
-  Array.from(document.getElementById('container').children).forEach(n => n.remove())
+        const chart = new ApexCharts(canvas, {
+          ...options,
+          series: data.map(serie => ({ name: serie.title, data: serie.data })),
+          title: {
+            text: title,
+            align: 'center'
+          }
+        })
+        chart.render()
+      }
+  })
 }

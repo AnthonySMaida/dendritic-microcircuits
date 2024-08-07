@@ -1,1 +1,1 @@
-from .sacramento_main import generate_plot, main
+from .sacramento_main import main

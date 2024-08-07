@@ -21,8 +21,8 @@ class PyrNRN:
         self.basal_hat_act = 0.0  # predicted basal activation
         self.soma_act = 0.0  # activation value for soma
         self.apical_act = 0.0  # activation for apical dendrite
-        # self.apical_hat = 0.0  # predicted apical membrane potential
-        # self.apical_hat_act = 0.0  # used in W_PP_ff learning rule
+        self.apical_hat = 0.0  # predicted apical membrane potential
+        self.apical_hat_act = 0.0  # used in W_PP_ff learning rule
         # Below: feedforward wts
         # self.W_PP_ff     = rng.normal(wt_mu, wt_sig, (n_ff_wt,))     if n_ff_wt else None
         self.W_PP_ff = rng.exponential(beta, (n_ff_wt,)) if n_ff_wt else None
