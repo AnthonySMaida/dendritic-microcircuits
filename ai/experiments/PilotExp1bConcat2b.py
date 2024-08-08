@@ -3,6 +3,7 @@ import logging
 import numpy as np
 
 from ai.experiments.Experiment import Experiment
+from metrics import Serie
 
 logger = logging.getLogger('ai.experiments.PilotExp1bConcat2b')
 logger.setLevel(logging.INFO)
@@ -28,23 +29,23 @@ class PilotExp1bConcat2b(Experiment):
         data4 = np.transpose(self._metrics[KEY_RULE_13_WT_DATA]).tolist()
         return {
             "Layer 1 Apical MPs": [
-                {"title": "Apical MP 1", "data": data1[0]},
-                {"title": "Apical MP 2", "data": data1[1]}
+                Serie("Apical MP 1", data1[0]),
+                Serie("Apical MP 2", data1[1]),
             ],
             "Layer 2 Apical MPs": [
-                {"title": "Apical MP 1", "data": data2[0]},
-                {"title": "Apical MP 2", "data": data2[1]},
-                {"title": "Apical MP 3", "data": data2[2]}
+                Serie("Apical MP 1", data2[0]),
+                Serie("Apical MP 2", data2[1]),
+                Serie("Apical MP 3", data2[2]),
             ],
             "Learning Rule PP_FF Triggers": [
-                {"title": "Soma act", "data": data3[0]},
-                {"title": "Basal act", "data": data3[1]},
-                {"title": "Post value", "data": data3[2]},
-                {"title": "Soma mp", "data": data3[3]},
-                {"title": "Basal mp", "data": data3[4]},
+                Serie("Soma act", data3[0]),
+                Serie("Basal act", data3[1]),
+                Serie("Post value", data3[2]),
+                Serie("Soma mp", data3[3]),
+                Serie("Basal mp", data3[4]),
             ],
             "Learning Rule PP_FF wts": [
-                {"title": "Weight value", "data": data4},
+                Serie("Weight value", data4),
             ]
         }
 
