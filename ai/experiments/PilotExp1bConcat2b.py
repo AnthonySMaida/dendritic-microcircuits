@@ -23,29 +23,29 @@ class PilotExp1bConcat2b(Experiment):
         self._metrics[KEY_RULE_13_WT_DATA] = np.empty(shape=(0,))  # empty vector
 
     def extract_metrics(self):
-        data1 = np.transpose(self._metrics[KEY_LAYER_1]).tolist()
-        data2 = np.transpose(self._metrics[KEY_LAYER_2]).tolist()
-        data3 = np.transpose(self._metrics[KEY_RULE_13_POST_DATA]).tolist()
-        data4 = np.transpose(self._metrics[KEY_RULE_13_WT_DATA]).tolist()
+        data1 = self._metrics[KEY_LAYER_1]
+        data2 = self._metrics[KEY_LAYER_2]
+        data3 = self._metrics[KEY_RULE_13_POST_DATA]
+        data4 = self._metrics[KEY_RULE_13_WT_DATA]
         return {
             "Layer 1 Apical MPs": [
-                Serie("Apical MP 1", data1[0]),
-                Serie("Apical MP 2", data1[1]),
+                Serie("Apical MP 1", data1[:, 0].tolist()),
+                Serie("Apical MP 2", data1[:, 1].tolist()),
             ],
             "Layer 2 Apical MPs": [
-                Serie("Apical MP 1", data2[0]),
-                Serie("Apical MP 2", data2[1]),
-                Serie("Apical MP 3", data2[2]),
+                Serie("Apical MP 1", data2[:, 0].tolist()),
+                Serie("Apical MP 2", data2[:, 1].tolist()),
+                Serie("Apical MP 3", data2[:, 2].tolist()),
             ],
             "Learning Rule PP_FF Triggers": [
-                Serie("Soma act", data3[0]),
-                Serie("Basal act", data3[1]),
-                Serie("Post value", data3[2]),
-                Serie("Soma mp", data3[3]),
-                Serie("Basal mp", data3[4]),
+                Serie("Soma act", data3[:, 0].tolist()),
+                Serie("Basal act", data3[:, 1].tolist()),
+                Serie("Post value", data3[:, 2].tolist()),
+                Serie("Soma mp", data3[:, 3].tolist()),
+                Serie("Basal mp", data3[:, 4].tolist()),
             ],
             "Learning Rule PP_FF wts": [
-                Serie("Weight value", data4),
+                Serie("Weight value", data4.tolist()),
             ]
         }
 
