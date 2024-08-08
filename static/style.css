@@ -13,8 +13,9 @@ h1 {
   color: #333;
 }
 
-p {
-  color: #666;
+#error {
+  height: 75vh;
+  width: 80vw;
 }
 
 #container {
@@ -25,9 +26,9 @@ p {
   justify-content: center;
   gap: 8px;
   background-color: #fff;
-  margin: 16px 0;
+  margin: 16px;
   padding: 20px;
-  border-radius: 5px;
+  border-radius: 24px;
   box-shadow: 0 0 10px rgba(0,0,0,0.1);
 }
 
