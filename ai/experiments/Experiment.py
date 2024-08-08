@@ -7,6 +7,7 @@ import numpy as np
 from ai.Layer import Layer
 from ai.config import get_rng, n_input_pyr_nrns, n_hidden_pyr_nrns, n_output_pyr_nrns, nudge1, nudge2
 from ai.utils import iter_with_prev
+from metrics import Serie
 
 logger = logging.getLogger('ai.experiments.Experiment')
 logger.setLevel(logging.INFO)
@@ -17,6 +18,17 @@ class Experiment:
         self.rng = get_rng()
         self._metrics = {}
         self.layers: List[Layer] = []
+
+    @staticmethod
+    def format_series(data: np.ndarray, *serie_names: str):
+        if len(data.shape) == len(serie_names) == 1:
+            # Handle vectors
+            return [Serie(serie_names[0], data.tolist())]
+        elif len(data) != len(serie_names):
+            # Handle matrices
+            raise ValueError(f"length mismatch: data is of size {len(data)} and {len(serie_names)} names were given")
+
+        return list(map(lambda x: Serie(x[0], x[1].tolist()), zip(serie_names, data)))
 
     @abstractmethod
     def extract_metrics(self):
