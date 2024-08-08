@@ -3,6 +3,7 @@ import logging
 import numpy as np
 
 from ai.experiments.Experiment import Experiment
+from metrics import Serie
 
 logger = logging.getLogger('ai.experiments.PilotExp1bConcat2b')
 logger.setLevel(logging.INFO)
@@ -30,8 +31,8 @@ class PilotExp1bConcat2b(Experiment):
             "Layer 1 Apical MPs": {
                 "precision": 2,
                 "series": [
-                    {"title": "Apical MP 1", "data": data1[0]},
-                    {"title": "Apical MP 2", "data": data1[1]}
+                    Serie("Apical MP 1", data1[0]),
+                    Serie("Apical MP 2", data1[1]),
                 ],
                 "xaxis": "Training steps",
                 "yaxis": "Membrane potential (mV)"
@@ -39,9 +40,9 @@ class PilotExp1bConcat2b(Experiment):
             "Layer 2 Apical MPs": {
                 "precision": 2,
                 "series": [
-                    {"title": "Apical MP 1", "data": data2[0]},
-                    {"title": "Apical MP 2", "data": data2[1]},
-                    {"title": "Apical MP 3", "data": data2[2]}
+                    Serie("Apical MP 1", data2[0]),
+                    Serie("Apical MP 2", data2[1]),
+                    Serie("Apical MP 3", data2[2]),
                 ],
                 "xaxis": "Training steps",
                 "yaxis": "Membrane potential (mV)"
@@ -49,11 +50,11 @@ class PilotExp1bConcat2b(Experiment):
             "Learning Rule PP_FF Triggers": {
                 "precision": 2,
                 "series": [
-                    {"title": "Soma act", "data": data3[0]},
-                    {"title": "Basal act", "data": data3[1]},
-                    {"title": "Post value", "data": data3[2]},
-                    {"title": "Soma mp", "data": data3[3]},
-                    {"title": "Basal mp", "data": data3[4]},
+                    Serie("Soma act", data3[0]),
+                    Serie("Basal act", data3[1]),
+                    Serie("Post value", data3[2]),
+                    Serie("Soma mp", data3[3]),
+                    Serie("Basal mp", data3[4]),
                 ],
                 "xaxis": "Training steps",
                 "yaxis": "..."
@@ -61,7 +62,7 @@ class PilotExp1bConcat2b(Experiment):
             "Learning Rule PP_FF wts": {
                 "precision": 2,
                 "series": [
-                    {"title": "Weight value", "data": data4[0]},
+                    Serie("Weight value", data4),
                 ],
                 "xaxis": "Training steps",
                 "yaxis": "..."
