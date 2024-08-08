@@ -43,9 +43,7 @@ def main():
     logger.info("nudge1 = %s; nudge2 = %s", nudge1, nudge2)
     logger.info("wt_init_seed = %d", wt_init_seed)
 
-    return (*experiment.datasets[:2],
-            experiment.rule13_post_data[1:].tolist(),
-            experiment.rule13_wt_data[1:].tolist())
+    return experiment.extract_metrics()
 
 
 if __name__ == '__main__':
