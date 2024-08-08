@@ -30,32 +30,33 @@ function getData() {
         },
         stroke: {
           curve: 'smooth'
-        },
-        xaxis: {
-          type: 'numeric'
-        },
-        yaxis: {
-          labels: {
-            formatter: val => val.toPrecision(2)
-          },
-          title: {
-            text: 'Loss'
-          }
         }
       }
 
       for (const [title, data] of Object.entries(json)) {
-        if (!Array.isArray(data)) continue;
-
         const canvas = document.createElement('div')
         container.appendChild(canvas)
 
         const chart = new ApexCharts(canvas, {
           ...options,
-          series: data.map(serie => ({ name: serie.title, data: serie.data })),
+          series: data.series.map(serie => ({ name: serie.title, data: serie.data })),
           title: {
             text: title,
             align: 'center'
+          },
+          xaxis: {
+            title: {
+              text: data.xaxis
+            },
+            type: 'numeric'
+          },
+          yaxis: {
+            labels: {
+              formatter: val => val.toPrecision(data.precision)
+            },
+            title: {
+              text: data.yaxis
+            }
           }
         })
         chart.render()

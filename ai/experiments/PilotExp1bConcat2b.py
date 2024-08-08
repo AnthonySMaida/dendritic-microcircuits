@@ -7,7 +7,7 @@ logger.setLevel(logging.INFO)
 
 
 class PilotExp1bConcat2b(Experiment):
-    def train_1_step(self, nudge_predicate: bool): # Signature matched its abstract method b/c *args can be empty.
+    def train_1_step(self, nudge_predicate: bool):  # Signature matched its abstract method b/c *args can be empty.
         self.train_1_step_rule_16b_and_rule_13(nudge_predicate=nudge_predicate)  # defined in superclass
 
     def run(self, steps_to_self_pred=150):

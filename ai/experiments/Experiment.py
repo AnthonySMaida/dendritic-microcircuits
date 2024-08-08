@@ -40,7 +40,7 @@ class Experiment:
         l3 = Layer(self.rng, n_output_pyr_nrns, 0, 3, None, None, None)
         logger.debug("""Layer 3:\n========\n%s""", l3)
 
-        self.datasets = [[], [], []] # why three elements long? Separate data for each layer?
+        self.datasets = [[], [], []]  # why three elements long? Separate data for each layer?
         self.layers = [l1, l2, l3]
 
         logger.info("Finished building model.")
@@ -153,10 +153,10 @@ class Experiment:
                 data.append(list(map(lambda x: x.apical_mp, layer.pyrs)))  # map(func, iterable)
 
     @abstractmethod
-    def train_1_step(self, *args, **kwargs): # I would have never figured out the signature.
-    """
-         Formerly called "train()"
-    """
+    def train_1_step(self, *args, **kwargs):  # I would have never figured out the signature.
+        """
+        Formerly called "train()"
+        """
         raise NotImplementedError
 
     @abstractmethod
