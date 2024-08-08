@@ -1,13 +1,77 @@
 import logging
 
+import numpy as np
+
 from ai.experiments.Experiment import Experiment
+from ai.utils import create_column_vector
 
 logger = logging.getLogger('ai.experiments.PilotExp1bConcat2b')
 logger.setLevel(logging.INFO)
 
+KEY_LAYER_1 = "layer1"
+KEY_LAYER_2 = "layer2"
+KEY_RULE_13_POST_DATA = "rule13_post_data"
+KEY_RULE_13_WT_DATA = "rule13_wt_data"
+
 
 class PilotExp1bConcat2b(Experiment):
-    def train_1_step(self, nudge_predicate: bool): # Signature matched its abstract method b/c *args can be empty.
+    def __init__(self):
+        super().__init__()  # call the constructor of the parent class (aka superclass)
+
+        self._metrics[KEY_LAYER_1] = np.empty(shape=(2, 0))
+        self._metrics[KEY_LAYER_2] = np.empty(shape=(3, 0))
+        self._metrics[KEY_RULE_13_POST_DATA] = np.empty(shape=(5, 0))
+        self._metrics[KEY_RULE_13_WT_DATA] = np.empty(shape=(0,))
+
+    def extract_metrics(self):
+        data1 = self._metrics[KEY_LAYER_1]
+        data2 = self._metrics[KEY_LAYER_2]
+        data3 = self._metrics[KEY_RULE_13_POST_DATA]
+        data4 = self._metrics[KEY_RULE_13_WT_DATA]
+        return {
+            "Layer 1 Apical MPs": self.format_series(data1,
+                                                     "Apical MP 1",
+                                                     "Apical MP 2"),
+            "Layer 2 Apical MPs": self.format_series(data2,
+                                                     "Apical MP 1",
+                                                     "Apical MP 2",
+                                                     "Apical MP 3"),
+            "Learning Rule PP_FF Triggers": self.format_series(data3,
+                                                               "Soma act",
+                                                               "Basal act",
+                                                               "Soma mp",
+                                                               "Basal mp",
+                                                               "Post value"),
+            "Learning Rule PP_FF wts": self.format_series(data4, "Weight value")
+        }
+
+    def hook_post_train_step(self):
+        l1, l2, l3 = self.layers
+        self._metrics[KEY_LAYER_1] = np.append(
+            self._metrics[KEY_LAYER_1],
+            create_column_vector(l1.pyrs[0].apical_mp, l1.pyrs[1].apical_mp),
+            axis=1
+        )
+        self._metrics[KEY_LAYER_2] = np.append(
+            self._metrics[KEY_LAYER_2],
+            create_column_vector(l2.pyrs[0].apical_mp, l2.pyrs[1].apical_mp, l2.pyrs[2].apical_mp),
+            axis=1
+        )
+
+        soma_act = l3.pyr_soma_acts()[0]
+        basal_hat_act = l3.pyr_basal_hat_acts()[0]
+        post_soma_mp = l3.pyr_soma_mps()[0]
+        post_basal_mp = l3.pyr_basal_mps()[0]
+        post_val = post_soma_mp - post_basal_mp
+
+        self._metrics["rule13_post_data"] = np.append(
+            self._metrics["rule13_post_data"],
+            create_column_vector(soma_act, basal_hat_act, post_soma_mp, post_basal_mp, post_val),
+            axis=1)
+        self._metrics["rule13_wt_data"] = np.append(self._metrics["rule13_wt_data"],
+                                                    l3.pyrs[0].W_PP_ff[0])
+
+    def train_1_step(self, nudge_predicate: bool):  # Signature matched its abstract method b/c *args can be empty.
         self.train_1_step_rule_16b_and_rule_13(nudge_predicate=nudge_predicate)  # defined in superclass
 
     def run(self, steps_to_self_pred=150):

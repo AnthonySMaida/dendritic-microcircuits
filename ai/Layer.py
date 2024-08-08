@@ -166,16 +166,9 @@ class Layer:
         post = post_soma_mp - post_basal_mp  # use unprocessed raw mps.
         # post          = post_a - post_b
         # post         = self.pyr_soma_acts() - self.pyr_basal_hat_acts() # original
-        trigger_data_pt = np.array([[self.pyr_soma_acts()[0],
-                             self.pyr_basal_hat_acts()[0],
-                             post[0],
-                             post_soma_mp[0],
-                             post_basal_mp[0]]])
         for i in range(post.size):
             for j in range(pre.size):
                 self.pyrs[i].W_PP_ff[j] += learning_rate * post[i] * pre[j]
-        wt_data_pt = np.array([[self.pyrs[0].W_PP_ff[0]]])
-        return trigger_data_pt, wt_data_pt
 
     def adjust_wts_lat_ip(self):  # Equation 16a
         pre = self.pyr_soma_acts()
