@@ -123,13 +123,7 @@ class Experiment:
         # l2.adjust_wts_lat_IP()      # adjust lateral IP wts in Layer 2
 
         # Adjust FF wts projecting to Layer 3.
-        trigger_data_pt, wt_data_pt = l3.adjust_wts_pp_ff(l2)  # adjust FF wts projecting to Layer 3
-
-        # TODO: Move metrics to subclass
-        # save data point: [soma_act, basal_hat_act, post_val, soma_mp, basal_mp]
-        self._metrics["rule13_post_data"] = np.concatenate((self._metrics["rule13_post_data"], trigger_data_pt), axis=0)
-        # save data point: [FF_wt_value]
-        self._metrics["rule13_wt_data"] = np.concatenate((self._metrics["rule13_wt_data"], wt_data_pt), axis=0)
+        l3.adjust_wts_pp_ff(l2)  # adjust FF wts projecting to Layer 3
 
         # continue learning
         l1.adjust_wts_lat_pi()  # adjust lateral PI wts in Layer 1

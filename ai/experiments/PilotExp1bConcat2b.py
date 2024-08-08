@@ -69,7 +69,7 @@ class PilotExp1bConcat2b(Experiment):
         }
 
     def hook_post_train_step(self):
-        l1, l2, *_ = self.layers
+        l1, l2, l3 = self.layers
         self._metrics[KEY_LAYER_1] = np.concatenate((
             self._metrics[KEY_LAYER_1],
             np.array([[l1.pyrs[0].apical_mp, l1.pyrs[1].apical_mp]])
@@ -78,6 +78,21 @@ class PilotExp1bConcat2b(Experiment):
             self._metrics[KEY_LAYER_2],
             np.array([[l2.pyrs[0].apical_mp, l2.pyrs[1].apical_mp, l2.pyrs[2].apical_mp]])
         ), axis=0)
+
+        post_soma_mp = l3.pyr_soma_mps()
+        post_basal_mp = l3.pyr_basal_mps()
+        post = post_soma_mp - post_basal_mp
+        trigger_data_pt = np.array([[l3.pyr_soma_acts()[0],
+                                     l3.pyr_basal_hat_acts()[0],
+                                     post[0],
+                                     post_soma_mp[0],
+                                     post_basal_mp[0]]])
+        wt_data_pt = np.array([[l3.pyrs[0].W_PP_ff[0]]])
+
+        # save data point: [soma_act, basal_hat_act, post_val, soma_mp, basal_mp]
+        self._metrics["rule13_post_data"] = np.concatenate((self._metrics["rule13_post_data"], trigger_data_pt), axis=0)
+        # save data point: [FF_wt_value]
+        self._metrics["rule13_wt_data"] = np.concatenate((self._metrics["rule13_wt_data"], wt_data_pt), axis=0)
 
     def train_1_step(self, nudge_predicate: bool):  # Signature matched its abstract method b/c *args can be empty.
         self.train_1_step_rule_16b_and_rule_13(nudge_predicate=nudge_predicate)  # defined in superclass
