@@ -19,7 +19,7 @@ class PilotExp1bConcat2b(Experiment):
         self._metrics[KEY_LAYER_1] = np.empty(shape=(0, 2))  # empty matrix for 2-sized vectors
         self._metrics[KEY_LAYER_2] = np.empty(shape=(0, 3))  # empty matrix for 3-sized vectors
         self._metrics[KEY_RULE_13_POST_DATA] = np.empty(shape=(0, 5))  # empty matrix for 5-sized vectors
-        self._metrics[KEY_RULE_13_WT_DATA] = np.empty(shape=(0, 1))  # empty matrix for 1-sized vectors
+        self._metrics[KEY_RULE_13_WT_DATA] = np.empty(shape=(0,))  # empty vector
 
     def extract_metrics(self):
         data1 = np.transpose(self._metrics[KEY_LAYER_1]).tolist()
@@ -87,7 +87,7 @@ class PilotExp1bConcat2b(Experiment):
                                      post[0],
                                      post_soma_mp[0],
                                      post_basal_mp[0]]])
-        wt_data_pt = np.array([[l3.pyrs[0].W_PP_ff[0]]])
+        wt_data_pt = np.array([l3.pyrs[0].W_PP_ff[0]])
 
         # save data point: [soma_act, basal_hat_act, post_val, soma_mp, basal_mp]
         self._metrics["rule13_post_data"] = np.concatenate((self._metrics["rule13_post_data"], trigger_data_pt), axis=0)
