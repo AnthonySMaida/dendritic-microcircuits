@@ -1,8 +1,6 @@
 import logging
 from abc import abstractmethod
-from typing import List, Dict
-
-import numpy as np
+from typing import List
 
 from ai.Layer import Layer
 from ai.config import get_rng, n_input_pyr_nrns, n_hidden_pyr_nrns, n_output_pyr_nrns, nudge1, nudge2
