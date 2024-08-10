@@ -5,6 +5,7 @@ from typing import List
 from ai.Layer import Layer
 from ai.config import get_rng, n_input_pyr_nrns, n_hidden_pyr_nrns, n_output_pyr_nrns, nudge1, nudge2
 from ai.utils import iter_with_prev
+from metrics import Graph
 
 logger = logging.getLogger('ai.experiments.Experiment')
 logger.setLevel(logging.INFO)
@@ -17,10 +18,12 @@ class Experiment:
         self.layers: List[Layer] = []
 
     @abstractmethod
-    def extract_metrics(self):
+    def extract_metrics(self) -> List[Graph]:
         """
         This method must return all data that will be plotted
         This should also process the "raw" data to be in the correct return format
+
+        :return: list of `Graph`
         """
         raise NotImplementedError
 

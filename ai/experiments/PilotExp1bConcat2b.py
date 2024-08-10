@@ -4,7 +4,7 @@ import numpy as np
 
 from ai.experiments.Experiment import Experiment
 from ai.utils import create_column_vector
-from metrics import Serie
+from metrics import Graph, Serie
 
 logger = logging.getLogger('ai.experiments.PilotExp1bConcat2b')
 logger.setLevel(logging.INFO)
@@ -29,47 +29,49 @@ class PilotExp1bConcat2b(Experiment):
         data2 = self._metrics[KEY_LAYER_2]
         data3 = self._metrics[KEY_RULE_13_POST_DATA]
         data4 = self._metrics[KEY_RULE_13_WT_DATA]
-        return {
-            "Layer 1 Apical MPs": {
-                "precision": 2,
-                "series": [
+        return [
+            Graph(
+                title="Layer 1 Apical MPs",
+                precision=2,
+                series=[
                     Serie("Apical MP 1", data1[0].tolist()),
                     Serie("Apical MP 2", data1[1].tolist()),
                 ],
-                "xaxis": "Training steps",
-                "yaxis": "Membrane potential (mV)"
-            },
-            "Layer 2 Apical MPs": {
-                "precision": 2,
-                "series": [
+                xaxis="Training steps",
+                yaxis="Membrane potential (mV)"),
+            Graph(
+                title="Layer 2 Apical MPs",
+                precision=2,
+                series=[
                     Serie("Apical MP 1", data2[0].tolist()),
                     Serie("Apical MP 2", data2[1].tolist()),
                     Serie("Apical MP 3", data2[2].tolist()),
                 ],
-                "xaxis": "Training steps",
-                "yaxis": "Membrane potential (mV)"
-            },
-            "Learning Rule PP_FF Triggers": {
-                "precision": 2,
-                "series": [
+                xaxis="Training steps",
+                yaxis="Membrane potential (mV)"),
+            Graph(
+                title="Learning Rule PP_FF Triggers",
+                precision=2,
+                series=[
                     Serie("Soma act", data3[0].tolist()),
-                    Serie("Basal act", data3[1].tolist()),
-                    Serie("Post value", data3[2].tolist()),
-                    Serie("Soma mp", data3[3].tolist()),
-                    Serie("Basal mp", data3[4].tolist()),
+                    Serie("Basal hat act", data3[1].tolist()),
+                    Serie("Post soma MP", data3[2].tolist()),
+                    Serie("Post basal MP", data3[3].tolist()),
+                    Serie("Post val", data3[4].tolist()),
                 ],
-                "xaxis": "Training steps",
-                "yaxis": "..."
-            },
-            "Learning Rule PP_FF wts": {
-                "precision": 2,
-                "series": [
-                    Serie("Weight value", data4.tolist()),
+                xaxis="Training steps",
+                yaxis="..."
+            ),
+            Graph(
+                title="Learning Rule PP_FF wts",
+                precision=2,
+                series=[
+                    Serie("PP_FF wt", data4.tolist()),
                 ],
-                "xaxis": "Training steps",
-                "yaxis": "..."
-            }
-        }
+                xaxis="Training steps",
+                yaxis="..."
+            )
+        ]
 
     def hook_post_train_step(self):
         l1, l2, l3 = self.layers

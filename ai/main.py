@@ -24,6 +24,7 @@ interneurons are called 'inhibs'
 Implemented in numpy. The code is not vectorized but the
 data structures used closely mimic the neural anatomy given in the paper.
 """
+
 import logging
 
 from ai.config import nudge1, nudge2, wt_init_seed
