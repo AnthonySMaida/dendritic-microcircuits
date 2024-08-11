@@ -30,59 +30,53 @@ class PilotExp1bConcat2b(Experiment):
         data3 = self._metrics[KEY_RULE_13_POST_DATA]
         data4 = self._metrics[KEY_RULE_13_WT_DATA]
         return [
-            Graph(
-                title="Layer 1 Apical MPs",
-                precision=2,
-                series=[
-                    Serie("Apical MP 1", data1[0].tolist()),
-                    Serie("Apical MP 2", data1[1].tolist()),
-                ],
-                xaxis="Training steps",
-                yaxis="Membrane potential (mV)"),
-            Graph(
-                title="Layer 2 Apical MPs",
-                precision=2,
-                series=[
-                    Serie("Apical MP 1", data2[0].tolist()),
-                    Serie("Apical MP 2", data2[1].tolist()),
-                    Serie("Apical MP 3", data2[2].tolist()),
-                ],
-                xaxis="Training steps",
-                yaxis="Membrane potential (mV)"),
-            Graph(
-                title="Learning Rule PP_FF Triggers",
-                precision=2,
-                series=[
-                    Serie("Soma act", data3[0].tolist()),
-                    Serie("Basal hat act", data3[1].tolist()),
-                    Serie("Post soma MP", data3[2].tolist()),
-                    Serie("Post basal MP", data3[3].tolist()),
-                    Serie("Post val", data3[4].tolist()),
-                ],
-                xaxis="Training steps",
-                yaxis="..."
-            ),
-            Graph(
-                title="Learning Rule PP_FF wts",
-                precision=2,
-                series=[
-                    Serie("PP_FF wt", data4.tolist()),
-                ],
-                xaxis="Training steps",
-                yaxis="..."
-            )
+            Graph(title="Layer 1 Apical MPs",
+                  precision=2,
+                  series=[
+                      Serie("Apical MP 1", data1[0].tolist()),
+                      Serie("Apical MP 2", data1[1].tolist()),
+                  ],
+                  xaxis="Training steps",
+                  yaxis="Membrane potential (mV)"),
+            Graph(title="Layer 2 Apical MPs",
+                  precision=2,
+                  series=[
+                      Serie("Apical MP 1", data2[0].tolist()),
+                      Serie("Apical MP 2", data2[1].tolist()),
+                      Serie("Apical MP 3", data2[2].tolist()),
+                  ],
+                  xaxis="Training steps",
+                  yaxis="Membrane potential (mV)"),
+            Graph(title="Learning Rule PP_FF Triggers",
+                  precision=2,
+                  series=[
+                      Serie("Soma act", data3[0].tolist()),
+                      Serie("Basal hat act", data3[1].tolist()),
+                      Serie("Post soma MP", data3[2].tolist()),
+                      Serie("Post basal MP", data3[3].tolist()),
+                      Serie("Post val", data3[4].tolist()),
+                  ],
+                  xaxis="Training steps",
+                  yaxis="..."),
+            Graph(title="Learning Rule PP_FF wts",
+                  precision=2,
+                  series=[
+                      Serie("PP_FF wt", data4.tolist()),
+                  ],
+                  xaxis="Training steps",
+                  yaxis="...")
         ]
 
     def hook_post_train_step(self):
         l1, l2, l3 = self.layers
         self._metrics[KEY_LAYER_1] = np.append(
             self._metrics[KEY_LAYER_1],
-            create_column_vector(l1.pyrs[0].apical_mp, l1.pyrs[1].apical_mp),
+            create_column_vector(*map(lambda p: p.apical_mp, l1.pyrs)),
             axis=1
         )
         self._metrics[KEY_LAYER_2] = np.append(
             self._metrics[KEY_LAYER_2],
-            create_column_vector(l2.pyrs[0].apical_mp, l2.pyrs[1].apical_mp, l2.pyrs[2].apical_mp),
+            create_column_vector(*map(lambda p: p.apical_mp, l2.pyrs)),
             axis=1
         )
 
@@ -92,12 +86,12 @@ class PilotExp1bConcat2b(Experiment):
         post_basal_mp = l3.pyr_basal_mps()[0]
         post_val = post_soma_mp - post_basal_mp
 
-        self._metrics["rule13_post_data"] = np.append(
-            self._metrics["rule13_post_data"],
+        self._metrics[KEY_RULE_13_POST_DATA] = np.append(
+            self._metrics[KEY_RULE_13_POST_DATA],
             create_column_vector(soma_act, basal_hat_act, post_soma_mp, post_basal_mp, post_val),
             axis=1)
-        self._metrics["rule13_wt_data"] = np.append(self._metrics["rule13_wt_data"],
-                                                    l3.pyrs[0].W_PP_ff[0])
+        self._metrics[KEY_RULE_13_WT_DATA] = np.append(self._metrics[KEY_RULE_13_WT_DATA],
+                                                       l3.pyrs[0].W_PP_ff[0])
 
     def train_1_step(self, nudge_predicate: bool):  # Signature matched its abstract method b/c *args can be empty.
         self.train_1_step_rule_16b_and_rule_13(nudge_predicate=nudge_predicate)  # defined in superclass
