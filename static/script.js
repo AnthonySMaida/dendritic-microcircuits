@@ -26,8 +26,8 @@ function handleApiData(json) {
       curve: 'smooth'
     }
   }
-  
-  for (const [title, data] of Object.entries(json)) {
+
+  for (const data of json) {
     const canvas = document.createElement('div')
     container.appendChild(canvas)
 
@@ -35,7 +35,7 @@ function handleApiData(json) {
       ...options,
       series: data.series.map(serie => ({ name: serie.title, data: serie.data })),
       title: {
-        text: title,
+        text: data.title,
         align: 'center'
       },
       xaxis: {

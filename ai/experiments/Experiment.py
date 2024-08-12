@@ -2,11 +2,10 @@ import logging
 from abc import abstractmethod
 from typing import List
 
-import numpy as np
-
 from ai.Layer import Layer
 from ai.config import get_rng, n_input_pyr_nrns, n_hidden_pyr_nrns, n_output_pyr_nrns, nudge1, nudge2
 from ai.utils import iter_with_prev
+from metrics import Graph
 
 logger = logging.getLogger('ai.experiments.Experiment')
 logger.setLevel(logging.INFO)
@@ -14,11 +13,19 @@ logger.setLevel(logging.INFO)
 
 class Experiment:
     def __init__(self):
-        self.rule13_post_data = np.array([[0, 0, 0, 0, 0]])
-        self.rule13_wt_data = np.array([[0]])
         self.rng = get_rng()
-        self.datasets: List[List[float]] = []
+        self._metrics = {}
         self.layers: List[Layer] = []
+
+    @abstractmethod
+    def extract_metrics(self) -> List[Graph]:
+        """
+        This method must return all data that will be plotted
+        This should also process the "raw" data to be in the correct return format
+
+        :return: list of `Graph`
+        """
+        raise NotImplementedError
 
     def build_small_three_layer_network(self):
         """Build 3-layer network"""
@@ -40,7 +47,6 @@ class Experiment:
         l3 = Layer(self.rng, n_output_pyr_nrns, 0, 3, None, None, None)
         logger.debug("""Layer 3:\n========\n%s""", l3)
 
-        self.datasets = [[], [], []]  # why three elements long? Separate data for each layer?
         self.layers = [l1, l2, l3]
 
         logger.info("Finished building model.")
@@ -118,12 +124,7 @@ class Experiment:
         # l2.adjust_wts_lat_IP()      # adjust lateral IP wts in Layer 2
 
         # Adjust FF wts projecting to Layer 3.
-        trigger_data_pt, wt_data_pt = l3.adjust_wts_pp_ff(l2)  # adjust FF wts projecting to Layer 3
-
-        # save data point: [soma_act, basal_hat_act, post_val, soma_mp, basal_mp]
-        self.rule13_post_data = np.concatenate((self.rule13_post_data, trigger_data_pt), axis=0)
-        # save data point: [FF_wt_value]
-        self.rule13_wt_data = np.concatenate((self.rule13_wt_data, wt_data_pt), axis=0)
+        l3.adjust_wts_pp_ff(l2)  # adjust FF wts projecting to Layer 3
 
         # continue learning
         l1.adjust_wts_lat_pi()  # adjust lateral PI wts in Layer 1
@@ -148,9 +149,21 @@ class Experiment:
         :return:
         """
         for _ in range(n_steps):
+            self.hook_pre_train_step()
             self.train_1_step(*args, **kwargs)  # do training. Results stored using call by reference.
-            for data, layer in zip(self.datasets, self.layers):
-                data.append(list(map(lambda x: x.apical_mp, layer.pyrs)))  # map(func, iterable)
+            self.hook_post_train_step()
+
+    def hook_pre_train_step(self):
+        """
+        Hook called before each training step
+        """
+        pass
+
+    def hook_post_train_step(self):
+        """
+        Hook called after each training step
+        """
+        pass
 
     @abstractmethod
     def train_1_step(self, *args, **kwargs):  # I would have never figured out the signature.

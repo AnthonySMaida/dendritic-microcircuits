@@ -1,1 +1,1 @@
-from .sacramento_main import main
+from .main import main
