@@ -75,7 +75,8 @@ class PilotExp1bConcat2b(Experiment):
                   ],
                   xaxis="Training steps",
                   yaxis="..."),
-            Graph(title="Learning Rule PP_FF Triggers L1",
+            Graph(type=GraphType.LINE,
+                  title="Learning Rule PP_FF Triggers L1",
                   precision=2,
                   series=[
                       Serie("Soma act", data5[0].tolist()),
@@ -86,7 +87,8 @@ class PilotExp1bConcat2b(Experiment):
                   ],
                   xaxis="Training steps",
                   yaxis="..."),
-            Graph(title="Learning Rule PP_FF wts L1",
+            Graph(type=GraphType.LINE,
+                  title="Learning Rule PP_FF wts L1",
                   precision=2,
                   series=[
                       Serie("PP_FF wt L1", data6.tolist()),
