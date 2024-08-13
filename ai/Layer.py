@@ -1,13 +1,15 @@
-import logging
+#import logging
 
 import numpy as np
 
 from ai.InhibNRN import InhibNRN
 from ai.PyrNRN import PyrNRN
 from ai.config import learning_rate, logsig
+from ai.colorized_logger import get_logger
 
-logger = logging.getLogger("ai.Layer")
-logger.setLevel(logging.INFO)
+#logger = logging.getLogger("ai.Layer")
+logger = get_logger("ai.Layer")
+#logger.setLevel(logging.DEBUG)
 
 
 # Allocate storage, then allocate objects
@@ -55,9 +57,15 @@ class Layer:
         """returns array of inhib activations from current layer"""
         return np.array([x.soma_act for x in self.inhibs])
 
+    def inhib_soma_mps(self):
+        return np.array([x.soma_mp for x in self.inhibs])
+
     def inhib_dend_mps(self):
         """returns array of dendritic membrane potentials"""
         return np.array([x.dend_mp for x in self.inhibs])
+
+    def inhib_dend_hat_acts(self):
+        return np.array([x.dend_hat_act for x in self.inhibs])
 
     ######################################
     # FF and FB neuron update mechanisms #
@@ -157,22 +165,23 @@ class Layer:
                 # change for wt projecting to pyr i from inhib j.
 
     def adjust_wts_pp_ff(self, prev_layer):  # Adjust FF wts for layer. Eqn 13
-        """This rule uses the basal predicted activation, NOT the apical."""
+        """Simplified from Rule 13. Drop nonlinearities. Replace basal_hat_mp w/ basal_mp"""
         pre = prev_layer.pyr_soma_acts()  # Need activations from prev layer.
         # post_a        = self.pyr_soma_acts()
         post_soma_mp = self.pyr_soma_mps()
         # post_b        = self.pyr_basal_hat_acts()
         post_basal_mp = self.pyr_basal_mps()
         post = post_soma_mp - post_basal_mp  # use unprocessed raw mps.
-        # post          = post_a - post_b
-        # post         = self.pyr_soma_acts() - self.pyr_basal_hat_acts() # original
+        # post         = post_a - post_b
+        # post         = self.pyr_soma_acts() - self.pyr_basal_hat_acts() # original Rule 13
         for i in range(post.size):
             for j in range(pre.size):
                 self.pyrs[i].W_PP_ff[j] += learning_rate * post[i] * pre[j]
 
     def adjust_wts_lat_ip(self):  # Equation 16a
         pre = self.pyr_soma_acts()
-        post = self.inhib_soma_acts() - self.inhib_dend_mps()
+        # post = self.inhib_soma_acts() - self.inhib_soma_acts()  # Original Rule 16a
+        post = self.inhib_soma_mps() - self.inhib_dend_mps()      # Simplified for debugging
         for i in range(post.size):
             for j in range(pre.size):
                 self.inhibs[i].W_IP_lat[j] += learning_rate * post[i] * pre[j]

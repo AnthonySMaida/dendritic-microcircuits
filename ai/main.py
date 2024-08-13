@@ -24,20 +24,24 @@ interneurons are called 'inhibs'
 Implemented in numpy. The code is not vectorized but the
 data structures used closely mimic the neural anatomy given in the paper.
 """
-
-import logging
+#import logging
 
 from ai.config import nudge1, nudge2, wt_init_seed
 from ai.experiments import PilotExp1bConcat2b
+from ai.colorized_logger import get_logger
 
-logger = logging.getLogger('ai.sacramento_main')
-logger.setLevel(logging.INFO)
+
+logger = get_logger('ai.sacramento_main')
+#logger.setLevel(logging.DEBUG)
 
 
 def main():
     """Do an experiment"""
+    logger.info('Starting sacramento_main')
     experiment = PilotExp1bConcat2b()  # make instance
     experiment.build_small_three_layer_network()
+    logger.info('Finished building network')
+    logger.info('Starting to run experiment')
     experiment.run(steps_to_self_pred=400)
     experiment.print_ff_and_fb_wts_last_layer()
 

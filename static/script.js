@@ -46,7 +46,7 @@ function handleApiData(json) {
       },
       yaxis: {
         labels: {
-          formatter: val => val.toPrecision(data.precision)
+          formatter: val => val?.toPrecision(data.precision) ?? val
         },
         title: {
           text: data.yaxis

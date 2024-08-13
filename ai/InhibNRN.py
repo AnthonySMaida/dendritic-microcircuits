@@ -29,5 +29,7 @@ class InhibNRN:
     incoming W_IP_lat: {self.W_IP_lat}"""
 
     def update_inhib_soma_ff(self):  # there is no backward soma update for inhib
+        self.dend_hat_mp = 0.909 * self.dend_mp  # assumes g_lk = 0.1. See Eqn 15.
         self.soma_mp = self.dend_mp
         self.soma_act = logsig(self.soma_mp)
+        self.dend_hat_mp_act = logsig(self.dend_hat_mp)
