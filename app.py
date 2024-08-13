@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, request
 
 import ai
 
@@ -17,7 +17,7 @@ def home():
 
 @app.route('/data')
 def data():
-    return jsonify(ai.main())
+    return jsonify(ai.main(request.args))
 
 
 if __name__ == '__main__':
