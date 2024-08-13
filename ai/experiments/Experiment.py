@@ -2,8 +2,9 @@
 from abc import abstractmethod
 from typing import List
 
+import numpy as np
+
 from ai.Layer import Layer
-from ai.config import get_rng, n_input_pyr_nrns, n_hidden_pyr_nrns, n_output_pyr_nrns, nudge1, nudge2
 from ai.utils import iter_with_prev
 from ai.colorized_logger import get_logger
 from metrics import Graph
@@ -13,9 +14,14 @@ logger = get_logger('ai.experiments.Experiment')
 
 
 class Experiment:
-    def __init__(self):
-        self.rng = get_rng()
-        self._metrics = {}  # protected
+    def __init__(self, wt_init_seed: int, beta: float, learning_rate: float, nudge1: float, nudge2: float):
+        self._beta = beta
+        self._learning_rate = learning_rate
+        self._metrics = {}
+        self._nudge1 = nudge1
+        self._nudge2 = nudge2
+        self._rng = np.random.default_rng(seed=wt_init_seed)
+
         self.layers: List[Layer] = []  # Tells Python list is made of layers
                                        # Helps w/ code completion
 
@@ -29,24 +35,24 @@ class Experiment:
         """
         raise NotImplementedError
 
-    def build_small_three_layer_network(self):
+    def build_small_three_layer_network(self, n_input_pyr_nrns: int, n_hidden_pyr_nrns: int, n_output_pyr_nrns: int):
         """Build 3-layer network"""
         # Layer 1 is the input layer w/ 2 pyrs and 1 inhib cell.
         # No FF connections in input layer. They are postponed to receiving layer.
         # Each pyramid projects a FF connection to each of 3 pyrs in Layer 2 (hidden).
         # wts are always incoming weights.
-        l1 = Layer(self.rng, n_input_pyr_nrns, 1, None, 2, 3, 1)
+        l1 = Layer(self._learning_rate, self._rng, n_input_pyr_nrns, 1, None, 1, 3, self._beta, 2)
         logger.info("Building model...")
         logger.warning("""Layer 1:\n========\n%s""", l1)
 
         # Layer 2 is hidden layer w/ 3 pyrs.
         # Also has 3 inhib neurons.
         # Has feedback connections to Layer 1
-        l2 = Layer(self.rng, n_hidden_pyr_nrns, 3, 2, 3, 2, 3)
+        l2 = Layer(self._learning_rate, self._rng, n_hidden_pyr_nrns, 3, 2, 3, 2, self._beta, 3)
         logger.warning("""Layer 2:\n========\n%s""", l2)
 
         # Layer 3 is output layer w/ 2 pyrs. No inhib neurons.
-        l3 = Layer(self.rng, n_output_pyr_nrns, 0, 3, None, None, None)
+        l3 = Layer(self._learning_rate, self._rng, n_output_pyr_nrns, 0, 3, None, None, self._beta, None)
         logger.warning("""Layer 3:\n========\n%s""", l3)
 
         self.layers = [l1, l2, l3]
@@ -97,7 +103,7 @@ class Experiment:
         logger.info("Imposing nudge now")
 
         last_layer = self.layers[-1]
-        last_layer.nudge_output_layer_neurons(nudge1, nudge2, lambda_nudge=0.8)
+        last_layer.nudge_output_layer_neurons(self._nudge1, self._nudge2, lambda_nudge=0.8)
         logger.debug("Layer %d activations after nudge.", last_layer.id_num)
         last_layer.print_pyr_activations()
 
@@ -145,14 +151,13 @@ class Experiment:
         # Do FF and FB sweeps so wt changes show their effects.
         self.do_ff_sweep()
         if use_nudge:
-            l3.nudge_output_layer_neurons(nudge1, nudge2, lambda_nudge=0.8)
+            l3.nudge_output_layer_neurons(self._nudge1, self._nudge2, lambda_nudge=0.8)
         self.do_fb_sweep()
 
     def train_and_save_apical_data(self, n_steps: int, *args, **kwargs):
         """
         Previously called: train_data
-        Train 1 step. Wt updates are preserved by call-by-ref side-effect.
-        Save apical dendrite membrane potentials for each layer in 'dataset' attribute.
+        Train 1 step.
         :param n_steps: int num of training steps
         :param args: No args.
         :param kwargs: nudge_predicate (True or False), to indicate if nudging happens.
@@ -160,7 +165,7 @@ class Experiment:
         """
         for _ in range(n_steps):
             self.hook_pre_train_step()
-            self.train_1_step(*args, **kwargs)  # do training. Results stored using call by reference.
+            self.train_1_step(*args, **kwargs)  # do training.
             self.hook_post_train_step()
 
     def hook_pre_train_step(self):
@@ -183,5 +188,5 @@ class Experiment:
         raise NotImplementedError
 
     @abstractmethod
-    def run(self):
+    def run(self, *args, **kwargs):
         raise NotImplementedError

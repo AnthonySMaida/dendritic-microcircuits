@@ -1,5 +1,3 @@
-#import logging
-
 import numpy as np
 
 from ai.experiments.Experiment import Experiment
@@ -19,8 +17,9 @@ KEY_RULE_13_WT_DATA_L1 = "rule13_wt_data_l1"
 
 
 class PilotExp1bConcat2b(Experiment):
-    def __init__(self):
-        super().__init__()  # call the constructor of the parent class (aka superclass)
+    def __init__(self, wt_init_seed: int, beta: float, learning_rate: float, nudge1: float, nudge2: float):
+        # call the constructor of the parent class (aka superclass)
+        super().__init__(wt_init_seed, beta, learning_rate, nudge1, nudge2)
 
         self._metrics[KEY_LAYER_1] = np.empty(shape=(2, 0))
         self._metrics[KEY_LAYER_2] = np.empty(shape=(3, 0))
@@ -139,7 +138,7 @@ class PilotExp1bConcat2b(Experiment):
         """
         self.train_1_step_rule_16b_and_rule_13(use_nudge=nudge_predicate)  # defined in superclass
 
-    def run(self, steps_to_self_pred=150):
+    def run(self, self_prediction_steps: int, training_steps: int):
         logger.info("START: Performing nudge experiment with rules 16b and 13.")
         self.do_ff_sweep()  # prints state
         logger.info("Finished 1st FF sweep: pilot_exp_1b_concat_2b")
@@ -147,22 +146,20 @@ class PilotExp1bConcat2b(Experiment):
         self.do_fb_sweep()  # prints state
         logger.info("Finished 1st FB sweep: pilot_exp_1b_concat_2b")
 
-        n_of_training_steps_to_self_predictive = steps_to_self_pred
-        logger.info(f"Starting training {n_of_training_steps_to_self_predictive} steps to 1b2b self predictive.")
+        logger.info(f"Starting training {self_prediction_steps} steps to 1b2b self predictive.")
 
         # trains and SAVES apical results in 'datasets' attr
-        self.train_and_save_apical_data(n_of_training_steps_to_self_predictive, nudge_predicate=False)
+        self.train_and_save_apical_data(self_prediction_steps, nudge_predicate=False)
 
         logger.info("Calling function to impose nudge.")
         self.nudge_output_layer()
 
-        n_of_training_steps = 200
-        logger.info(f"Starting training {n_of_training_steps} steps for p_exp 3b")
+        logger.info(f"Starting training {training_steps} steps for p_exp 3b")
 
         # trains and APPENDS apical results in 'datasets' attr
-        self.train_and_save_apical_data(n_of_training_steps, nudge_predicate=True)
+        self.train_and_save_apical_data(training_steps, nudge_predicate=True)
 
-        logger.info(f"Finished training {n_of_training_steps} steps for p_exp 3b")
+        logger.info(f"Finished training {training_steps} steps for p_exp 3b")
         self.print_pyr_activations_all_layers_topdown()  # print activations while nudging is still on
 
         self.do_ff_sweep()  # to get new activations without nudging

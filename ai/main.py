@@ -24,8 +24,6 @@ interneurons are called 'inhibs'
 Implemented in numpy. The code is not vectorized but the
 data structures used closely mimic the neural anatomy given in the paper.
 """
-#import logging
-
 from ai.config import nudge1, nudge2, wt_init_seed
 from ai.experiments import PilotExp1bConcat2b
 from ai.colorized_logger import get_logger
@@ -37,12 +35,21 @@ logger = get_logger('ai.sacramento_main')
 
 def main():
     """Do an experiment"""
+    wt_init_seed = 42
+    beta = 1.0 / 3.0  # beta = 1/lambda => lambda = 3. beta is scale param for rng.exponential.
+    learning_rate = 0.05
+    nudge1 = 1.0
+    nudge2 = 0.0
+    n_pyr_by_layer = (2, 3, 2)
+    self_prediction_steps = 400
+    training_steps = 200
+
     logger.info('Starting sacramento_main')
-    experiment = PilotExp1bConcat2b()  # make instance
-    experiment.build_small_three_layer_network()
+    experiment = PilotExp1bConcat2b(wt_init_seed, beta, learning_rate, nudge1, nudge2)  # make instance
+    experiment.build_small_three_layer_network(*n_pyr_by_layer)
     logger.info('Finished building network')
     logger.info('Starting to run experiment')
-    experiment.run(steps_to_self_pred=400)
+    experiment.run(self_prediction_steps, training_steps)
     experiment.print_ff_and_fb_wts_last_layer()
 
     logger.info("nudge1 = %s; nudge2 = %s", nudge1, nudge2)
