@@ -24,25 +24,42 @@ interneurons are called 'inhibs'
 Implemented in numpy. The code is not vectorized but the
 data structures used closely mimic the neural anatomy given in the paper.
 """
-#import logging
 
-from ai.config import nudge1, nudge2, wt_init_seed
-from ai.experiments import PilotExp1bConcat2b
+import logging
+from typing import List
+
+from werkzeug.datastructures import MultiDict
+
 from ai.colorized_logger import get_logger
+from ai.experiments import PilotExp1bConcat2b
+from metrics import Graph
 
 
 logger = get_logger('ai.sacramento_main')
 #logger.setLevel(logging.DEBUG)
 
 
-def main():
+def main(params: MultiDict) -> List[Graph]:
     """Do an experiment"""
+    wt_init_seed = params.get('wt_init_seed', 42, type=int)
+    beta = params.get('beta', 1.0 / 3.0, type=float)  # beta = 1/lambda => lambda = 3. beta is scale param for rng.exponential.
+    learning_rate = params.get('learning_rate', 0.05, type=float)
+    nudge1 = params.get('nudge1', 1.0, type=float)
+    nudge2 = params.get('nudge2', 0.0, type=float)
+    n_pyr_by_layer = (
+        params.get('n_pyr_layer1', 2, type=int),
+        params.get('n_pyr_layer2', 3, type=int),
+        params.get('n_pyr_layer3', 2, type=int),
+    )
+    self_prediction_steps = params.get('self_prediction_steps', 400, type=int)
+    training_steps = params.get('training_steps', 200, type=int)
+
     logger.info('Starting sacramento_main')
-    experiment = PilotExp1bConcat2b()  # make instance
-    experiment.build_small_three_layer_network()
+    experiment = PilotExp1bConcat2b(wt_init_seed, beta, learning_rate, nudge1, nudge2)  # make instance
+    experiment.build_small_three_layer_network(*n_pyr_by_layer)
     logger.info('Finished building network')
     logger.info('Starting to run experiment')
-    experiment.run(steps_to_self_pred=400)
+    experiment.run(self_prediction_steps, training_steps)
     experiment.print_ff_and_fb_wts_last_layer()
 
     logger.info("nudge1 = %s; nudge2 = %s", nudge1, nudge2)
