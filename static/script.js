@@ -4,6 +4,17 @@ function cleanContainer() {
   Array.from(container.children).forEach(n => n.remove())
 }
 
+function genGraph(data) {
+  switch(data.type) {
+    case 'column':
+      return genColumnGraph(data)
+    case 'line':
+      return genLineGraph(data)
+    default:
+      throw new Error(`Unknown graph type: ${data.type}`)
+  }
+}
+
 function getFormValues() {
   return {
     wt_init_seed: document.getElementById('wt_init_seed').value,
@@ -22,52 +33,11 @@ function getFormValues() {
 function handleApiData(json) {
   cleanContainer()
 
-  const options = {
-    chart: {
-      height: 334,
-      width: 500,
-      type: 'line'
-    },
-    dataLabels: {
-      enabled: false
-    },
-    grid: {
-      row: {
-        colors: ['#f3f3f3', 'transparent'], // takes an array which will be repeated on columns
-        opacity: 0.5
-      },
-    },
-    stroke: {
-      curve: 'smooth'
-    }
-  }
-
   for (const data of json) {
     const canvas = document.createElement('div')
     container.appendChild(canvas)
 
-    const chart = new ApexCharts(canvas, {
-      ...options,
-      series: data.series.map(serie => ({ name: serie.title, data: serie.data })),
-      title: {
-        text: data.title,
-        align: 'center'
-      },
-      xaxis: {
-        title: {
-          text: data.xaxis
-        },
-        type: 'numeric'
-      },
-      yaxis: {
-        labels: {
-          formatter: val => val?.toPrecision(data.precision) ?? val
-        },
-        title: {
-          text: data.yaxis
-        }
-      }
-    })
+    const chart = new ApexCharts(canvas, genGraph(data))
     chart.render()
   }
 }

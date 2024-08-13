@@ -3,7 +3,7 @@ import numpy as np
 from ai.experiments.Experiment import Experiment
 from ai.colorized_logger import get_logger
 from ai.utils import create_column_vector
-from metrics import Graph, Serie
+from metrics import Graph, Serie, GraphType
 
 logger = get_logger('ai.experiments.PilotExp1bConcat2b')
 #logger.setLevel(logging.DEBUG)
@@ -36,7 +36,8 @@ class PilotExp1bConcat2b(Experiment):
         data5 = self._metrics[KEY_RULE_13_POST_DATA_L1]
         data6 = self._metrics[KEY_RULE_13_WT_DATA_L1]
         return [
-            Graph(title="Layer 1 Apical MPs",
+            Graph(type=GraphType.LINE,
+                  title="Layer 1 Apical MPs",
                   precision=2,
                   series=[
                       Serie("Apical MP 1", data1[0].tolist()),
@@ -44,7 +45,8 @@ class PilotExp1bConcat2b(Experiment):
                   ],
                   xaxis="Training steps",
                   yaxis="Membrane potential (mV)"),
-            Graph(title="Layer 2 Apical MPs",
+            Graph(type=GraphType.LINE,
+                  title="Layer 2 Apical MPs",
                   precision=2,
                   series=[
                       Serie("Apical MP 1", data2[0].tolist()),
@@ -53,7 +55,8 @@ class PilotExp1bConcat2b(Experiment):
                   ],
                   xaxis="Training steps",
                   yaxis="Membrane potential (mV)"),
-            Graph(title="Learning Rule PP_FF Triggers",
+            Graph(type=GraphType.LINE,
+                  title="Learning Rule PP_FF Triggers",
                   precision=2,
                   series=[
                       Serie("Soma act", data3[0].tolist()),
@@ -62,9 +65,10 @@ class PilotExp1bConcat2b(Experiment):
                       Serie("Post basal MP", data3[3].tolist()),
                       Serie("Post val", data3[4].tolist()),
                   ],
-                  xaxis="Training steps",
+                  # xaxis="Training steps",
                   yaxis="..."),
-            Graph(title="Learning Rule PP_FF wts",
+            Graph(type=GraphType.LINE,
+                  title="Learning Rule PP_FF wts",
                   precision=2,
                   series=[
                       Serie("PP_FF wt", data4.tolist()),
@@ -88,6 +92,15 @@ class PilotExp1bConcat2b(Experiment):
                       Serie("PP_FF wt L1", data6.tolist()),
                   ],
                   xaxis="Training steps",
+                  yaxis="..."),
+            Graph(type=GraphType.COLUMN,
+                  title="test",
+                  precision=2,
+                  series=[
+                      Serie("serie1", [1, 2, 3]),
+                        Serie("serie2", [4, 5, 6]),
+                  ],
+                  categories=["cat1", "cat2", "cat3"],
                   yaxis="...")
         ]
 
