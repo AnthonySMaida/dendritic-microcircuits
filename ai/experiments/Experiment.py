@@ -22,8 +22,7 @@ class Experiment:
         self._nudge2 = nudge2
         self._rng = np.random.default_rng(seed=wt_init_seed)
 
-        self.layers: List[Layer] = []  # Tells Python list is made of layers
-                                       # Helps w/ code completion
+        self.layers: List[Layer] = []  # list is made of layers. Assists code completion.
 
     @abstractmethod
     def extract_metrics(self) -> List[Graph]:  # declares return type

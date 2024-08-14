@@ -39,7 +39,7 @@ logger = get_logger('ai.sacramento_main')
 #logger.setLevel(logging.DEBUG)
 
 
-def main(params: MultiDict) -> List[Graph]:
+def main(params: MultiDict) -> List[Graph]:  # Why is MultiDict needed?
     """Do an experiment"""
     wt_init_seed = params.get('wt_init_seed', 42, type=int)
     beta = params.get('beta', 1.0 / 3.0, type=float)  # beta = 1/lambda => lambda = 3. beta is scale param for rng.exponential.
@@ -52,14 +52,15 @@ def main(params: MultiDict) -> List[Graph]:
         params.get('n_pyr_layer3', 2, type=int),
     )
     self_prediction_steps = params.get('self_prediction_steps', 400, type=int)
-    training_steps = params.get('training_steps', 200, type=int)
+    training_steps = params.get('training_steps', 190, type=int)
+    after_training_steps = params.get('after_training_steps', 10, type=int)
 
     logger.info('Starting sacramento_main')
     experiment = PilotExp1bConcat2b(wt_init_seed, beta, learning_rate, nudge1, nudge2)  # make instance
     experiment.build_small_three_layer_network(*n_pyr_by_layer)
     logger.info('Finished building network')
     logger.info('Starting to run experiment')
-    experiment.run(self_prediction_steps, training_steps)
+    experiment.run(self_prediction_steps, training_steps, after_training_steps)
     experiment.print_ff_and_fb_wts_last_layer()
 
     logger.info("nudge1 = %s; nudge2 = %s", nudge1, nudge2)

@@ -14,6 +14,7 @@ KEY_RULE_13_POST_DATA = "rule13_post_data"
 KEY_RULE_13_WT_DATA = "rule13_wt_data"
 KEY_RULE_13_POST_DATA_L1 = "rule13_post_data_l1"
 KEY_RULE_13_WT_DATA_L1 = "rule13_wt_data_l1"
+KEY_OUTPUT_LAYER_VALUES = "output_layer_values"
 
 
 class PilotExp1bConcat2b(Experiment):
@@ -27,6 +28,7 @@ class PilotExp1bConcat2b(Experiment):
         self._metrics[KEY_RULE_13_WT_DATA] = np.empty(shape=(0,))
         self._metrics[KEY_RULE_13_POST_DATA_L1] = np.empty(shape=(5,0))
         self._metrics[KEY_RULE_13_WT_DATA_L1] = np.empty(shape=(0,))
+        self._metrics[KEY_OUTPUT_LAYER_VALUES] = np.empty(shape=(2, 0))
 
     def extract_metrics(self):
         data1 = self._metrics[KEY_LAYER_1]
@@ -35,6 +37,7 @@ class PilotExp1bConcat2b(Experiment):
         data4 = self._metrics[KEY_RULE_13_WT_DATA]
         data5 = self._metrics[KEY_RULE_13_POST_DATA_L1]
         data6 = self._metrics[KEY_RULE_13_WT_DATA_L1]
+        data7 = self._metrics[KEY_OUTPUT_LAYER_VALUES]
         return [
             Graph(type=GraphType.LINE,
                   title="Layer 1 Apical MPs",
@@ -95,15 +98,30 @@ class PilotExp1bConcat2b(Experiment):
                   ],
                   xaxis="Training steps",
                   yaxis="..."),
-            Graph(type=GraphType.COLUMN,
-                  title="test",
+            Graph(type=GraphType.LINE,
+                  title="Layer 3 Soma Activations",
                   precision=2,
                   series=[
-                      Serie("serie1", [1, 2, 3]),
-                        Serie("serie2", [4, 5, 6]),
+                      Serie("Apical MP 1", data7[0].tolist()),
+                      Serie("Apical MP 2", data7[1].tolist()),
                   ],
-                  categories=["cat1", "cat2", "cat3"],
-                  yaxis="...")
+                  xaxis="Training steps",
+                  yaxis="Output activation"),
+            Graph(type=GraphType.COLUMN,
+                  title="Output Activations",
+                  precision=4,
+                  series=[
+                      Serie("Neuron 1", [self._metrics[KEY_OUTPUT_LAYER_VALUES][0][399],  # 0.6535
+                                         self._metrics[KEY_OUTPUT_LAYER_VALUES][0][400],  # 0.7165
+                                         self._metrics[KEY_OUTPUT_LAYER_VALUES][0][598],  # 0.7310
+                                         self._metrics[KEY_OUTPUT_LAYER_VALUES][0][599]]), # 0.7309
+                      Serie("Neuron 2", [self._metrics[KEY_OUTPUT_LAYER_VALUES][1][399],  # 0.6051,
+                                         self._metrics[KEY_OUTPUT_LAYER_VALUES][1][400],  # 0.5213,
+                                         self._metrics[KEY_OUTPUT_LAYER_VALUES][1][598],  # 0.5000,
+                                         self._metrics[KEY_OUTPUT_LAYER_VALUES][1][599]]) # 0.5002
+                  ],
+                  categories=["Before Nudge","Nudged", "After learning", "Nudged removed"],
+                  yaxis="Activation level")
         ]
 
     def hook_post_train_step(self):
@@ -143,6 +161,10 @@ class PilotExp1bConcat2b(Experiment):
             axis=1)
         self._metrics[KEY_RULE_13_WT_DATA_L1] = np.append(self._metrics[KEY_RULE_13_WT_DATA_L1],
                                                           l2.pyrs[0].W_PP_ff[0])
+        self._metrics[KEY_OUTPUT_LAYER_VALUES] = np.append(
+            self._metrics[KEY_OUTPUT_LAYER_VALUES],
+            create_column_vector(*map(lambda p: p.soma_act, l3.pyrs)),
+            axis=1)
 
 
     def train_1_step(self, nudge_predicate: bool):  # Signature matched its abstract method b/c *args can be empty.
@@ -153,7 +175,7 @@ class PilotExp1bConcat2b(Experiment):
         """
         self.train_1_step_rule_16b_and_rule_13(use_nudge=nudge_predicate)  # defined in superclass
 
-    def run(self, self_prediction_steps: int, training_steps: int):
+    def run(self, self_prediction_steps: int, training_steps: int, after_training_steps: int):
         logger.info("START: Performing nudge experiment with rules 16b and 13.")
         self.do_ff_sweep()  # prints state
         logger.info("Finished 1st FF sweep: pilot_exp_1b_concat_2b")
@@ -162,7 +184,6 @@ class PilotExp1bConcat2b(Experiment):
         logger.info("Finished 1st FB sweep: pilot_exp_1b_concat_2b")
 
         logger.info(f"Starting training {self_prediction_steps} steps to 1b2b self predictive.")
-
         # trains and SAVES apical results in 'datasets' attr
         self.train_and_save_apical_data(self_prediction_steps, nudge_predicate=False)
 
@@ -173,11 +194,13 @@ class PilotExp1bConcat2b(Experiment):
 
         # trains and APPENDS apical results in 'datasets' attr
         self.train_and_save_apical_data(training_steps, nudge_predicate=True)
+        logger.info(f"Finished training {training_steps} steps for p_exp 3b")
 
+        self.train_and_save_apical_data(after_training_steps, nudge_predicate=False)
         logger.info(f"Finished training {training_steps} steps for p_exp 3b")
         self.print_pyr_activations_all_layers_topdown()  # print activations while nudging is still on
 
-        self.do_ff_sweep()  # to get new activations without nudging
+        #self.do_ff_sweep()  # to get new activations without nudging
 
         logger.info("Final activations after nudging is removed")
         self.print_pyr_activations_all_layers_topdown()  # shows the true effect of learning
