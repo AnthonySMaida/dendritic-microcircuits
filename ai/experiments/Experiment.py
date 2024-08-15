@@ -14,12 +14,10 @@ logger = get_logger('ai.experiments.Experiment')
 
 
 class Experiment:
-    def __init__(self, wt_init_seed: int, beta: float, learning_rate: float, nudge1: float, nudge2: float):
+    def __init__(self, wt_init_seed: int, beta: float, learning_rate: float):
         self._beta = beta
         self._learning_rate = learning_rate
         self._metrics = {}
-        self._nudge1 = nudge1
-        self._nudge2 = nudge2
         self._rng = np.random.default_rng(seed=wt_init_seed)
 
         self.layers: List[Layer] = []  # list is made of layers. Assists code completion.
@@ -86,32 +84,6 @@ class Experiment:
 
         #logger.info("FB sweep done.")
 
-    def nudge_output_layer(self):
-        """
-        Prints all layer wts.
-        Imposes nudge on the output layer and prints output layer activations.
-        Does a FF sweep and then prints layer activations in reverse order.
-        """
-        self.layers[-2].print_fb_and_pi_wts_layer()
-        self.layers[-2].print_ff_and_ip_wts_for_layers(self.layers[-1])
-
-        last_layer = self.layers[-1]
-        logger.debug("Layer %d activations before nudge.", last_layer.id_num)
-        last_layer.print_pyr_activations()
-
-        logger.info("Imposing nudge now")
-
-        last_layer = self.layers[-1]
-        last_layer.nudge_output_layer_neurons(self._nudge1, self._nudge2, lambda_nudge=0.8)
-        logger.debug("Layer %d activations after nudge.", last_layer.id_num)
-        last_layer.print_pyr_activations()
-
-        logger.info("Starting FB sweep")
-        self.do_fb_sweep()  # prints state
-
-        logger.info("Finished 1st FB sweep after nudge: pilot_exp_2b")  # shows effect of nudge in earlier layers
-        self.print_pyr_activations_all_layers_topdown()
-
     def print_pyr_activations_all_layers_topdown(self):
         """Prints the pyr activations for all layers in the network, starting with the top layer"""
         for layer in reversed(self.layers):
@@ -126,34 +98,7 @@ class Experiment:
         logger.info("FB wts coming into Layer %d", prev_last_layer.id_num)
         prev_last_layer.print_fb_wts()
 
-    def train_1_step_rule_16b_and_rule_13(self, use_nudge=False, use_rule_ip = False):
-        """
-        Learning step that uses both rules 16b and 13.
-        Does one training step.
-        """
-        l1, l2, l3 = self.layers
-        l2.adjust_wts_lat_pi()  # adjust lateral PI wts in Layer 2
-
-        # l2.adjust_wts_lat_IP()      # adjust lateral IP wts in Layer 2
-
-        # Adjust FF wts projecting to Layer 3.
-        l3.adjust_wts_pp_ff(l2)  # adjust FF wts projecting to Layer 3
-
-        # continue learning
-        l1.adjust_wts_lat_pi()  # adjust lateral PI wts in Layer 1
-
-        if use_rule_ip:  # also known as Rule 16a
-            l1.adjust_wts_lat_IP()      # adjust lateral IP wts in Layer 1
-
-        l2.adjust_wts_pp_ff(l1)  # adjust FF wts projecting to Layer 2
-
-        # Do FF and FB sweeps so wt changes show their effects.
-        self.do_ff_sweep()
-        if use_nudge:
-            l3.nudge_output_layer_neurons(self._nudge1, self._nudge2, lambda_nudge=0.8)
-        self.do_fb_sweep()
-
-    def train_and_save_apical_data(self, n_steps: int, *args, **kwargs):
+    def train(self, n_steps: int, *args, **kwargs):
         """
         Previously called: train_data
         Train 1 step.

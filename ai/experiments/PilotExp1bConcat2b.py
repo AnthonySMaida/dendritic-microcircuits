@@ -22,7 +22,10 @@ KEY_HIDDEN_LAYER_INHIB_ACTS = "hidden_layer_inhib_acts"
 class PilotExp1bConcat2b(Experiment):
     def __init__(self, wt_init_seed: int, beta: float, learning_rate: float, nudge1: float, nudge2: float):
         # call the constructor of the parent class (aka superclass)
-        super().__init__(wt_init_seed, beta, learning_rate, nudge1, nudge2)
+        super().__init__(wt_init_seed, beta, learning_rate)
+
+        self._nudge1 = nudge1
+        self._nudge2 = nudge2
 
         self._metrics[KEY_LAYER_1] = np.empty(shape=(2, 0))
         self._metrics[KEY_LAYER_2] = np.empty(shape=(3, 0))
@@ -226,7 +229,7 @@ class PilotExp1bConcat2b(Experiment):
         :param nudge_predicate:
         :return:
         """
-        self.train_1_step_rule_16b_and_rule_13(use_nudge=nudge_predicate)  # defined in superclass
+        self._train_1_step_rule_16b_and_rule_13(use_nudge=nudge_predicate)  # defined in superclass
 
     def run(self, self_prediction_steps: int, training_steps: int, after_training_steps: int):
         logger.info("START: Performing nudge experiment with rules 16b and 13.")
@@ -238,18 +241,18 @@ class PilotExp1bConcat2b(Experiment):
 
         logger.info(f"Starting training {self_prediction_steps} steps to 1b2b self predictive.")
         # trains and SAVES apical results in 'datasets' attr
-        self.train_and_save_apical_data(self_prediction_steps, nudge_predicate=False)
+        self.train(self_prediction_steps, nudge_predicate=False)
 
         logger.info("Calling function to impose nudge.")
-        self.nudge_output_layer()
+        self._nudge_output_layer()
 
         logger.info(f"Starting training {training_steps} steps for p_exp 3b")
 
         # trains and APPENDS apical results in 'datasets' attr
-        self.train_and_save_apical_data(training_steps, nudge_predicate=True)
+        self.train(training_steps, nudge_predicate=True)
         logger.info(f"Finished training {training_steps} steps for p_exp 3b")
 
-        self.train_and_save_apical_data(after_training_steps, nudge_predicate=False)
+        self.train(after_training_steps, nudge_predicate=False)
         logger.info(f"Finished training {training_steps} steps for p_exp 3b")
         self.print_pyr_activations_all_layers_topdown()  # print activations while nudging is still on
 
@@ -258,3 +261,56 @@ class PilotExp1bConcat2b(Experiment):
         logger.info("Final activations after nudging is removed")
         self.print_pyr_activations_all_layers_topdown()  # shows the true effect of learning
         logger.info("FINISH: Performing nudge experiment with rules 16b and 13.")
+
+    def _nudge_output_layer(self):
+        """
+        Prints all layer wts.
+        Imposes nudge on the output layer and prints output layer activations.
+        Does a FF sweep and then prints layer activations in reverse order.
+        """
+        self.layers[-2].print_fb_and_pi_wts_layer()
+        self.layers[-2].print_ff_and_ip_wts_for_layers(self.layers[-1])
+
+        last_layer = self.layers[-1]
+        logger.debug("Layer %d activations before nudge.", last_layer.id_num)
+        last_layer.print_pyr_activations()
+
+        logger.info("Imposing nudge now")
+
+        last_layer = self.layers[-1]
+        last_layer.nudge_output_layer_neurons(self._nudge1, self._nudge2, lambda_nudge=0.8)
+        logger.debug("Layer %d activations after nudge.", last_layer.id_num)
+        last_layer.print_pyr_activations()
+
+        logger.info("Starting FB sweep")
+        self.do_fb_sweep()  # prints state
+
+        logger.info("Finished 1st FB sweep after nudge: pilot_exp_2b")  # shows effect of nudge in earlier layers
+        self.print_pyr_activations_all_layers_topdown()
+
+    def _train_1_step_rule_16b_and_rule_13(self, use_nudge=False, use_rule_ip = False):
+        """
+        Learning step that uses both rules 16b and 13.
+        Does one training step.
+        """
+        l1, l2, l3 = self.layers
+        l2.adjust_wts_lat_pi()  # adjust lateral PI wts in Layer 2
+
+        # l2.adjust_wts_lat_ip()      # adjust lateral IP wts in Layer 2
+
+        # Adjust FF wts projecting to Layer 3.
+        l3.adjust_wts_pp_ff(l2)  # adjust FF wts projecting to Layer 3
+
+        # continue learning
+        l1.adjust_wts_lat_pi()  # adjust lateral PI wts in Layer 1
+
+        if use_rule_ip:  # also known as Rule 16a
+            l1.adjust_wts_lat_ip()      # adjust lateral IP wts in Layer 1
+
+        l2.adjust_wts_pp_ff(l1)  # adjust FF wts projecting to Layer 2
+
+        # Do FF and FB sweeps so wt changes show their effects.
+        self.do_ff_sweep()
+        if use_nudge:
+            l3.nudge_output_layer_neurons(self._nudge1, self._nudge2, lambda_nudge=0.8)
+        self.do_fb_sweep()

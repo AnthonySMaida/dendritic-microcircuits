@@ -25,7 +25,6 @@ Implemented in numpy. The code is not vectorized but the
 data structures used closely mimic the neural anatomy given in the paper.
 """
 
-# import logging
 from typing import List
 
 from werkzeug.datastructures import MultiDict
@@ -34,13 +33,15 @@ from ai.colorized_logger import get_logger
 from ai.experiments import PilotExp1bConcat2b
 from metrics import Graph
 
-
 logger = get_logger('ai.sacramento_main')
 #logger.setLevel(logging.DEBUG)
 
 
-def main(params: MultiDict) -> List[Graph]:  # Why is MultiDict needed?
+def main(params: MultiDict = None) -> List[Graph]:  # Why is MultiDict needed?
     """Do an experiment"""
+    if params is None:
+        params = MultiDict()
+
     wt_init_seed = params.get('wt_init_seed', 42, type=int)
     beta = params.get('beta', 1.0 / 3.0, type=float)  # beta = 1/lambda => lambda = 3. beta is scale param for rng.exponential.
     learning_rate = params.get('learning_rate', 0.05, type=float)
