@@ -1,6 +1,7 @@
 from flask import Flask, render_template, jsonify, request
 
 import ai
+from ai.experiments import EXPERIMENTS
 
 app = Flask(__name__)
 app.secret_key = r'4c44309dd5a080a06e7d67c91cd53fa30012e6296e6258ceb06276a8c06c5e01'
@@ -12,12 +13,20 @@ def home():
     Called when the user accesses the root URL of the web app, the Flask app
     routes this request to the "home" function b/c of the route decorator.
     """
-    return render_template('index.html')
+    return render_template('list.html',
+                           experiments=EXPERIMENTS)
 
 
-@app.route('/data')
-def data():
-    return jsonify(ai.main(request.args))
+@app.route('/experiments/<experiment_name>')
+def experiment(experiment_name: str):
+    return render_template(f'experiments/{experiment_name}.html',
+                           title=EXPERIMENTS[experiment_name]['title'],
+                           key=experiment_name)
+
+
+@app.route('/data/<experiment_name>')
+def data(experiment_name: str):
+    return jsonify(ai.main(experiment_name, request.args))
 
 
 if __name__ == '__main__':

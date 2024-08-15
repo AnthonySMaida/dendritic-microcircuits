@@ -4,7 +4,7 @@ import numpy as np
 
 from ai.Layer import Layer
 from ai.colorized_logger import get_logger
-from ai.experiments import Experiment
+from ai.experiments.Experiment import Experiment
 from ai.utils import create_column_vector, iter_with_prev
 from metrics import Graph, GraphType, Serie
 

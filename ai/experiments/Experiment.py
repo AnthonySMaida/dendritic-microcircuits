@@ -5,7 +5,6 @@ from typing import List
 import numpy as np
 
 from ai.Layer import Layer
-from ai.utils import iter_with_prev
 from ai.colorized_logger import get_logger
 from metrics import Graph
 
