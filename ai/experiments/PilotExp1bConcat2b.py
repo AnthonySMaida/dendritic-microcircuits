@@ -14,7 +14,9 @@ KEY_RULE_13_POST_DATA = "rule13_post_data"
 KEY_RULE_13_WT_DATA = "rule13_wt_data"
 KEY_RULE_13_POST_DATA_L1 = "rule13_post_data_l1"
 KEY_RULE_13_WT_DATA_L1 = "rule13_wt_data_l1"
-KEY_OUTPUT_LAYER_VALUES = "output_layer_values"
+KEY_OUTPUT_LAYER_PYR_ACTS = "output_layer_acts"
+KEY_HIDDEN_LAYER_PYR_ACTS = "hidden_layer_pyr_acts"
+KEY_HIDDEN_LAYER_INHIB_ACTS = "hidden_layer_inhib_acts"
 
 
 class PilotExp1bConcat2b(Experiment):
@@ -28,7 +30,9 @@ class PilotExp1bConcat2b(Experiment):
         self._metrics[KEY_RULE_13_WT_DATA] = np.empty(shape=(0,))
         self._metrics[KEY_RULE_13_POST_DATA_L1] = np.empty(shape=(5,0))
         self._metrics[KEY_RULE_13_WT_DATA_L1] = np.empty(shape=(0,))
-        self._metrics[KEY_OUTPUT_LAYER_VALUES] = np.empty(shape=(2, 0))
+        self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS] = np.empty(shape=(2, 0))
+        self._metrics[KEY_HIDDEN_LAYER_PYR_ACTS] = np.empty(shape=(3, 0))
+        self._metrics[KEY_HIDDEN_LAYER_INHIB_ACTS] = np.empty(shape=(3, 0))
 
     def extract_metrics(self):
         data1 = self._metrics[KEY_LAYER_1]
@@ -37,8 +41,11 @@ class PilotExp1bConcat2b(Experiment):
         data4 = self._metrics[KEY_RULE_13_WT_DATA]
         data5 = self._metrics[KEY_RULE_13_POST_DATA_L1]
         data6 = self._metrics[KEY_RULE_13_WT_DATA_L1]
-        data7 = self._metrics[KEY_OUTPUT_LAYER_VALUES]
+        data7 = self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS]
+        data8 = self._metrics[KEY_HIDDEN_LAYER_PYR_ACTS]
+        data9 = self._metrics[KEY_HIDDEN_LAYER_INHIB_ACTS]
         return [
+            # data1
             Graph(type=GraphType.LINE,
                   title="Layer 1 Apical MPs",
                   precision=2,
@@ -48,6 +55,7 @@ class PilotExp1bConcat2b(Experiment):
                   ],
                   xaxis="Training steps",
                   yaxis="Membrane potential (mV)"),
+            # data2
             Graph(type=GraphType.LINE,
                   title="Layer 2 Apical MPs",
                   precision=2,
@@ -58,6 +66,7 @@ class PilotExp1bConcat2b(Experiment):
                   ],
                   xaxis="Training steps",
                   yaxis="Membrane potential (mV)"),
+            # data3
             Graph(type=GraphType.LINE,
                   title="Learning Rule PP_FF Triggers",
                   precision=2,
@@ -70,6 +79,7 @@ class PilotExp1bConcat2b(Experiment):
                   ],
                   # xaxis="Training steps",
                   yaxis="..."),
+            # data4
             Graph(type=GraphType.LINE,
                   title="Learning Rule PP_FF wts",
                   precision=2,
@@ -78,6 +88,7 @@ class PilotExp1bConcat2b(Experiment):
                   ],
                   xaxis="Training steps",
                   yaxis="..."),
+            # data5
             Graph(type=GraphType.LINE,
                   title="Learning Rule PP_FF Triggers L1",
                   precision=2,
@@ -90,6 +101,7 @@ class PilotExp1bConcat2b(Experiment):
                   ],
                   xaxis="Training steps",
                   yaxis="..."),
+            # data6
             Graph(type=GraphType.LINE,
                   title="Learning Rule PP_FF wts L1",
                   precision=2,
@@ -98,45 +110,72 @@ class PilotExp1bConcat2b(Experiment):
                   ],
                   xaxis="Training steps",
                   yaxis="..."),
+            # data7
             Graph(type=GraphType.LINE,
                   title="Layer 3 Soma Activations",
                   precision=2,
                   series=[
-                      Serie("Apical MP 1", data7[0].tolist()),
-                      Serie("Apical MP 2", data7[1].tolist()),
+                      Serie("Soma act 1", data7[0].tolist()),
+                      Serie("Soma act 2", data7[1].tolist()),
                   ],
                   xaxis="Training steps",
                   yaxis="Output activation"),
+            # bar graph for output acts
             Graph(type=GraphType.COLUMN,
                   title="Output Activations",
                   precision=4,
                   series=[
-                      Serie("Neuron 1", [self._metrics[KEY_OUTPUT_LAYER_VALUES][0][399],  # 0.6535
-                                         self._metrics[KEY_OUTPUT_LAYER_VALUES][0][400],  # 0.7165
-                                         self._metrics[KEY_OUTPUT_LAYER_VALUES][0][598],  # 0.7310
-                                         self._metrics[KEY_OUTPUT_LAYER_VALUES][0][599]]), # 0.7309
-                      Serie("Neuron 2", [self._metrics[KEY_OUTPUT_LAYER_VALUES][1][399],  # 0.6051,
-                                         self._metrics[KEY_OUTPUT_LAYER_VALUES][1][400],  # 0.5213,
-                                         self._metrics[KEY_OUTPUT_LAYER_VALUES][1][598],  # 0.5000,
-                                         self._metrics[KEY_OUTPUT_LAYER_VALUES][1][599]]) # 0.5002
+                      Serie("Neuron 1", [self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS][0][399],  # 0.6535
+                                         self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS][0][400],  # 0.7165
+                                         self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS][0][598],  # 0.7310
+                                         self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS][0][599]]), # 0.7309
+                      Serie("Neuron 2", [self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS][1][399],  # 0.6051,
+                                         self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS][1][400],  # 0.5213,
+                                         self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS][1][598],  # 0.5000,
+                                         self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS][1][599]]) # 0.5002
                   ],
                   categories=["Before Nudge","Nudged", "After learning", "Nudged removed"],
-                  yaxis="Activation level")
+                  yaxis="Activation level"),
+            # data8
+            Graph(type=GraphType.LINE,
+                  title="Layer 2 Soma Activations",
+                  precision=2,
+                  series=[
+                      Serie("Soma act 1", data8[0].tolist()),
+                      Serie("Soma act 2", data8[1].tolist()),
+                      Serie("Soma act 3", data8[2].tolist()),
+                  ],
+                  xaxis="Training steps",
+                  yaxis="Output activation"),
+            # data9
+            Graph(type=GraphType.LINE,
+                  title="Layer 2 Inhib Activations",
+                  precision=2,
+                  series=[
+                      Serie("Soma act 1", data9[0].tolist()),
+                      Serie("Soma act 2", data9[1].tolist()),
+                      Serie("Soma act 3", data9[2].tolist()),
+                  ],
+                  xaxis="Training steps",
+                  yaxis="Output activation")
         ]
 
     def hook_post_train_step(self):
         l1, l2, l3 = self.layers
+        # data1: apical membrane potentials Layer 1
         self._metrics[KEY_LAYER_1] = np.append(
             self._metrics[KEY_LAYER_1],
             create_column_vector(*map(lambda p: p.apical_mp, l1.pyrs)),
             axis=1
         )
+        # data2: apical membrane potentials Layer 2
         self._metrics[KEY_LAYER_2] = np.append(
             self._metrics[KEY_LAYER_2],
             create_column_vector(*map(lambda p: p.apical_mp, l2.pyrs)),
             axis=1
         )
 
+        # data3, data4: FF learning rule triggers and wts Layer 2
         soma_act = l3.pyr_soma_acts()[0]
         basal_hat_act = l3.pyr_basal_hat_acts()[0]
         post_soma_mp = l3.pyr_soma_mps()[0]
@@ -149,6 +188,7 @@ class PilotExp1bConcat2b(Experiment):
             axis=1)
         self._metrics[KEY_RULE_13_WT_DATA] = np.append(self._metrics[KEY_RULE_13_WT_DATA],
                                                        l3.pyrs[0].W_PP_ff[0])
+        # data5, data6: FF learning rule triggers and wts Layer 1
         soma_act = l2.pyr_soma_acts()[0]
         basal_hat_act = l2.pyr_basal_hat_acts()[0]
         post_soma_mp = l2.pyr_soma_mps()[0]
@@ -161,9 +201,22 @@ class PilotExp1bConcat2b(Experiment):
             axis=1)
         self._metrics[KEY_RULE_13_WT_DATA_L1] = np.append(self._metrics[KEY_RULE_13_WT_DATA_L1],
                                                           l2.pyrs[0].W_PP_ff[0])
-        self._metrics[KEY_OUTPUT_LAYER_VALUES] = np.append(
-            self._metrics[KEY_OUTPUT_LAYER_VALUES],
+        # data7: output layer activation values
+        self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS] = np.append(
+            self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS],
             create_column_vector(*map(lambda p: p.soma_act, l3.pyrs)),
+            axis=1)
+
+        # data8: hidden layer pyr activation values
+        self._metrics[KEY_HIDDEN_LAYER_PYR_ACTS] = np.append(
+            self._metrics[KEY_HIDDEN_LAYER_PYR_ACTS],
+            create_column_vector(*map(lambda p: p.soma_act, l2.pyrs)),
+            axis=1)
+
+        # data9: hidden layer inhib activation values
+        self._metrics[KEY_HIDDEN_LAYER_INHIB_ACTS] = np.append(
+            self._metrics[KEY_HIDDEN_LAYER_INHIB_ACTS],
+            create_column_vector(*map(lambda p: p.soma_act, l2.inhibs)),
             axis=1)
 
 

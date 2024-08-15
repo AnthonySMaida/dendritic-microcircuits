@@ -25,7 +25,7 @@ Implemented in numpy. The code is not vectorized but the
 data structures used closely mimic the neural anatomy given in the paper.
 """
 
-import logging
+# import logging
 from typing import List
 
 from werkzeug.datastructures import MultiDict
