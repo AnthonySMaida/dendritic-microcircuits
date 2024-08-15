@@ -1,10 +1,7 @@
+from .KEYS import KEYS
 from .Experiment import Experiment
 from .PilotExp1bConcat2b import PilotExp1bConcat2b
 from .XorExperiment import XorExperiment
-
-class KEYS:
-    PILOT_EXP_1B_CONCAT_2B = "PilotExp1bConcat2b"
-    XOR_EXPERIMENT = "XorExperiment"
 
 EXPERIMENTS: dict[str, dict[str, str | Experiment]] = {
     KEYS.PILOT_EXP_1B_CONCAT_2B: {
