@@ -56,34 +56,6 @@ class Experiment:
 
         logger.info("Finished building model.")
 
-    def do_ff_sweep(self):
-        """Standard FF sweep"""
-        logger.debug("Starting FF sweep...")
-
-        # Iterates over layers from start to end. From ai.utils.
-        for prev, layer in iter_with_prev(self.layers):  # Yields prev layer and current layer
-            if prev is None:
-                layer.apply_inputs_to_test_self_predictive_convergence()
-            else:
-                layer.update_pyrs_basal_and_soma_ff(prev)
-            layer.update_dend_mps_via_ip()
-            #logger.debug(layer)
-
-        #logger.info("FF sweep done.")
-
-    def do_fb_sweep(self):
-        """Standard FB sweep"""
-        logger.debug("Starting FB sweep...")
-
-        for prev, layer in iter_with_prev(reversed(self.layers)):
-            if prev is None:  # Skip first layer (L3)
-                continue
-            # update current layer pyrs using somatic pyr acts from previous layer and inhib acts from current layer
-            layer.update_pyrs_apical_soma_fb(prev)
-            #logger.debug(layer)
-
-        #logger.info("FB sweep done.")
-
     def print_pyr_activations_all_layers_topdown(self):
         """Prints the pyr activations for all layers in the network, starting with the top layer"""
         for layer in reversed(self.layers):
