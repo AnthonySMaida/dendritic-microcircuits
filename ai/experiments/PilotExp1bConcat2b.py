@@ -229,7 +229,7 @@ class PilotExp1bConcat2b(Experiment):
         # Iterates over layers from start to end. From ai.utils.
         for prev, layer in iter_with_prev(self.layers):  # Yields prev layer and current layer
             if prev is None:
-                layer.apply_inputs_to_test_self_predictive_convergence()
+                layer.apply_inputs_to_test_self_predictive_convergence([.5, .5])
             else:
                 layer.update_pyrs_basal_and_soma_ff(prev)
             layer.update_dend_mps_via_ip()

@@ -1,8 +1,11 @@
 {% extends 'base/experiment.html' %}
 
 {% block params %}
-  <label for="wt_init_seed">Initial seed</label>
+  <label for="wt_init_seed">Initial seed for weights</label>
   <input type="number" id="wt_init_seed" value="42" step="1">
+
+  <label for="label_init_seed">Initial seed for labels</label>
+  <input type="number" id="label_init_seed" value="42" step="1">
 
   <label for="beta">Beta</label>
   <input type="number" id="beta" value=".333" step=".001">

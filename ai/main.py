@@ -74,6 +74,7 @@ def xor_experiment(params: MultiDict = None) -> List[Graph]:
         params = MultiDict()
 
     wt_init_seed = params.get('wt_init_seed', 42, type=int)
+    label_init_seed = params.get('label_init_seed', 42, type=int)
     beta = params.get('beta', 1.0 / 3.0, type=float)  # beta = 1/lambda => lambda = 3. beta is scale param for rng.exponential.
     learning_rate = params.get('learning_rate', 0.05, type=float)
     n_pyr_by_layer = (
@@ -85,7 +86,7 @@ def xor_experiment(params: MultiDict = None) -> List[Graph]:
     training_steps = params.get('training_steps', 190, type=int)
     after_training_steps = params.get('after_training_steps', 10, type=int)
 
-    experiment = XorExperiment(wt_init_seed, beta, learning_rate)
+    experiment = XorExperiment(wt_init_seed, label_init_seed, beta, learning_rate)
     experiment.build_small_three_layer_network(*n_pyr_by_layer)
     experiment.run(self_prediction_steps, training_steps, after_training_steps)
     experiment.print_ff_and_fb_wts_last_layer()

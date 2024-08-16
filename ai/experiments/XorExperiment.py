@@ -16,11 +16,13 @@ KEY_RULE_13_POST_DATA = "rule13_post_data"
 KEY_RULE_13_WT_DATA = "rule13_wt_data"
 KEY_RULE_13_POST_DATA_L1 = "rule13_post_data_l1"
 KEY_RULE_13_WT_DATA_L1 = "rule13_wt_data_l1"
-KEY_OUTPUT_LAYER_VALUES = "output_layer_values"
+KEY_OUTPUT_LAYER_PYR_ACTS = "output_layer_acts"
+KEY_HIDDEN_LAYER_PYR_ACTS = "hidden_layer_pyr_acts"
+KEY_HIDDEN_LAYER_INHIB_ACTS = "hidden_layer_inhib_acts"
 
 
 class XorExperiment(Experiment):
-    def __init__(self, wt_init_seed: int, beta: float, learning_rate: float):
+    def __init__(self, wt_init_seed: int, label_init_seed: int, beta: float, learning_rate: float):
         super().__init__(wt_init_seed, beta, learning_rate)
 
         self._metrics[KEY_LAYER_1] = np.empty(shape=(2, 0))
@@ -29,12 +31,16 @@ class XorExperiment(Experiment):
         self._metrics[KEY_RULE_13_WT_DATA] = np.empty(shape=(0,))
         self._metrics[KEY_RULE_13_POST_DATA_L1] = np.empty(shape=(5, 0))
         self._metrics[KEY_RULE_13_WT_DATA_L1] = np.empty(shape=(0,))
-        self._metrics[KEY_OUTPUT_LAYER_VALUES] = np.empty(shape=(2, 0))
+        self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS] = np.empty(shape=(1, 0))
+        self._metrics[KEY_HIDDEN_LAYER_PYR_ACTS] = np.empty(shape=(3, 0))
+        self._metrics[KEY_HIDDEN_LAYER_INHIB_ACTS] = np.empty(shape=(3, 0))
 
         self._X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
-        self._Y = np.array([[0], [1], [1], [0]])
+        self._Y = np.array([0, 1, 1, 0])
         self._current_X: Optional[np.ndarray] = None
         self._current_label: Optional[int] = None
+
+        self._rng_labels = np.random.default_rng(seed=label_init_seed)
 
     def extract_metrics(self):
         data1 = self._metrics[KEY_LAYER_1]
@@ -43,7 +49,9 @@ class XorExperiment(Experiment):
         data4 = self._metrics[KEY_RULE_13_WT_DATA]
         data5 = self._metrics[KEY_RULE_13_POST_DATA_L1]
         data6 = self._metrics[KEY_RULE_13_WT_DATA_L1]
-        data7 = self._metrics[KEY_OUTPUT_LAYER_VALUES]
+        data7 = self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS]
+        data8 = self._metrics[KEY_HIDDEN_LAYER_PYR_ACTS]
+        data9 = self._metrics[KEY_HIDDEN_LAYER_INHIB_ACTS]
         return [
             Graph(type=GraphType.LINE,
                   title="Layer 1 Apical MPs",
@@ -108,8 +116,7 @@ class XorExperiment(Experiment):
                   title="Layer 3 Soma Activations",
                   precision=2,
                   series=[
-                      Serie("Apical MP 1", data7[0].tolist()),
-                      Serie("Apical MP 2", data7[1].tolist()),
+                      Serie("Soma act", data7[0].tolist()),
                   ],
                   xaxis="Training steps",
                   yaxis="Output activation"),
@@ -117,18 +124,39 @@ class XorExperiment(Experiment):
                   title="Output Activations",
                   precision=4,
                   series=[
-                      Serie("Neuron 1", [self._metrics[KEY_OUTPUT_LAYER_VALUES][0][399],  # 0.6535
-                                         self._metrics[KEY_OUTPUT_LAYER_VALUES][0][400],  # 0.7165
-                                         self._metrics[KEY_OUTPUT_LAYER_VALUES][0][598],  # 0.7310
-                                         self._metrics[KEY_OUTPUT_LAYER_VALUES][0][599]]),  # 0.7309
-                      Serie("Neuron 2", [self._metrics[KEY_OUTPUT_LAYER_VALUES][1][399],  # 0.6051,
-                                         self._metrics[KEY_OUTPUT_LAYER_VALUES][1][400],  # 0.5213,
-                                         self._metrics[KEY_OUTPUT_LAYER_VALUES][1][598],  # 0.5000,
-                                         self._metrics[KEY_OUTPUT_LAYER_VALUES][1][599]])  # 0.5002
+                      Serie("Neuron 1", [self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS][0][399],  # 0.6535
+                                         self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS][0][400],  # 0.7165
+                                         self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS][0][598],  # 0.7310
+                                         self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS][0][599]]), # 0.7309
                   ],
                   categories=["Before Nudge", "Nudged", "After learning", "Nudged removed"],
-                  yaxis="Activation level")
+                  yaxis="Activation level"),
+            Graph(type=GraphType.LINE,
+                  title="Layer 2 Soma Activations",
+                  precision=2,
+                  series=[
+                      Serie("Soma act 1", data8[0].tolist()),
+                      Serie("Soma act 2", data8[1].tolist()),
+                      Serie("Soma act 3", data8[2].tolist()),
+                  ],
+                  xaxis="Training steps",
+                  yaxis="Output activation"),
+            Graph(type=GraphType.LINE,
+                  title="Layer 2 Inhib Activations",
+                  precision=2,
+                  series=[
+                      Serie("Soma act 1", data9[0].tolist()),
+                      Serie("Soma act 2", data9[1].tolist()),
+                      Serie("Soma act 3", data9[2].tolist()),
+                  ],
+                  xaxis="Training steps",
+                  yaxis="Output activation")
         ]
+
+    def hook_pre_train_step(self):
+        index = self._rng_labels.integers(low=0, high=len(self._X))
+        self._current_X = self._X[index]
+        self._current_label = self._Y[index]
 
     def hook_post_train_step(self):
         l1, l2, l3 = self.layers
@@ -146,9 +174,19 @@ class XorExperiment(Experiment):
         self._gather_layer_metrics(KEY_RULE_13_POST_DATA_L1, KEY_RULE_13_WT_DATA_L1, l2)
         self._gather_layer_metrics(KEY_RULE_13_POST_DATA, KEY_RULE_13_WT_DATA, l3)
 
-        self._metrics[KEY_OUTPUT_LAYER_VALUES] = np.append(
-            self._metrics[KEY_OUTPUT_LAYER_VALUES],
+        self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS] = np.append(
+            self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS],
             create_column_vector(*map(lambda p: p.soma_act, l3.pyrs)),
+            axis=1)
+
+        self._metrics[KEY_HIDDEN_LAYER_PYR_ACTS] = np.append(
+            self._metrics[KEY_HIDDEN_LAYER_PYR_ACTS],
+            create_column_vector(*map(lambda p: p.soma_act, l2.pyrs)),
+            axis=1)
+
+        self._metrics[KEY_HIDDEN_LAYER_INHIB_ACTS] = np.append(
+            self._metrics[KEY_HIDDEN_LAYER_INHIB_ACTS],
+            create_column_vector(*map(lambda p: p.soma_act, l2.inhibs)),
             axis=1)
 
     def _gather_layer_metrics(self, key_post: str, key_wts: str, layer: Layer):
@@ -172,7 +210,7 @@ class XorExperiment(Experiment):
         # Iterates over layers from start to end. From ai.utils.
         for prev, layer in iter_with_prev(self.layers):  # Yields prev layer and current layer
             if prev is None:
-                layer.apply_inputs_to_test_self_predictive_convergence()
+                layer.apply_inputs_to_test_self_predictive_convergence(self._current_X)
             else:
                 layer.update_pyrs_basal_and_soma_ff(prev)
             layer.update_dend_mps_via_ip()
@@ -217,27 +255,27 @@ class XorExperiment(Experiment):
 
     def run(self, self_prediction_steps: int, training_steps: int, after_training_steps: int):
         logger.info("START: Performing nudge experiment with rules 16b and 13.")
-        self.do_ff_sweep()  # prints state
-        logger.info("Finished 1st FF sweep: pilot_exp_1b_concat_2b")
+        # self.do_ff_sweep()  # prints state
+        # logger.info("Finished 1st FF sweep: pilot_exp_1b_concat_2b")
 
-        self.do_fb_sweep()  # prints state
-        logger.info("Finished 1st FB sweep: pilot_exp_1b_concat_2b")
+        # self.do_fb_sweep()  # prints state
+        # logger.info("Finished 1st FB sweep: pilot_exp_1b_concat_2b")
 
-        logger.info(f"Starting training {self_prediction_steps} steps to 1b2b self predictive.")
+        logger.info(f"Starting training {self_prediction_steps} steps to XOR self predictive.")
         # trains and SAVES apical results in 'datasets' attr
         self.train(self_prediction_steps, nudge_predicate=False)
 
         # logger.info("Calling function to impose nudge.")
         # self._nudge_output_layer()
 
-        logger.info(f"Starting training {training_steps} steps for p_exp 3b")
+        logger.info(f"Starting training {training_steps} steps for XOR exp")
 
         # trains and APPENDS apical results in 'datasets' attr
         self.train(training_steps, nudge_predicate=True)
-        logger.info(f"Finished training {training_steps} steps for p_exp 3b")
+        logger.info(f"Finished training {training_steps} steps for XOR exp")
 
         self.train(after_training_steps, nudge_predicate=False)
-        logger.info(f"Finished training {training_steps} steps for p_exp 3b")
+        logger.info(f"Finished training {training_steps} steps for XOR exp")
         self.print_pyr_activations_all_layers_topdown()  # print activations while nudging is still on
 
         # self.do_ff_sweep()  # to get new activations without nudging

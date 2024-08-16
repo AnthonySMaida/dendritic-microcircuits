@@ -70,10 +70,10 @@ class Layer:
     # FF and FB neuron update mechanisms #
     ######################################
 
-    def apply_inputs_to_test_self_predictive_convergence(self, input_val=0.5):
+    def apply_inputs_to_test_self_predictive_convergence(self, input_val):
         """apply uniform inputs of 0.5 to get the system running"""
         for i in range(len(self.pyrs)):
-            self.pyrs[i].basal_mp = input_val
+            self.pyrs[i].basal_mp = input_val[i]
             self.pyrs[i].update_pyr_soma_ff()  # updates soma mp and activation
 
     def update_dend_mps_via_ip(self):  # update dendritic membrane potentials

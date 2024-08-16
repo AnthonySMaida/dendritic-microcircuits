@@ -17,7 +17,7 @@ class Experiment:
         self._beta = beta
         self._learning_rate = learning_rate
         self._metrics = {}
-        self._rng = np.random.default_rng(seed=wt_init_seed)
+        self._rng_wts = np.random.default_rng(seed=wt_init_seed)
 
         self.layers: List[Layer] = []  # list is made of layers. Assists code completion.
 
@@ -31,24 +31,28 @@ class Experiment:
         """
         raise NotImplementedError
 
-    def build_small_three_layer_network(self, n_input_pyr_nrns: int, n_hidden_pyr_nrns: int, n_output_pyr_nrns: int):
+    def build_small_three_layer_network(self, n_input_pyr_nrns: int = 2, n_hidden_pyr_nrns: int = 3, n_output_pyr_nrns: int = 2):
         """Build 3-layer network"""
+
+        # Ensures the first layer is always 1 for a new network
+        Layer.next_id = 1
+
         # Layer 1 is the input layer w/ 2 pyrs and 1 inhib cell.
         # No FF connections in input layer. They are postponed to receiving layer.
         # Each pyramid projects a FF connection to each of 3 pyrs in Layer 2 (hidden).
         # wts are always incoming weights.
-        l1 = Layer(self._learning_rate, self._rng, n_input_pyr_nrns, 1, None, 1, 3, self._beta, 2)
+        l1 = Layer(self._learning_rate, self._rng_wts, n_input_pyr_nrns, 1, None, 1, n_hidden_pyr_nrns, self._beta, 2)
         logger.info("Building model...")
         logger.warning("""Layer 1:\n========\n%s""", l1)
 
         # Layer 2 is hidden layer w/ 3 pyrs.
         # Also has 3 inhib neurons.
         # Has feedback connections to Layer 1
-        l2 = Layer(self._learning_rate, self._rng, n_hidden_pyr_nrns, 3, 2, 3, 2, self._beta, 3)
+        l2 = Layer(self._learning_rate, self._rng_wts, n_hidden_pyr_nrns, 3, n_input_pyr_nrns, 3, n_output_pyr_nrns, self._beta, 3)
         logger.warning("""Layer 2:\n========\n%s""", l2)
 
         # Layer 3 is output layer w/ 2 pyrs. No inhib neurons.
-        l3 = Layer(self._learning_rate, self._rng, n_output_pyr_nrns, 0, 3, None, None, self._beta, None)
+        l3 = Layer(self._learning_rate, self._rng_wts, n_output_pyr_nrns, 0, n_hidden_pyr_nrns, None, None, self._beta, None)
         logger.warning("""Layer 3:\n========\n%s""", l3)
 
         self.layers = [l1, l2, l3]
