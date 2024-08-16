@@ -11,6 +11,8 @@ function genGraph(data) {
       return genColumnGraph(data)
     case 'line':
       return genLineGraph(data)
+    case '':
+      return null
     default:
       throw new Error(`Unknown graph type: ${data.type}`)
   }
@@ -31,10 +33,20 @@ function handleApiData(json) {
 
   for (const data of json) {
     const canvas = document.createElement('div')
+
+    const options = genGraph(data)
+
+    if (!options) {
+      canvas.style.height = '349px'
+      canvas.style.width = '502px'
+    }
+
     container.appendChild(canvas)
 
-    const chart = new ApexCharts(canvas, genGraph(data))
-    chart.render()
+    if (options) {
+      const chart = new ApexCharts(canvas, options)
+      chart.render()
+    }
   }
 }
 

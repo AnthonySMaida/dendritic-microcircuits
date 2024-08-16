@@ -38,6 +38,7 @@ function genColumnGraph(data) {
       title: {
         text: data.yaxis
       }
-    }
+    },
+    ...data.extra
   }
 }

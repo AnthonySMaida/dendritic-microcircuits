@@ -35,6 +35,7 @@ function genLineGraph(data) {
       title: {
         text: data.yaxis
       }
-    }
+    },
+    ...data.extra
   }
 }
