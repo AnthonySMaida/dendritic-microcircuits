@@ -31,134 +31,159 @@ class XorExperiment(Experiment):
         self._metrics[KEY_RULE_13_WT_DATA] = np.empty(shape=(0,))
         self._metrics[KEY_RULE_13_POST_DATA_L1] = np.empty(shape=(5, 0))
         self._metrics[KEY_RULE_13_WT_DATA_L1] = np.empty(shape=(0,))
-        self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS] = np.empty(shape=(1, 0))
+        self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS] = np.empty(shape=(0,))
         self._metrics[KEY_HIDDEN_LAYER_PYR_ACTS] = np.empty(shape=(3, 0))
         self._metrics[KEY_HIDDEN_LAYER_INHIB_ACTS] = np.empty(shape=(3, 0))
 
         self._X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
         self._Y = np.array([0, 1, 1, 0])
+
+        self._current_index: Optional[int] = None
         self._current_X: Optional[np.ndarray] = None
         self._current_label: Optional[int] = None
 
         self._rng_labels = np.random.default_rng(seed=label_init_seed)
 
     def extract_metrics(self):
-        data1 = self._metrics[KEY_LAYER_1]
-        data2 = self._metrics[KEY_LAYER_2]
-        data3 = self._metrics[KEY_RULE_13_POST_DATA]
-        data4 = self._metrics[KEY_RULE_13_WT_DATA]
-        data5 = self._metrics[KEY_RULE_13_POST_DATA_L1]
-        data6 = self._metrics[KEY_RULE_13_WT_DATA_L1]
-        data7 = self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS]
-        data8 = self._metrics[KEY_HIDDEN_LAYER_PYR_ACTS]
-        data9 = self._metrics[KEY_HIDDEN_LAYER_INHIB_ACTS]
+        data_l1 = self._metrics[KEY_LAYER_1]
+        data_l2 = self._metrics[KEY_LAYER_2]
+        triggers_l2 = self._metrics[KEY_RULE_13_POST_DATA]
+        wts_l2 = self._metrics[KEY_RULE_13_WT_DATA]
+        triggers_l1 = self._metrics[KEY_RULE_13_POST_DATA_L1]
+        wts_l1 = self._metrics[KEY_RULE_13_WT_DATA_L1]
+        soma_acts_l3 = self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS]
+        soma_acts_l2 = self._metrics[KEY_HIDDEN_LAYER_PYR_ACTS]
+        inhib_acts_l2 = self._metrics[KEY_HIDDEN_LAYER_INHIB_ACTS]
+
+        extra = {
+            "annotations": {
+                "xaxis": [
+                    {"x": 400, "label": {"text": "Enable nudge"}}
+                ]
+            }
+        }
+
         return [
             Graph(type=GraphType.LINE,
                   title="Layer 1 Apical MPs",
                   precision=2,
                   series=[
-                      Serie("Apical MP 1", data1[0].tolist()),
-                      Serie("Apical MP 2", data1[1].tolist()),
+                      Serie("Apical MP 1", data_l1[0].tolist()),
+                      Serie("Apical MP 2", data_l1[1].tolist()),
                   ],
                   xaxis="Training steps",
-                  yaxis="Membrane potential (mV)"),
+                  yaxis="Membrane potential (mV)",
+                  extra=extra),
             Graph(type=GraphType.LINE,
                   title="Layer 2 Apical MPs",
                   precision=2,
                   series=[
-                      Serie("Apical MP 1", data2[0].tolist()),
-                      Serie("Apical MP 2", data2[1].tolist()),
-                      Serie("Apical MP 3", data2[2].tolist()),
+                      Serie("Apical MP 1", data_l2[0].tolist()),
+                      Serie("Apical MP 2", data_l2[1].tolist()),
+                      Serie("Apical MP 3", data_l2[2].tolist()),
                   ],
                   xaxis="Training steps",
-                  yaxis="Membrane potential (mV)"),
-            Graph(type=GraphType.LINE,
-                  title="Learning Rule PP_FF Triggers",
-                  precision=2,
-                  series=[
-                      Serie("Soma act", data3[0].tolist()),
-                      Serie("Basal hat act", data3[1].tolist()),
-                      Serie("Post soma MP", data3[2].tolist()),
-                      Serie("Post basal MP", data3[3].tolist()),
-                      Serie("Post val", data3[4].tolist()),
-                  ],
-                  # xaxis="Training steps",
-                  yaxis="..."),
-            Graph(type=GraphType.LINE,
-                  title="Learning Rule PP_FF wts",
-                  precision=2,
-                  series=[
-                      Serie("PP_FF wt", data4.tolist()),
-                  ],
-                  xaxis="Training steps",
-                  yaxis="..."),
-            Graph(type=GraphType.LINE,
-                  title="Learning Rule PP_FF Triggers L1",
-                  precision=2,
-                  series=[
-                      Serie("Soma act", data5[0].tolist()),
-                      Serie("Basal hat act", data5[1].tolist()),
-                      Serie("Post soma MP", data5[2].tolist()),
-                      Serie("Post basal MP", data5[3].tolist()),
-                      Serie("Post val", data5[4].tolist()),
-                  ],
-                  xaxis="Training steps",
-                  yaxis="..."),
-            Graph(type=GraphType.LINE,
-                  title="Learning Rule PP_FF wts L1",
-                  precision=2,
-                  series=[
-                      Serie("PP_FF wt L1", data6.tolist()),
-                  ],
-                  xaxis="Training steps",
-                  yaxis="..."),
-            Graph(type=GraphType.LINE,
-                  title="Layer 3 Soma Activations",
-                  precision=2,
-                  series=[
-                      Serie("Soma act", data7[0].tolist()),
-                  ],
-                  xaxis="Training steps",
-                  yaxis="Output activation"),
-            Graph(type=GraphType.COLUMN,
-                  title="Output Activations",
-                  precision=4,
-                  series=[
-                      Serie("Neuron 1", [self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS][0][399],  # 0.6535
-                                         self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS][0][400],  # 0.7165
-                                         self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS][0][598],  # 0.7310
-                                         self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS][0][599]]), # 0.7309
-                  ],
-                  categories=["Before Nudge", "Nudged", "After learning", "Nudged removed"],
-                  yaxis="Activation level"),
+                  yaxis="Membrane potential (mV)",
+                  extra=extra),
             Graph(type=GraphType.LINE,
                   title="Layer 2 Soma Activations",
                   precision=2,
                   series=[
-                      Serie("Soma act 1", data8[0].tolist()),
-                      Serie("Soma act 2", data8[1].tolist()),
-                      Serie("Soma act 3", data8[2].tolist()),
+                      Serie("Soma act 1", soma_acts_l2[0].tolist()),
+                      Serie("Soma act 2", soma_acts_l2[1].tolist()),
+                      Serie("Soma act 3", soma_acts_l2[2].tolist()),
                   ],
                   xaxis="Training steps",
-                  yaxis="Output activation"),
+                  yaxis="Output activation",
+                  extra=extra),
+            Graph(type=GraphType.LINE,
+                  title="Learning Rule PP_FF Triggers L1",
+                  precision=2,
+                  series=[
+                      Serie("Soma act", triggers_l1[0].tolist()),
+                      Serie("Basal hat act", triggers_l1[1].tolist()),
+                      Serie("Post soma MP", triggers_l1[2].tolist()),
+                      Serie("Post basal MP", triggers_l1[3].tolist()),
+                      Serie("Post val", triggers_l1[4].tolist()),
+                  ],
+                  xaxis="Training steps",
+                  yaxis="...",
+                  extra=extra),
+            Graph(type=GraphType.LINE,
+                  title="Learning Rule PP_FF Triggers L2",
+                  precision=2,
+                  series=[
+                      Serie("Soma act", triggers_l2[0].tolist()),
+                      Serie("Basal hat act", triggers_l2[1].tolist()),
+                      Serie("Post soma MP", triggers_l2[2].tolist()),
+                      Serie("Post basal MP", triggers_l2[3].tolist()),
+                      Serie("Post val", triggers_l2[4].tolist()),
+                  ],
+                  # xaxis="Training steps",
+                  yaxis="...",
+                  extra=extra),
             Graph(type=GraphType.LINE,
                   title="Layer 2 Inhib Activations",
                   precision=2,
                   series=[
-                      Serie("Soma act 1", data9[0].tolist()),
-                      Serie("Soma act 2", data9[1].tolist()),
-                      Serie("Soma act 3", data9[2].tolist()),
+                      Serie("Soma act 1", inhib_acts_l2[0].tolist()),
+                      Serie("Soma act 2", inhib_acts_l2[1].tolist()),
+                      Serie("Soma act 3", inhib_acts_l2[2].tolist()),
                   ],
                   xaxis="Training steps",
-                  yaxis="Output activation")
+                  yaxis="Output activation",
+                  extra=extra),
+            Graph(type=GraphType.LINE,
+                  title="Learning Rule PP_FF wts L1",
+                  precision=2,
+                  series=[
+                      Serie("PP_FF wt L1", wts_l1.tolist()),
+                  ],
+                  xaxis="Training steps",
+                  yaxis="...",
+                  extra=extra),
+            Graph(type=GraphType.LINE,
+                  title="Learning Rule PP_FF wts L2",
+                  precision=2,
+                  series=[
+                      Serie("PP_FF wt", wts_l2.tolist()),
+                  ],
+                  xaxis="Training steps",
+                  yaxis="...",
+                  extra=extra),
+            Graph.empty(),
+            # Graph(type=GraphType.COLUMN,
+            #       title="Output Activations",
+            #       precision=4,
+            #       series=[
+            #           Serie("Neuron 1", [soma_acts_l3[399],  # 0.6535
+            #                              soma_acts_l3[400],  # 0.7165
+            #                              soma_acts_l3[598],  # 0.7310
+            #                              soma_acts_l3[599]]), # 0.7309
+            #       ],
+            #       categories=["Before Nudge", "Nudged", "After learning", "Nudged removed"],
+            #       yaxis="Activation level"),
+            Graph(type=GraphType.LINE,
+                  title="Layer 3 Soma Activations",
+                  precision=2,
+                  series=[
+                      Serie("Soma act", soma_acts_l3.tolist()),
+                  ],
+                  xaxis="Training steps",
+                  yaxis="Output activation",
+                  extra=extra),
         ]
 
     def hook_pre_train_step(self):
-        index = self._rng_labels.integers(low=0, high=len(self._X))
+        self._current_index = index = self._rng_labels.integers(low=0, high=len(self._X))
         self._current_X = self._X[index]
         self._current_label = self._Y[index]
 
     def hook_post_train_step(self):
+        # Only record data if current index is 0
+        if self._current_index != 0:
+            return
+
         l1, l2, l3 = self.layers
         self._metrics[KEY_LAYER_1] = np.append(
             self._metrics[KEY_LAYER_1],
@@ -176,8 +201,7 @@ class XorExperiment(Experiment):
 
         self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS] = np.append(
             self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS],
-            create_column_vector(*map(lambda p: p.soma_act, l3.pyrs)),
-            axis=1)
+            l3.pyrs[0].soma_act)
 
         self._metrics[KEY_HIDDEN_LAYER_PYR_ACTS] = np.append(
             self._metrics[KEY_HIDDEN_LAYER_PYR_ACTS],
