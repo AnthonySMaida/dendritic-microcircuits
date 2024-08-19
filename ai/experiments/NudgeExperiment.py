@@ -5,21 +5,27 @@ from ai.colorized_logger import get_logger
 from ai.utils import create_column_vector, iter_with_prev
 from metrics import Graph, Serie, GraphType
 
-logger = get_logger('ai.experiments.PilotExp1bConcat2b')
+logger = get_logger('ai.experiments.NudgeExperiment')
 #logger.setLevel(logging.DEBUG)
 
 KEY_LAYER_1 = "layer1"
 KEY_LAYER_2 = "layer2"
 KEY_RULE_13_POST_DATA = "rule13_post_data"
-KEY_RULE_13_WT_DATA = "rule13_wt_data"
+#KEY_RULE_13_WT_DATA = "rule13_wt_data"
+KEY_RULE_13_WT_DATA_L2_PYR0 = "rule13_wt_data_l2_pyr0"
+KEY_RULE_13_WT_DATA_L2_PYR1 = "rule13_wt_data_l2_pyr1"
+KEY_RULE_16B_WT_DATA_L2_PYR0 = "rule16b_wt_data_l2_pyr0"  # <= new
+KEY_RULE_16B_WT_DATA_L2_PYR1 = "rule16b_wt_data_l2_pyr1"  # <= new
+KEY_RULE_16B_WT_DATA_L2_PYR2 = "rule16b_wt_data_l2_pyr2"  # <= new
 KEY_RULE_13_POST_DATA_L1 = "rule13_post_data_l1"
 KEY_RULE_13_WT_DATA_L1 = "rule13_wt_data_l1"
-KEY_OUTPUT_LAYER_PYR_ACTS = "output_layer_acts"
-KEY_HIDDEN_LAYER_PYR_ACTS = "hidden_layer_pyr_acts"
-KEY_HIDDEN_LAYER_INHIB_ACTS = "hidden_layer_inhib_acts"
+KEY_OUTPUT_LAYER_VALUES = "output_layer_values"
+KEY_HIDDEN_LAYER_PYR_ACT_VALUES = "hidden_layer_pyr_act_values"
+KEY_HIDDEN_LAYER_APICAL_VALUES = "hidden_layer_cal_pyr_apical_values"
+KEY_HIDDEN_LAYER_INHIB_ACT_VALUES = "hidden_layer_inhib_act_values"
 
 
-class PilotExp1bConcat2b(Experiment):
+class NudgeExperiment(Experiment):
     def __init__(self, wt_init_seed: int, beta: float, learning_rate: float, nudge1: float, nudge2: float):
         # call the constructor of the parent class (aka superclass)
         super().__init__(wt_init_seed, beta, learning_rate)
@@ -30,25 +36,36 @@ class PilotExp1bConcat2b(Experiment):
         self._metrics[KEY_LAYER_1] = np.empty(shape=(2, 0))
         self._metrics[KEY_LAYER_2] = np.empty(shape=(3, 0))
         self._metrics[KEY_RULE_13_POST_DATA] = np.empty(shape=(5, 0))
-        self._metrics[KEY_RULE_13_WT_DATA] = np.empty(shape=(0,))
+#        self._metrics[KEY_RULE_13_WT_DATA] = np.empty(shape=(0,))
+        self._metrics[KEY_RULE_13_WT_DATA_L2_PYR0] = np.empty(shape=(3, 0))
+        self._metrics[KEY_RULE_13_WT_DATA_L2_PYR1] = np.empty(shape=(3, 0))
+        self._metrics[KEY_RULE_16B_WT_DATA_L2_PYR0] = np.empty(shape=(3, 0))
+        self._metrics[KEY_RULE_16B_WT_DATA_L2_PYR1] = np.empty(shape=(3, 0))
+        self._metrics[KEY_RULE_16B_WT_DATA_L2_PYR2] = np.empty(shape=(3, 0))
         self._metrics[KEY_RULE_13_POST_DATA_L1] = np.empty(shape=(5,0))
         self._metrics[KEY_RULE_13_WT_DATA_L1] = np.empty(shape=(0,))
-        self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS] = np.empty(shape=(2, 0))
-        self._metrics[KEY_HIDDEN_LAYER_PYR_ACTS] = np.empty(shape=(3, 0))
-        self._metrics[KEY_HIDDEN_LAYER_INHIB_ACTS] = np.empty(shape=(3, 0))
+        self._metrics[KEY_OUTPUT_LAYER_VALUES] = np.empty(shape=(2, 0))
+        self._metrics[KEY_HIDDEN_LAYER_PYR_ACT_VALUES] = np.empty(shape=(3, 0))
+        self._metrics[KEY_HIDDEN_LAYER_APICAL_VALUES] = np.empty(shape=(3, 0))
+        self._metrics[KEY_HIDDEN_LAYER_INHIB_ACT_VALUES] = np.empty(shape=(3, 0))
 
     def extract_metrics(self):
         data1 = self._metrics[KEY_LAYER_1]
         data2 = self._metrics[KEY_LAYER_2]
         data3 = self._metrics[KEY_RULE_13_POST_DATA]
-        data4 = self._metrics[KEY_RULE_13_WT_DATA]
+        data4a = self._metrics[KEY_RULE_13_WT_DATA_L2_PYR0]
+        data4b = self._metrics[KEY_RULE_13_WT_DATA_L2_PYR1]
         data5 = self._metrics[KEY_RULE_13_POST_DATA_L1]
         data6 = self._metrics[KEY_RULE_13_WT_DATA_L1]
-        data7 = self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS]
-        data8 = self._metrics[KEY_HIDDEN_LAYER_PYR_ACTS]
-        data9 = self._metrics[KEY_HIDDEN_LAYER_INHIB_ACTS]
+        data7 = self._metrics[KEY_OUTPUT_LAYER_VALUES]
+        data8a = self._metrics[KEY_RULE_16B_WT_DATA_L2_PYR0]
+        data8b = self._metrics[KEY_RULE_16B_WT_DATA_L2_PYR1]
+        data8c = self._metrics[KEY_RULE_16B_WT_DATA_L2_PYR2]
+        data9a = self._metrics[KEY_HIDDEN_LAYER_PYR_ACT_VALUES]
+        data9b = self._metrics[KEY_HIDDEN_LAYER_APICAL_VALUES]
+        data10 = self._metrics[KEY_HIDDEN_LAYER_INHIB_ACT_VALUES]
+
         return [
-            # data1
             Graph(type=GraphType.LINE,
                   title="Layer 1 Apical MPs",
                   precision=2,
@@ -58,7 +75,6 @@ class PilotExp1bConcat2b(Experiment):
                   ],
                   xaxis="Training steps",
                   yaxis="Membrane potential (mV)"),
-            # data2
             Graph(type=GraphType.LINE,
                   title="Layer 2 Apical MPs",
                   precision=2,
@@ -69,7 +85,6 @@ class PilotExp1bConcat2b(Experiment):
                   ],
                   xaxis="Training steps",
                   yaxis="Membrane potential (mV)"),
-            # data3
             Graph(type=GraphType.LINE,
                   title="Learning Rule PP_FF Triggers",
                   precision=2,
@@ -82,16 +97,56 @@ class PilotExp1bConcat2b(Experiment):
                   ],
                   # xaxis="Training steps",
                   yaxis="..."),
-            # data4
-            Graph(type=GraphType.LINE,
-                  title="Learning Rule PP_FF wts",
+            Graph(type=GraphType.LINE,  # This and the next graph interferred w/ each other when series strings were the same.
+                  title="PP_FF wts projecting to L3 Pyr0",
                   precision=2,
                   series=[
-                      Serie("PP_FF wt", data4.tolist()),
+                      Serie("PP_FF wt[0] to P0", data4a[0].tolist()),
+                      Serie("PP_FF wt[1] to P0", data4a[1].tolist()),
+                      Serie("PP_FF wt[2] to P0", data4a[2].tolist())
                   ],
                   xaxis="Training steps",
-                  yaxis="..."),
-            # data5
+                  yaxis="FF wt values to Pyr0 in L3"),
+            Graph(type=GraphType.LINE,
+                  title="PP_FF wts projecting to L3 Pyr1",
+                  precision=2,
+                  series=[
+                      Serie("PP_FF wt[0] to P1", data4b[0].tolist()),
+                      Serie("PP_FF wt[1] to P1", data4b[1].tolist()),
+                      Serie("PP_FF wt[2] to P1", data4b[2].tolist())
+                  ],
+                  xaxis="Training steps",
+                  yaxis="FF wt values to Pyr1 in L3"),
+            Graph(type=GraphType.LINE,
+                  title="PI_lat wts projecting to L2 Pyr0",
+                  precision=2,
+                  series=[
+                      Serie("PI_lat wt[0] to P0", data8a[0].tolist()),
+                      Serie("PI_lat wt[1] to P0", data8a[1].tolist()),
+                      Serie("PI_lat wt[2] to P0", data8a[2].tolist())
+                  ],
+                  xaxis="Training steps",
+                  yaxis="Lat wt values to Pyr0 in L2"),
+            Graph(type=GraphType.LINE,
+                  title="PI_lat wts projecting to L2 Pyr1",
+                  precision=2,
+                  series=[
+                      Serie("PI_lat wt[0] to P1", data8b[0].tolist()),
+                      Serie("PI_lat wt[1] to P1", data8b[1].tolist()),
+                      Serie("PI_lat wt[2] to P1", data8b[2].tolist())
+                  ],
+                  xaxis="Training steps",
+                  yaxis="Lat wt values to Pyr1 in L2"),
+            Graph(type=GraphType.LINE,
+                  title="PI_lat wts projecting to L2 Pyr2",
+                  precision=2,
+                  series=[
+                      Serie("PI_lat wt[0] to P2", data8c[0].tolist()),
+                      Serie("PI_lat wt[1] to P2", data8c[1].tolist()),
+                      Serie("PI_lat wt[2] to P2", data8c[2].tolist())
+                  ],
+                  xaxis="Training steps",
+                  yaxis="Lat wt values to Pyr2 in L2"),
             Graph(type=GraphType.LINE,
                   title="Learning Rule PP_FF Triggers L1",
                   precision=2,
@@ -104,81 +159,84 @@ class PilotExp1bConcat2b(Experiment):
                   ],
                   xaxis="Training steps",
                   yaxis="..."),
-            # data6
             Graph(type=GraphType.LINE,
-                  title="Learning Rule PP_FF wts L1",
+                  title="PP_FF wt projecting to L2 Pyr0",
                   precision=2,
                   series=[
                       Serie("PP_FF wt L1", data6.tolist()),
                   ],
                   xaxis="Training steps",
                   yaxis="..."),
-            # data7
             Graph(type=GraphType.LINE,
-                  title="Layer 3 Soma Activations",
+                  title="Layer 3 Pyr Soma Activations",
                   precision=2,
                   series=[
-                      Serie("Soma act 1", data7[0].tolist()),
-                      Serie("Soma act 2", data7[1].tolist()),
+                      Serie("Act Pyr 0", data7[0].tolist()),
+                      Serie("Act Pyr 1", data7[1].tolist()),
                   ],
                   xaxis="Training steps",
                   yaxis="Output activation"),
-            # bar graph for output acts
+            Graph(type=GraphType.LINE,
+                  title="Layer 2 Pyr Soma Activations",
+                  precision=2,
+                  series=[
+                      Serie("Act Pyr 0", data9a[0].tolist()),
+                      Serie("Act Pyr 1", data9a[1].tolist()),
+                      Serie("Act Pyr 2", data9a[2].tolist()),
+                  ],
+                  xaxis="Training steps",
+                  yaxis="Pyr Hidden activation"),
+            Graph(type=GraphType.LINE,
+                  title="Layer 2 Pyr Apical Membrane Potentials",
+                  precision=2,
+                  series=[
+                      Serie("Apical Pyr 0", data9b[0].tolist()),
+                      Serie("Apical Pyr 1", data9b[1].tolist()),
+                      Serie("Apical Pyr 2", data9b[2].tolist()),
+                  ],
+                  xaxis="Training steps",
+                  yaxis="Pyr Hidden apical membrane potential"),
+            Graph(type=GraphType.LINE,
+                  title="Layer 2 Inhib Soma Activations",
+                  precision=2,
+                  series=[
+                      Serie("Act Inhib 0", data10[0].tolist()),
+                      Serie("Act Inhib 1", data10[1].tolist()),
+                      Serie("Act Inhib 2", data10[2].tolist()),
+                  ],
+                  xaxis="Training steps",
+                  yaxis="Inhib Hidden activation"),
             Graph(type=GraphType.COLUMN,
                   title="Output Activations",
                   precision=4,
                   series=[
-                      Serie("Neuron 1", [self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS][0][399],  # 0.6535
-                                         self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS][0][400],  # 0.7165
-                                         self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS][0][598],  # 0.7310
-                                         self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS][0][599]]), # 0.7309
-                      Serie("Neuron 2", [self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS][1][399],  # 0.6051,
-                                         self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS][1][400],  # 0.5213,
-                                         self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS][1][598],  # 0.5000,
-                                         self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS][1][599]]) # 0.5002
+                      Serie("Neuron 1", [self._metrics[KEY_OUTPUT_LAYER_VALUES][0][399],  # 0.6535
+                                         self._metrics[KEY_OUTPUT_LAYER_VALUES][0][400],  # 0.7165
+                                         self._metrics[KEY_OUTPUT_LAYER_VALUES][0][598],  # 0.7310
+                                         self._metrics[KEY_OUTPUT_LAYER_VALUES][0][599]]), # 0.7309
+                      Serie("Neuron 2", [self._metrics[KEY_OUTPUT_LAYER_VALUES][1][399],  # 0.6051,
+                                         self._metrics[KEY_OUTPUT_LAYER_VALUES][1][400],  # 0.5213,
+                                         self._metrics[KEY_OUTPUT_LAYER_VALUES][1][598],  # 0.5000,
+                                         self._metrics[KEY_OUTPUT_LAYER_VALUES][1][599]]) # 0.5002
                   ],
                   categories=["Before Nudge","Nudged", "After learning", "Nudged removed"],
-                  yaxis="Activation level"),
-            # data8
-            Graph(type=GraphType.LINE,
-                  title="Layer 2 Soma Activations",
-                  precision=2,
-                  series=[
-                      Serie("Soma act 1", data8[0].tolist()),
-                      Serie("Soma act 2", data8[1].tolist()),
-                      Serie("Soma act 3", data8[2].tolist()),
-                  ],
-                  xaxis="Training steps",
-                  yaxis="Output activation"),
-            # data9
-            Graph(type=GraphType.LINE,
-                  title="Layer 2 Inhib Activations",
-                  precision=2,
-                  series=[
-                      Serie("Soma act 1", data9[0].tolist()),
-                      Serie("Soma act 2", data9[1].tolist()),
-                      Serie("Soma act 3", data9[2].tolist()),
-                  ],
-                  xaxis="Training steps",
-                  yaxis="Output activation")
+                  yaxis="Activation level")
         ]
 
     def hook_post_train_step(self):
         l1, l2, l3 = self.layers
-        # data1: apical membrane potentials Layer 1
+
         self._metrics[KEY_LAYER_1] = np.append(
             self._metrics[KEY_LAYER_1],
             create_column_vector(*map(lambda p: p.apical_mp, l1.pyrs)),
             axis=1
         )
-        # data2: apical membrane potentials Layer 2
         self._metrics[KEY_LAYER_2] = np.append(
             self._metrics[KEY_LAYER_2],
             create_column_vector(*map(lambda p: p.apical_mp, l2.pyrs)),
             axis=1
         )
 
-        # data3, data4: FF learning rule triggers and wts Layer 2
         soma_act = l3.pyr_soma_acts()[0]
         basal_hat_act = l3.pyr_basal_hat_acts()[0]
         post_soma_mp = l3.pyr_soma_mps()[0]
@@ -189,9 +247,37 @@ class PilotExp1bConcat2b(Experiment):
             self._metrics[KEY_RULE_13_POST_DATA],
             create_column_vector(soma_act, basal_hat_act, post_soma_mp, post_basal_mp, post_val),
             axis=1)
-        self._metrics[KEY_RULE_13_WT_DATA] = np.append(self._metrics[KEY_RULE_13_WT_DATA],
-                                                       l3.pyrs[0].W_PP_ff[0])
-        # data5, data6: FF learning rule triggers and wts Layer 1
+
+        self._metrics[KEY_RULE_13_WT_DATA_L2_PYR0] = np.append(
+            self._metrics[KEY_RULE_13_WT_DATA_L2_PYR0],
+            create_column_vector(l3.pyrs[0].W_PP_ff[0], l3.pyrs[0].W_PP_ff[1], l3.pyrs[0].W_PP_ff[2]),
+            axis=1
+        )
+
+        self._metrics[KEY_RULE_13_WT_DATA_L2_PYR1] = np.append(
+            self._metrics[KEY_RULE_13_WT_DATA_L2_PYR1],
+            create_column_vector(l3.pyrs[1].W_PP_ff[0], l3.pyrs[1].W_PP_ff[1], l3.pyrs[1].W_PP_ff[2]),
+            axis=1
+        )
+
+        self._metrics[KEY_RULE_16B_WT_DATA_L2_PYR0] = np.append(
+            self._metrics[KEY_RULE_16B_WT_DATA_L2_PYR0],
+            create_column_vector(l2.pyrs[0].W_PI_lat[0], l2.pyrs[0].W_PI_lat[1], l2.pyrs[0].W_PI_lat[2]),
+            axis=1
+        )
+
+        self._metrics[KEY_RULE_16B_WT_DATA_L2_PYR1] = np.append(
+            self._metrics[KEY_RULE_16B_WT_DATA_L2_PYR1],
+            create_column_vector(l2.pyrs[1].W_PI_lat[0], l2.pyrs[1].W_PI_lat[1], l2.pyrs[1].W_PI_lat[2]),
+            axis=1
+        )
+
+        self._metrics[KEY_RULE_16B_WT_DATA_L2_PYR2] = np.append(
+            self._metrics[KEY_RULE_16B_WT_DATA_L2_PYR2],
+            create_column_vector(l2.pyrs[2].W_PI_lat[0], l2.pyrs[2].W_PI_lat[1], l2.pyrs[2].W_PI_lat[2]),
+            axis=1
+        )
+
         soma_act = l2.pyr_soma_acts()[0]
         basal_hat_act = l2.pyr_basal_hat_acts()[0]
         post_soma_mp = l2.pyr_soma_mps()[0]
@@ -204,27 +290,31 @@ class PilotExp1bConcat2b(Experiment):
             axis=1)
         self._metrics[KEY_RULE_13_WT_DATA_L1] = np.append(self._metrics[KEY_RULE_13_WT_DATA_L1],
                                                           l2.pyrs[0].W_PP_ff[0])
-        # data7: output layer activation values
-        self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS] = np.append(
-            self._metrics[KEY_OUTPUT_LAYER_PYR_ACTS],
+
+        self._metrics[KEY_OUTPUT_LAYER_VALUES] = np.append(
+            self._metrics[KEY_OUTPUT_LAYER_VALUES],
             create_column_vector(*map(lambda p: p.soma_act, l3.pyrs)),
             axis=1)
 
-        # data8: hidden layer pyr activation values
-        self._metrics[KEY_HIDDEN_LAYER_PYR_ACTS] = np.append(
-            self._metrics[KEY_HIDDEN_LAYER_PYR_ACTS],
+        self._metrics[KEY_HIDDEN_LAYER_PYR_ACT_VALUES] = np.append(
+            self._metrics[KEY_HIDDEN_LAYER_PYR_ACT_VALUES],
             create_column_vector(*map(lambda p: p.soma_act, l2.pyrs)),
             axis=1)
 
-        # data9: hidden layer inhib activation values
-        self._metrics[KEY_HIDDEN_LAYER_INHIB_ACTS] = np.append(
-            self._metrics[KEY_HIDDEN_LAYER_INHIB_ACTS],
+        self._metrics[KEY_HIDDEN_LAYER_APICAL_VALUES] = np.append(
+            self._metrics[KEY_HIDDEN_LAYER_APICAL_VALUES],
+            create_column_vector(*map(lambda p: p.apical_mp, l2.pyrs)),
+            axis=1)
+
+        self._metrics[KEY_HIDDEN_LAYER_INHIB_ACT_VALUES] = np.append(
+            self._metrics[KEY_HIDDEN_LAYER_INHIB_ACT_VALUES],
             create_column_vector(*map(lambda p: p.soma_act, l2.inhibs)),
             axis=1)
 
+
     def do_ff_sweep(self):
         """Standard FF sweep"""
-        logger.debug("Starting FF sweep...")
+        #logger.debug("Starting FF sweep...")
 
         # Iterates over layers from start to end. From ai.utils.
         for prev, layer in iter_with_prev(self.layers):  # Yields prev layer and current layer
@@ -239,7 +329,7 @@ class PilotExp1bConcat2b(Experiment):
 
     def do_fb_sweep(self):
         """Standard FB sweep"""
-        logger.debug("Starting FB sweep...")
+        #logger.debug("Starting FB sweep...")
 
         for prev, layer in iter_with_prev(reversed(self.layers)):
             if prev is None:  # Skip first layer (L3)
@@ -262,10 +352,10 @@ class PilotExp1bConcat2b(Experiment):
     def run(self, self_prediction_steps: int, training_steps: int, after_training_steps: int):
         logger.info("START: Performing nudge experiment with rules 16b and 13.")
         self.do_ff_sweep()  # prints state
-        logger.info("Finished 1st FF sweep: pilot_exp_1b_concat_2b")
+        logger.info("Finished 1st FF sweep: nudge_experiment")
 
         self.do_fb_sweep()  # prints state
-        logger.info("Finished 1st FB sweep: pilot_exp_1b_concat_2b")
+        logger.info("Finished 1st FB sweep: nudge_experiment")
 
         logger.info(f"Starting training {self_prediction_steps} steps to 1b2b self predictive.")
         # trains and SAVES apical results in 'datasets' attr

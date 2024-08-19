@@ -280,10 +280,9 @@ class XorExperiment(Experiment):
     def run(self, self_prediction_steps: int, training_steps: int, after_training_steps: int):
         logger.info("START: Performing nudge experiment with rules 16b and 13.")
         # self.do_ff_sweep()  # prints state
-        # logger.info("Finished 1st FF sweep: pilot_exp_1b_concat_2b")
-
+        # logger.info("Finished 1st FF sweep: NudgeExperiment")
         # self.do_fb_sweep()  # prints state
-        # logger.info("Finished 1st FB sweep: pilot_exp_1b_concat_2b")
+        # logger.info("Finished 1st FB sweep: nudge_experiment")
 
         logger.info(f"Starting training {self_prediction_steps} steps to XOR self predictive.")
         # trains and SAVES apical results in 'datasets' attr

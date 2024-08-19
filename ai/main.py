@@ -30,14 +30,14 @@ from typing import List
 from werkzeug.datastructures import MultiDict
 
 from ai.colorized_logger import get_logger
-from ai.experiments import KEYS, PilotExp1bConcat2b, XorExperiment
+from ai.experiments import KEYS, NudgeExperiment, XorExperiment
 from metrics import Graph
 
 logger = get_logger('ai.sacramento_main')
 #logger.setLevel(logging.DEBUG)
 
 
-def pilot_exp_1b_concat_2b(params: MultiDict = None) -> List[Graph]:  # Why is MultiDict needed?
+def nudge_experiment(params: MultiDict = None) -> List[Graph]:  # Why is MultiDict needed?
     """Do an experiment"""
     if params is None:
         params = MultiDict()
@@ -57,7 +57,7 @@ def pilot_exp_1b_concat_2b(params: MultiDict = None) -> List[Graph]:  # Why is M
     after_training_steps = params.get('after_training_steps', 10, type=int)
 
     logger.info('Starting sacramento_main')
-    experiment = PilotExp1bConcat2b(wt_init_seed, beta, learning_rate, nudge1, nudge2)  # make instance
+    experiment = NudgeExperiment(wt_init_seed, beta, learning_rate, nudge1, nudge2)  # make instance
     experiment.build_small_three_layer_network(*n_pyr_by_layer)
     logger.info('Finished building network')
     logger.info('Starting to run experiment')
@@ -96,8 +96,8 @@ def xor_experiment(params: MultiDict = None) -> List[Graph]:
 
 def main(experiment_name: str, params: MultiDict) -> List[Graph]:
     match experiment_name:
-        case KEYS.PILOT_EXP_1B_CONCAT_2B:
-            return pilot_exp_1b_concat_2b(params)
+        case KEYS.NUDGE_EXPERIMENT:
+            return nudge_experiment(params)
         case KEYS.XOR_EXPERIMENT:
             return xor_experiment(params)
         case _:
