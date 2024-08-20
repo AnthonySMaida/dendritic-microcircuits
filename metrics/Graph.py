@@ -17,3 +17,8 @@ class Graph:
     """Optional y-axis label"""
     categories: Optional[List[str]] = None
     """Optional list of categories for the x-axis (column type only)"""
+    extra: Optional[dict] = None
+
+    @staticmethod
+    def empty() -> "Graph":
+        return Graph(GraphType.EMPTY, "", 1, [])

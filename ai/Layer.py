@@ -70,10 +70,10 @@ class Layer:
     # FF and FB neuron update mechanisms #
     ######################################
 
-    def apply_inputs_to_test_self_predictive_convergence(self):
+    def apply_inputs_to_test_self_predictive_convergence(self, input_val):
         """apply uniform inputs of 0.5 to get the system running"""
         for i in range(len(self.pyrs)):
-            self.pyrs[i].basal_mp = 0.5
+            self.pyrs[i].basal_mp = input_val[i]
             self.pyrs[i].update_pyr_soma_ff()  # updates soma mp and activation
 
     def update_dend_mps_via_ip(self):  # update dendritic membrane potentials
@@ -107,15 +107,14 @@ class Layer:
     # Output layer nudging #
     ########################
 
-    def nudge_output_layer_neurons(self, targ_val1, targ_val2, lambda_nudge=0.8):
+    def nudge_output_layer_neurons(self, *targ_vals, lambda_nudge=0.8):
         """
-        Assumes there are two pyr neurons in the output layer.
         Nudges the somatic membrane potential of both neurons and then updates their activations.
         """
-        self.pyrs[0].soma_mp = (1 - lambda_nudge) * self.pyrs[0].basal_mp + lambda_nudge * targ_val1
-        self.pyrs[0].soma_act = logsig(self.pyrs[0].soma_mp)
-        self.pyrs[1].soma_mp = (1 - lambda_nudge) * self.pyrs[1].basal_mp + lambda_nudge * targ_val2
-        self.pyrs[1].soma_act = logsig(self.pyrs[1].soma_mp)
+        for i in range(len(self.pyrs)):
+            pyr = self.pyrs[i]
+            pyr.soma_mp = (1 - lambda_nudge) * pyr.basal_mp + lambda_nudge * targ_vals[i]
+            pyr.soma_act = logsig(pyr.soma_mp)
 
     #############
     # print wts #

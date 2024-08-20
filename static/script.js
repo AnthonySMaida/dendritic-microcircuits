@@ -1,4 +1,5 @@
 const container = document.getElementById('container-graph')
+const form = document.getElementById('container-params')
 
 function cleanContainer() {
   Array.from(container.children).forEach(n => n.remove())
@@ -10,24 +11,21 @@ function genGraph(data) {
       return genColumnGraph(data)
     case 'line':
       return genLineGraph(data)
+    case '':
+      return null
     default:
       throw new Error(`Unknown graph type: ${data.type}`)
   }
 }
 
 function getFormValues() {
-  return {
-    wt_init_seed: document.getElementById('wt_init_seed').value,
-    beta: document.getElementById('beta').value,
-    learning_rate: document.getElementById('learning_rate').value,
-    nudge1: document.getElementById('nudge1').value,
-    nudge2: document.getElementById('nudge2').value,
-    n_pyr_layer1: document.getElementById('n_pyr_layer1').value,
-    n_pyr_layer2: document.getElementById('n_pyr_layer2').value,
-    n_pyr_layer3: document.getElementById('n_pyr_layer3').value,
-    self_prediction_steps: document.getElementById('self_prediction_steps').value,
-    training_steps: document.getElementById('training_steps').value
-  }
+  const formData = {}
+  Array.from(form.elements).forEach(e => {
+    if (e.id) {
+      formData[e.id] = e.value
+    }
+  })
+  return formData
 }
 
 function handleApiData(json) {
@@ -35,10 +33,20 @@ function handleApiData(json) {
 
   for (const data of json) {
     const canvas = document.createElement('div')
+
+    const options = genGraph(data)
+
+    if (!options) {
+      canvas.style.height = '349px'
+      canvas.style.width = '502px'
+    }
+
     container.appendChild(canvas)
 
-    const chart = new ApexCharts(canvas, genGraph(data))
-    chart.render()
+    if (options) {
+      const chart = new ApexCharts(canvas, options)
+      chart.render()
+    }
   }
 }
 
@@ -57,5 +65,5 @@ function getData() {
    *  Fetch tells browser to send a request to the flask backend on the '/data' route.
    */
   const params = new URLSearchParams(getFormValues())
-  fetch(`/data?${params}`).then(r => r.ok ? r.json().then(handleApiData) : r.text().then(catchApiErrors))
+  fetch(`/data/${ENDPOINT}?${params}`).then(r => r.ok ? r.json().then(handleApiData) : r.text().then(catchApiErrors))
 }

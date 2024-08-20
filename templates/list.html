@@ -1,0 +1,14 @@
+{% extends 'base/base.html' %}
+
+{% block container %}
+  <h2>Available experiments</h2>
+  <div class="list">
+    {% for key, props in experiments.items() %}
+      <div class="list-item">
+        <a href="{{ url_for('experiment', experiment_name=key) }}">
+          {{ props.title }}
+        </a>
+      </div>
+    {% endfor %}
+  </div>
+{% endblock %}

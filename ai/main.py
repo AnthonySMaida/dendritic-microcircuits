@@ -25,22 +25,23 @@ Implemented in numpy. The code is not vectorized but the
 data structures used closely mimic the neural anatomy given in the paper.
 """
 
-# import logging
 from typing import List
 
 from werkzeug.datastructures import MultiDict
 
 from ai.colorized_logger import get_logger
-from ai.experiments import PilotExp1bConcat2b
+from ai.experiments import KEYS, NudgeExperiment, XorExperiment
 from metrics import Graph
-
 
 logger = get_logger('ai.sacramento_main')
 #logger.setLevel(logging.DEBUG)
 
 
-def main(params: MultiDict) -> List[Graph]:  # Why is MultiDict needed?
+def nudge_experiment(params: MultiDict = None) -> List[Graph]:  # Why is MultiDict needed?
     """Do an experiment"""
+    if params is None:
+        params = MultiDict()
+
     wt_init_seed = params.get('wt_init_seed', 42, type=int)
     beta = params.get('beta', 1.0 / 3.0, type=float)  # beta = 1/lambda => lambda = 3. beta is scale param for rng.exponential.
     learning_rate = params.get('learning_rate', 0.05, type=float)
@@ -56,7 +57,7 @@ def main(params: MultiDict) -> List[Graph]:  # Why is MultiDict needed?
     after_training_steps = params.get('after_training_steps', 10, type=int)
 
     logger.info('Starting sacramento_main')
-    experiment = PilotExp1bConcat2b(wt_init_seed, beta, learning_rate, nudge1, nudge2)  # make instance
+    experiment = NudgeExperiment(wt_init_seed, beta, learning_rate, nudge1, nudge2)  # make instance
     experiment.build_small_three_layer_network(*n_pyr_by_layer)
     logger.info('Finished building network')
     logger.info('Starting to run experiment')
@@ -68,6 +69,36 @@ def main(params: MultiDict) -> List[Graph]:  # Why is MultiDict needed?
 
     return experiment.extract_metrics()
 
+def xor_experiment(params: MultiDict = None) -> List[Graph]:
+    if params is None:
+        params = MultiDict()
 
-if __name__ == '__main__':
-    main()
+    wt_init_seed = params.get('wt_init_seed', 42, type=int)
+    label_init_seed = params.get('label_init_seed', 42, type=int)
+    beta = params.get('beta', 1.0 / 3.0, type=float)  # beta = 1/lambda => lambda = 3. beta is scale param for rng.exponential.
+    learning_rate = params.get('learning_rate', 0.05, type=float)
+    n_pyr_by_layer = (
+        params.get('n_pyr_layer1', 2, type=int),
+        params.get('n_pyr_layer2', 3, type=int),
+        params.get('n_pyr_layer3', 2, type=int),
+    )
+    self_prediction_steps = params.get('self_prediction_steps', 400, type=int)
+    training_steps = params.get('training_steps', 190, type=int)
+    after_training_steps = params.get('after_training_steps', 10, type=int)
+
+    experiment = XorExperiment(wt_init_seed, label_init_seed, beta, learning_rate)
+    experiment.build_small_three_layer_network(*n_pyr_by_layer)
+    experiment.run(self_prediction_steps, training_steps, after_training_steps)
+    experiment.print_ff_and_fb_wts_last_layer()
+
+    return experiment.extract_metrics()
+
+
+def main(experiment_name: str, params: MultiDict) -> List[Graph]:
+    match experiment_name:
+        case KEYS.NUDGE_EXPERIMENT:
+            return nudge_experiment(params)
+        case KEYS.XOR_EXPERIMENT:
+            return xor_experiment(params)
+        case _:
+            raise ValueError(f"Unknown experiment: {experiment_name}")

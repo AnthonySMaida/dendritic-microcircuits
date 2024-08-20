@@ -1,0 +1,29 @@
+{% extends 'base/base.html' %}
+
+{% block head %}
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+{% endblock %}
+
+{% block container %}
+  <div id="container-graph"></div>
+  <form id="container-params">
+      {% block params %}
+      {% endblock %}
+  </form>
+{% endblock %}
+
+{% block body %}
+<div id="actions">
+  {% block actions %}{% endblock %}
+  <button onclick="history.back()">Go Back</button>
+</div>
+{% endblock %}
+
+{% block postbody %}
+  {% if key %}
+  <script type="text/javascript">const ENDPOINT = '{{ key }}';</script>
+  {% endif %}
+  <script src="{{ url_for('static', filename='graph_types/column.js') }}"></script>
+  <script src="{{ url_for('static', filename='graph_types/line.js') }}"></script>
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+{% endblock %}
