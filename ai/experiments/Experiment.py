@@ -19,7 +19,7 @@ class Experiment:
         self._metrics = {}
         self._rng_wts = np.random.default_rng(seed=wt_init_seed)
 
-        self.layers: List[Layer] = []  # list is made of layers. Assists code completion.
+        self.layers: List[Layer] = []  # list is made of layers. List type assists code completion.
 
     @abstractmethod
     def extract_metrics(self) -> List[Graph]:  # declares return type

@@ -20,8 +20,10 @@ KEY_RULE_16B_WT_DATA_L2_PYR2 = "rule16b_wt_data_l2_pyr2"  # <= new
 KEY_RULE_13_POST_DATA_L1 = "rule13_post_data_l1"
 KEY_RULE_13_WT_DATA_L1 = "rule13_wt_data_l1"
 KEY_OUTPUT_LAYER_VALUES = "output_layer_values"
+KEY_OUTPUT_LAYER_BASAL_MPS = "output_layer_basal_mps"
 KEY_HIDDEN_LAYER_PYR_ACT_VALUES = "hidden_layer_pyr_act_values"
-KEY_HIDDEN_LAYER_APICAL_VALUES = "hidden_layer_cal_pyr_apical_values"
+KEY_HIDDEN_LAYER_APICAL_FB_VALUES = "hidden_layer_calc_pyr_apical_values"
+KEY_HIDDEN_LAYER_APICAL_LAT_VALUES = "hidden_layer_calc_pyr_lat_values"
 KEY_HIDDEN_LAYER_INHIB_ACT_VALUES = "hidden_layer_inhib_act_values"
 
 
@@ -45,8 +47,10 @@ class NudgeExperiment(Experiment):
         self._metrics[KEY_RULE_13_POST_DATA_L1] = np.empty(shape=(5,0))
         self._metrics[KEY_RULE_13_WT_DATA_L1] = np.empty(shape=(0,))
         self._metrics[KEY_OUTPUT_LAYER_VALUES] = np.empty(shape=(2, 0))
+        self._metrics[KEY_OUTPUT_LAYER_BASAL_MPS] = np.empty(shape=(2, 0))
         self._metrics[KEY_HIDDEN_LAYER_PYR_ACT_VALUES] = np.empty(shape=(3, 0))
-        self._metrics[KEY_HIDDEN_LAYER_APICAL_VALUES] = np.empty(shape=(3, 0))
+        self._metrics[KEY_HIDDEN_LAYER_APICAL_FB_VALUES] = np.empty(shape=(3, 0))
+        self._metrics[KEY_HIDDEN_LAYER_APICAL_LAT_VALUES] =  np.empty(shape=(3, 0))
         self._metrics[KEY_HIDDEN_LAYER_INHIB_ACT_VALUES] = np.empty(shape=(3, 0))
 
     def extract_metrics(self):
@@ -58,11 +62,13 @@ class NudgeExperiment(Experiment):
         triggers_l1 = self._metrics[KEY_RULE_13_POST_DATA_L1]
         wts_l1 = self._metrics[KEY_RULE_13_WT_DATA_L1]
         soma_acts_l3 = self._metrics[KEY_OUTPUT_LAYER_VALUES]
+        basal_mps_l3 = self._metrics[KEY_OUTPUT_LAYER_BASAL_MPS]
         wts_16b_l2_pyr0 = self._metrics[KEY_RULE_16B_WT_DATA_L2_PYR0]
         wts_16b_l2_pyr1 = self._metrics[KEY_RULE_16B_WT_DATA_L2_PYR1]
         wts_16b_l2_pyr2 = self._metrics[KEY_RULE_16B_WT_DATA_L2_PYR2]
         soma_acts_l2 = self._metrics[KEY_HIDDEN_LAYER_PYR_ACT_VALUES]
-        apical_mp_l2 = self._metrics[KEY_HIDDEN_LAYER_APICAL_VALUES]
+        apical_fb_l2 = self._metrics[KEY_HIDDEN_LAYER_APICAL_FB_VALUES]
+        apical_lat_l2 = self._metrics[KEY_HIDDEN_LAYER_APICAL_LAT_VALUES]
         inhib_soma_acts_l2 = self._metrics[KEY_HIDDEN_LAYER_INHIB_ACT_VALUES]
 
         return [
@@ -177,6 +183,15 @@ class NudgeExperiment(Experiment):
                   xaxis="Training steps",
                   yaxis="Output activation"),
             Graph(type=GraphType.LINE,
+                  title="Layer 3 Pyr Basal MPs",
+                  precision=2,
+                  series=[
+                      Serie("Act Pyr 0", basal_mps_l3[0].tolist()),
+                      Serie("Act Pyr 1", basal_mps_l3[1].tolist()),
+                  ],
+                  xaxis="Training steps",
+                  yaxis="Basal MP"),
+            Graph(type=GraphType.LINE,
                   title="Layer 2 Pyr Soma Activations",
                   precision=2,
                   series=[
@@ -187,15 +202,25 @@ class NudgeExperiment(Experiment):
                   xaxis="Training steps",
                   yaxis="Pyr Hidden activation"),
             Graph(type=GraphType.LINE,
-                  title="Layer 2 Pyr Apical Membrane Potentials",
+                  title="Layer 2 Pyr Apical FB Values",
                   precision=2,
                   series=[
-                      Serie("Apical Pyr 0", apical_mp_l2[0].tolist()),
-                      Serie("Apical Pyr 1", apical_mp_l2[1].tolist()),
-                      Serie("Apical Pyr 2", apical_mp_l2[2].tolist()),
+                      Serie("Apical FB Pyr 0", apical_fb_l2[0].tolist()),
+                      Serie("Apical FB Pyr 1", apical_fb_l2[1].tolist()),
+                      Serie("Apical FB Pyr 2", apical_fb_l2[2].tolist()),
                   ],
                   xaxis="Training steps",
-                  yaxis="Pyr Hidden apical membrane potential"),
+                  yaxis="Pyr Hidden apical FB values"),
+            Graph(type=GraphType.LINE,
+                  title="Layer 2 Pyr Apical LAT Values",
+                  precision=2,
+                  series=[
+                      Serie("Apical LAT Pyr 0", apical_lat_l2[0].tolist()),
+                      Serie("Apical LAT Pyr 1", apical_lat_l2[1].tolist()),
+                      Serie("Apical LAT Pyr 2", apical_lat_l2[2].tolist()),
+                  ],
+                  xaxis="Training steps",
+                  yaxis="Pyr Hidden apical LAT values"),
             Graph(type=GraphType.LINE,
                   title="Layer 2 Inhib Soma Activations",
                   precision=2,
@@ -296,14 +321,24 @@ class NudgeExperiment(Experiment):
             create_column_vector(*map(lambda p: p.soma_act, l3.pyrs)),
             axis=1)
 
+        self._metrics[KEY_OUTPUT_LAYER_BASAL_MPS] = np.append(
+            self._metrics[KEY_OUTPUT_LAYER_BASAL_MPS],
+            create_column_vector(*map(lambda p: p.basal_mp, l3.pyrs)),
+            axis=1)
+
         self._metrics[KEY_HIDDEN_LAYER_PYR_ACT_VALUES] = np.append(
             self._metrics[KEY_HIDDEN_LAYER_PYR_ACT_VALUES],
             create_column_vector(*map(lambda p: p.soma_act, l2.pyrs)),
             axis=1)
 
-        self._metrics[KEY_HIDDEN_LAYER_APICAL_VALUES] = np.append(
-            self._metrics[KEY_HIDDEN_LAYER_APICAL_VALUES],
-            create_column_vector(*map(lambda p: p.apical_mp, l2.pyrs)),
+        self._metrics[KEY_HIDDEN_LAYER_APICAL_FB_VALUES] = np.append(
+            self._metrics[KEY_HIDDEN_LAYER_APICAL_FB_VALUES],
+            create_column_vector(*map(lambda p: p.apical_fb, l2.pyrs)),
+            axis=1)
+
+        self._metrics[KEY_HIDDEN_LAYER_APICAL_LAT_VALUES] = np.append(
+            self._metrics[KEY_HIDDEN_LAYER_APICAL_LAT_VALUES],
+            create_column_vector(*map(lambda p: p.apical_lat, l2.pyrs)),
             axis=1)
 
         self._metrics[KEY_HIDDEN_LAYER_INHIB_ACT_VALUES] = np.append(
@@ -331,11 +366,11 @@ class NudgeExperiment(Experiment):
         """Standard FB sweep"""
         #logger.debug("Starting FB sweep...")
 
-        for prev, layer in iter_with_prev(reversed(self.layers)):
+        for prev, layer in iter_with_prev(reversed(self.layers)):  # [l3, l2, l1]
             if prev is None:  # Skip first layer (L3)
                 continue
             # update current layer pyrs using somatic pyr acts from previous layer and inhib acts from current layer
-            layer.update_pyrs_apical_soma_fb(prev)
+            layer.update_pyrs_apical_soma_fb(prev)  # in 2nd iter, layer = l2 and prev = l3
             #logger.debug(layer)
 
         #logger.info("FB sweep done.")
@@ -396,7 +431,7 @@ class NudgeExperiment(Experiment):
         logger.info("Imposing nudge now")
 
         last_layer = self.layers[-1]
-        last_layer.nudge_output_layer_neurons(self._nudge1, self._nudge2, lambda_nudge=0.8)
+        last_layer.nudge_output_layer_neurons(self._nudge1, self._nudge2, lambda_nudge=0.9)
         logger.debug("Layer %d activations after nudge.", last_layer.id_num)
         last_layer.print_pyr_activations()
 

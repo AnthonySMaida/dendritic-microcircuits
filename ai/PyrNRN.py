@@ -16,6 +16,8 @@ class PyrNRN:
         self.type = "pyr"
         self.soma_mp = 0.0  # somatic membrane potential
         self.apical_mp = 0.0  # apical membrane potential
+        self.apical_fb = 0.0   # for debugging
+        self.apical_lat = 0.0  # for debugging
         self.basal_mp = 0.0  # basal membrane potential
         self.basal_hat = 0.0  # predicted basal membrane potential
         self.basal_hat_act = 0.0  # predicted basal activation

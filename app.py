@@ -14,6 +14,7 @@ def home():
     routes this request to the "home" function b/c of the route decorator.
     """
     return render_template('list.html',
+                           title='crtfvygb',
                            experiments=EXPERIMENTS)
 
 

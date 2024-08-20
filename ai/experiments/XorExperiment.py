@@ -35,8 +35,8 @@ class XorExperiment(Experiment):
         self._metrics[KEY_HIDDEN_LAYER_PYR_ACTS] = np.empty(shape=(3, 0))
         self._metrics[KEY_HIDDEN_LAYER_INHIB_ACTS] = np.empty(shape=(3, 0))
 
-        self._X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
-        self._Y = np.array([0, 1, 1, 0])
+        self._X = np.array([[0, 1]])
+        self._Y = np.array([1])
 
         self._current_index: Optional[int] = None
         self._current_X: Optional[np.ndarray] = None

@@ -93,9 +93,12 @@ class Layer:
     def update_pyrs_apical_soma_fb(self, higher_layer):
         """propagates input from apical dends to soma"""
         fb_acts = higher_layer.pyr_soma_acts()
-        inhib_acts = self.inhib_soma_acts()
+        inhib_acts = self.inhib_soma_acts()  # inhibs in current layer
         for i in range(len(self.pyrs)):
-            self.pyrs[i].apical_mp = np.dot(self.pyrs[i].W_PP_fb, fb_acts) + np.dot(self.pyrs[i].W_PI_lat, inhib_acts)
+            self.pyrs[i].apical_fb = np.dot(self.pyrs[i].W_PP_fb, fb_acts)
+            self.pyrs[i].apical_lat = np.dot(self.pyrs[i].W_PI_lat, inhib_acts)
+            self.pyrs[i].apical_mp = self.pyrs[i].apical_fb + self.pyrs[i].apical_lat
+            #self.pyrs[i].apical_mp = np.dot(self.pyrs[i].W_PP_fb, fb_acts) + np.dot(self.pyrs[i].W_PI_lat, inhib_acts)
             self.pyrs[i].apical_act = logsig(self.pyrs[i].apical_mp)
             self.pyrs[i].apical_hat = 0.5 * self.pyrs[i].apical_mp  # approximation to Eqn (14)
             self.pyrs[i].apical_hat_act = logsig(self.pyrs[i].apical_hat)
@@ -107,7 +110,7 @@ class Layer:
     # Output layer nudging #
     ########################
 
-    def nudge_output_layer_neurons(self, *targ_vals, lambda_nudge=0.8):
+    def nudge_output_layer_neurons(self, *targ_vals, lambda_nudge=0.9):
         """
         Nudges the somatic membrane potential of both neurons and then updates their activations.
         """
