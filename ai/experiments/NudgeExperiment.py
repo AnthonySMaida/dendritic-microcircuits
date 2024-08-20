@@ -50,28 +50,28 @@ class NudgeExperiment(Experiment):
         self._metrics[KEY_HIDDEN_LAYER_INHIB_ACT_VALUES] = np.empty(shape=(3, 0))
 
     def extract_metrics(self):
-        data1 = self._metrics[KEY_LAYER_1]
-        data2 = self._metrics[KEY_LAYER_2]
-        data3 = self._metrics[KEY_RULE_13_POST_DATA]
-        data4a = self._metrics[KEY_RULE_13_WT_DATA_L2_PYR0]
-        data4b = self._metrics[KEY_RULE_13_WT_DATA_L2_PYR1]
-        data5 = self._metrics[KEY_RULE_13_POST_DATA_L1]
-        data6 = self._metrics[KEY_RULE_13_WT_DATA_L1]
-        data7 = self._metrics[KEY_OUTPUT_LAYER_VALUES]
-        data8a = self._metrics[KEY_RULE_16B_WT_DATA_L2_PYR0]
-        data8b = self._metrics[KEY_RULE_16B_WT_DATA_L2_PYR1]
-        data8c = self._metrics[KEY_RULE_16B_WT_DATA_L2_PYR2]
-        data9a = self._metrics[KEY_HIDDEN_LAYER_PYR_ACT_VALUES]
-        data9b = self._metrics[KEY_HIDDEN_LAYER_APICAL_VALUES]
-        data10 = self._metrics[KEY_HIDDEN_LAYER_INHIB_ACT_VALUES]
+        data_l1 = self._metrics[KEY_LAYER_1]
+        data_l2 = self._metrics[KEY_LAYER_2]
+        triggers_l2 = self._metrics[KEY_RULE_13_POST_DATA]
+        wts_r13_l2_pyr0 = self._metrics[KEY_RULE_13_WT_DATA_L2_PYR0]
+        wts_r13_l2_pyr1 = self._metrics[KEY_RULE_13_WT_DATA_L2_PYR1]
+        triggers_l1 = self._metrics[KEY_RULE_13_POST_DATA_L1]
+        wts_l1 = self._metrics[KEY_RULE_13_WT_DATA_L1]
+        soma_acts_l3 = self._metrics[KEY_OUTPUT_LAYER_VALUES]
+        wts_16b_l2_pyr0 = self._metrics[KEY_RULE_16B_WT_DATA_L2_PYR0]
+        wts_16b_l2_pyr1 = self._metrics[KEY_RULE_16B_WT_DATA_L2_PYR1]
+        wts_16b_l2_pyr2 = self._metrics[KEY_RULE_16B_WT_DATA_L2_PYR2]
+        soma_acts_l2 = self._metrics[KEY_HIDDEN_LAYER_PYR_ACT_VALUES]
+        apical_mp_l2 = self._metrics[KEY_HIDDEN_LAYER_APICAL_VALUES]
+        inhib_soma_acts_l2 = self._metrics[KEY_HIDDEN_LAYER_INHIB_ACT_VALUES]
 
         return [
             Graph(type=GraphType.LINE,
                   title="Layer 1 Apical MPs",
                   precision=2,
                   series=[
-                      Serie("Apical MP 1", data1[0].tolist()),
-                      Serie("Apical MP 2", data1[1].tolist()),
+                      Serie("Apical MP 1", data_l1[0].tolist()),
+                      Serie("Apical MP 2", data_l1[1].tolist()),
                   ],
                   xaxis="Training steps",
                   yaxis="Membrane potential (mV)"),
@@ -79,9 +79,9 @@ class NudgeExperiment(Experiment):
                   title="Layer 2 Apical MPs",
                   precision=2,
                   series=[
-                      Serie("Apical MP 1", data2[0].tolist()),
-                      Serie("Apical MP 2", data2[1].tolist()),
-                      Serie("Apical MP 3", data2[2].tolist()),
+                      Serie("Apical MP 1", data_l2[0].tolist()),
+                      Serie("Apical MP 2", data_l2[1].tolist()),
+                      Serie("Apical MP 3", data_l2[2].tolist()),
                   ],
                   xaxis="Training steps",
                   yaxis="Membrane potential (mV)"),
@@ -89,11 +89,11 @@ class NudgeExperiment(Experiment):
                   title="Learning Rule PP_FF Triggers",
                   precision=2,
                   series=[
-                      Serie("Soma act", data3[0].tolist()),
-                      Serie("Basal hat act", data3[1].tolist()),
-                      Serie("Post soma MP", data3[2].tolist()),
-                      Serie("Post basal MP", data3[3].tolist()),
-                      Serie("Post val", data3[4].tolist()),
+                      Serie("Soma act", triggers_l2[0].tolist()),
+                      Serie("Basal hat act", triggers_l2[1].tolist()),
+                      Serie("Post soma MP", triggers_l2[2].tolist()),
+                      Serie("Post basal MP", triggers_l2[3].tolist()),
+                      Serie("Post val", triggers_l2[4].tolist()),
                   ],
                   # xaxis="Training steps",
                   yaxis="..."),
@@ -101,9 +101,9 @@ class NudgeExperiment(Experiment):
                   title="PP_FF wts projecting to L3 Pyr0",
                   precision=2,
                   series=[
-                      Serie("PP_FF wt[0] to P0", data4a[0].tolist()),
-                      Serie("PP_FF wt[1] to P0", data4a[1].tolist()),
-                      Serie("PP_FF wt[2] to P0", data4a[2].tolist())
+                      Serie("PP_FF wt[0] to P0", wts_r13_l2_pyr0[0].tolist()),
+                      Serie("PP_FF wt[1] to P0", wts_r13_l2_pyr0[1].tolist()),
+                      Serie("PP_FF wt[2] to P0", wts_r13_l2_pyr0[2].tolist())
                   ],
                   xaxis="Training steps",
                   yaxis="FF wt values to Pyr0 in L3"),
@@ -111,9 +111,9 @@ class NudgeExperiment(Experiment):
                   title="PP_FF wts projecting to L3 Pyr1",
                   precision=2,
                   series=[
-                      Serie("PP_FF wt[0] to P1", data4b[0].tolist()),
-                      Serie("PP_FF wt[1] to P1", data4b[1].tolist()),
-                      Serie("PP_FF wt[2] to P1", data4b[2].tolist())
+                      Serie("PP_FF wt[0] to P1", wts_r13_l2_pyr1[0].tolist()),
+                      Serie("PP_FF wt[1] to P1", wts_r13_l2_pyr1[1].tolist()),
+                      Serie("PP_FF wt[2] to P1", wts_r13_l2_pyr1[2].tolist())
                   ],
                   xaxis="Training steps",
                   yaxis="FF wt values to Pyr1 in L3"),
@@ -121,9 +121,9 @@ class NudgeExperiment(Experiment):
                   title="PI_lat wts projecting to L2 Pyr0",
                   precision=2,
                   series=[
-                      Serie("PI_lat wt[0] to P0", data8a[0].tolist()),
-                      Serie("PI_lat wt[1] to P0", data8a[1].tolist()),
-                      Serie("PI_lat wt[2] to P0", data8a[2].tolist())
+                      Serie("PI_lat wt[0] to P0", wts_16b_l2_pyr0[0].tolist()),
+                      Serie("PI_lat wt[1] to P0", wts_16b_l2_pyr0[1].tolist()),
+                      Serie("PI_lat wt[2] to P0", wts_16b_l2_pyr0[2].tolist())
                   ],
                   xaxis="Training steps",
                   yaxis="Lat wt values to Pyr0 in L2"),
@@ -131,9 +131,9 @@ class NudgeExperiment(Experiment):
                   title="PI_lat wts projecting to L2 Pyr1",
                   precision=2,
                   series=[
-                      Serie("PI_lat wt[0] to P1", data8b[0].tolist()),
-                      Serie("PI_lat wt[1] to P1", data8b[1].tolist()),
-                      Serie("PI_lat wt[2] to P1", data8b[2].tolist())
+                      Serie("PI_lat wt[0] to P1", wts_16b_l2_pyr1[0].tolist()),
+                      Serie("PI_lat wt[1] to P1", wts_16b_l2_pyr1[1].tolist()),
+                      Serie("PI_lat wt[2] to P1", wts_16b_l2_pyr1[2].tolist())
                   ],
                   xaxis="Training steps",
                   yaxis="Lat wt values to Pyr1 in L2"),
@@ -141,9 +141,9 @@ class NudgeExperiment(Experiment):
                   title="PI_lat wts projecting to L2 Pyr2",
                   precision=2,
                   series=[
-                      Serie("PI_lat wt[0] to P2", data8c[0].tolist()),
-                      Serie("PI_lat wt[1] to P2", data8c[1].tolist()),
-                      Serie("PI_lat wt[2] to P2", data8c[2].tolist())
+                      Serie("PI_lat wt[0] to P2", wts_16b_l2_pyr2[0].tolist()),
+                      Serie("PI_lat wt[1] to P2", wts_16b_l2_pyr2[1].tolist()),
+                      Serie("PI_lat wt[2] to P2", wts_16b_l2_pyr2[2].tolist())
                   ],
                   xaxis="Training steps",
                   yaxis="Lat wt values to Pyr2 in L2"),
@@ -151,11 +151,11 @@ class NudgeExperiment(Experiment):
                   title="Learning Rule PP_FF Triggers L1",
                   precision=2,
                   series=[
-                      Serie("Soma act", data5[0].tolist()),
-                      Serie("Basal hat act", data5[1].tolist()),
-                      Serie("Post soma MP", data5[2].tolist()),
-                      Serie("Post basal MP", data5[3].tolist()),
-                      Serie("Post val", data5[4].tolist()),
+                      Serie("Soma act", triggers_l1[0].tolist()),
+                      Serie("Basal hat act", triggers_l1[1].tolist()),
+                      Serie("Post soma MP", triggers_l1[2].tolist()),
+                      Serie("Post basal MP", triggers_l1[3].tolist()),
+                      Serie("Post val", triggers_l1[4].tolist()),
                   ],
                   xaxis="Training steps",
                   yaxis="..."),
@@ -163,7 +163,7 @@ class NudgeExperiment(Experiment):
                   title="PP_FF wt projecting to L2 Pyr0",
                   precision=2,
                   series=[
-                      Serie("PP_FF wt L1", data6.tolist()),
+                      Serie("PP_FF wt L1", wts_l1.tolist()),
                   ],
                   xaxis="Training steps",
                   yaxis="..."),
@@ -171,8 +171,8 @@ class NudgeExperiment(Experiment):
                   title="Layer 3 Pyr Soma Activations",
                   precision=2,
                   series=[
-                      Serie("Act Pyr 0", data7[0].tolist()),
-                      Serie("Act Pyr 1", data7[1].tolist()),
+                      Serie("Act Pyr 0", soma_acts_l3[0].tolist()),
+                      Serie("Act Pyr 1", soma_acts_l3[1].tolist()),
                   ],
                   xaxis="Training steps",
                   yaxis="Output activation"),
@@ -180,9 +180,9 @@ class NudgeExperiment(Experiment):
                   title="Layer 2 Pyr Soma Activations",
                   precision=2,
                   series=[
-                      Serie("Act Pyr 0", data9a[0].tolist()),
-                      Serie("Act Pyr 1", data9a[1].tolist()),
-                      Serie("Act Pyr 2", data9a[2].tolist()),
+                      Serie("Act Pyr 0", soma_acts_l2[0].tolist()),
+                      Serie("Act Pyr 1", soma_acts_l2[1].tolist()),
+                      Serie("Act Pyr 2", soma_acts_l2[2].tolist()),
                   ],
                   xaxis="Training steps",
                   yaxis="Pyr Hidden activation"),
@@ -190,9 +190,9 @@ class NudgeExperiment(Experiment):
                   title="Layer 2 Pyr Apical Membrane Potentials",
                   precision=2,
                   series=[
-                      Serie("Apical Pyr 0", data9b[0].tolist()),
-                      Serie("Apical Pyr 1", data9b[1].tolist()),
-                      Serie("Apical Pyr 2", data9b[2].tolist()),
+                      Serie("Apical Pyr 0", apical_mp_l2[0].tolist()),
+                      Serie("Apical Pyr 1", apical_mp_l2[1].tolist()),
+                      Serie("Apical Pyr 2", apical_mp_l2[2].tolist()),
                   ],
                   xaxis="Training steps",
                   yaxis="Pyr Hidden apical membrane potential"),
@@ -200,9 +200,9 @@ class NudgeExperiment(Experiment):
                   title="Layer 2 Inhib Soma Activations",
                   precision=2,
                   series=[
-                      Serie("Act Inhib 0", data10[0].tolist()),
-                      Serie("Act Inhib 1", data10[1].tolist()),
-                      Serie("Act Inhib 2", data10[2].tolist()),
+                      Serie("Act Inhib 0", inhib_soma_acts_l2[0].tolist()),
+                      Serie("Act Inhib 1", inhib_soma_acts_l2[1].tolist()),
+                      Serie("Act Inhib 2", inhib_soma_acts_l2[2].tolist()),
                   ],
                   xaxis="Training steps",
                   yaxis="Inhib Hidden activation"),
