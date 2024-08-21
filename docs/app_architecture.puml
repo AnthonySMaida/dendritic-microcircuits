@@ -5,9 +5,9 @@ package "metrics" {
         + title: str
         + precision: int
         + series: List[Serie]
-        + xaxis?: Optional[str]
-        + yaxis?: Optional[str]
-        + categories: Optional[List[str]]
+        + xaxis?: str
+        + yaxis?: str
+        + categories?: List[str]
     }
 
     class "GraphType" {
@@ -60,9 +60,9 @@ package "ai" {
         - _X: np.ndarray
         - _Y: np.ndarray
 
-        - _current_index: Optional[int]
-        - _current_X: Optional[np.ndarray]
-        - _current_Y: Optional[int]
+        - _current_index?: int
+        - _current_X?: np.ndarray
+        - _current_Y?: int
 
         + __init__(wt_init_seed: int, label_init_seed: int, beta: float, learning_rate: float)
         - __do_ff_sweep()
