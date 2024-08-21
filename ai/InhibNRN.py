@@ -4,7 +4,7 @@ from ai.utils import logsig
 class InhibNRN:
     next_id = 1
 
-    def __init__(self, rng, beta, n_lat_wt):
+    def __init__(self, rng, beta: float, n_lat_wt: int):
         """
         :param n_lat_wt: lateral weight count
         """

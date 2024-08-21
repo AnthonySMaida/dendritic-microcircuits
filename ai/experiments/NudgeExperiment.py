@@ -6,17 +6,15 @@ from ai.utils import create_column_vector, iter_with_prev
 from metrics import Graph, Serie, GraphType
 
 logger = get_logger('ai.experiments.NudgeExperiment')
-#logger.setLevel(logging.DEBUG)
 
 KEY_LAYER_1 = "layer1"
 KEY_LAYER_2 = "layer2"
 KEY_RULE_13_POST_DATA = "rule13_post_data"
-#KEY_RULE_13_WT_DATA = "rule13_wt_data"
 KEY_RULE_13_WT_DATA_L2_PYR0 = "rule13_wt_data_l2_pyr0"
 KEY_RULE_13_WT_DATA_L2_PYR1 = "rule13_wt_data_l2_pyr1"
-KEY_RULE_16B_WT_DATA_L2_PYR0 = "rule16b_wt_data_l2_pyr0"  # <= new
-KEY_RULE_16B_WT_DATA_L2_PYR1 = "rule16b_wt_data_l2_pyr1"  # <= new
-KEY_RULE_16B_WT_DATA_L2_PYR2 = "rule16b_wt_data_l2_pyr2"  # <= new
+KEY_RULE_16B_WT_DATA_L2_PYR0 = "rule16b_wt_data_l2_pyr0"
+KEY_RULE_16B_WT_DATA_L2_PYR1 = "rule16b_wt_data_l2_pyr1"
+KEY_RULE_16B_WT_DATA_L2_PYR2 = "rule16b_wt_data_l2_pyr2"
 KEY_RULE_13_POST_DATA_L1 = "rule13_post_data_l1"
 KEY_RULE_13_WT_DATA_L1 = "rule13_wt_data_l1"
 KEY_OUTPUT_LAYER_VALUES = "output_layer_values"
@@ -38,7 +36,6 @@ class NudgeExperiment(Experiment):
         self._metrics[KEY_LAYER_1] = np.empty(shape=(2, 0))
         self._metrics[KEY_LAYER_2] = np.empty(shape=(3, 0))
         self._metrics[KEY_RULE_13_POST_DATA] = np.empty(shape=(5, 0))
-#        self._metrics[KEY_RULE_13_WT_DATA] = np.empty(shape=(0,))
         self._metrics[KEY_RULE_13_WT_DATA_L2_PYR0] = np.empty(shape=(3, 0))
         self._metrics[KEY_RULE_13_WT_DATA_L2_PYR1] = np.empty(shape=(3, 0))
         self._metrics[KEY_RULE_16B_WT_DATA_L2_PYR0] = np.empty(shape=(3, 0))
@@ -52,6 +49,182 @@ class NudgeExperiment(Experiment):
         self._metrics[KEY_HIDDEN_LAYER_APICAL_FB_VALUES] = np.empty(shape=(3, 0))
         self._metrics[KEY_HIDDEN_LAYER_APICAL_LAT_VALUES] =  np.empty(shape=(3, 0))
         self._metrics[KEY_HIDDEN_LAYER_INHIB_ACT_VALUES] = np.empty(shape=(3, 0))
+
+    def __do_ff_sweep(self):
+        """Standard FF sweep"""
+
+        # Iterates over layers from start to end. From ai.utils.
+        for prev, layer in iter_with_prev(self.layers):  # Yields prev layer and current layer
+            if prev is None:
+                layer.apply_inputs_to_test_self_predictive_convergence([.5, .5])
+            else:
+                layer.update_pyrs_basal_and_soma_ff(prev)
+            layer.update_dend_mps_via_ip()
+
+    def __do_fb_sweep(self):
+        """Standard FB sweep"""
+        for prev, layer in iter_with_prev(reversed(self.layers)):  # [l3, l2, l1]
+            if prev is None:  # Skip first layer (L3)
+                continue
+            # update current layer pyrs using somatic pyr acts from previous layer and inhib acts from current layer
+            layer.update_pyrs_apical_soma_fb(prev)  # in 2nd iter, prev = l3 and layer = l2
+
+    def __train_1_step_rule_16b_and_rule_13(self, use_nudge = False, use_rule_ip = False):
+        """
+        Learning step that uses both rules 16b and 13.
+        Does one training step.
+        """
+        l1, l2, l3 = self.layers
+        l2.adjust_wts_lat_pi()  # adjust lateral PI wts in Layer 2
+
+        # Adjust FF wts projecting to Layer 3.
+        l3.adjust_wts_pp_ff(l2)  # adjust FF wts projecting to Layer 3
+
+        # continue learning
+        l1.adjust_wts_lat_pi()  # adjust lateral PI wts in Layer 1
+
+        if use_rule_ip:  # also known as Rule 16a
+            l1.adjust_wts_lat_ip()      # adjust lateral IP wts in Layer 1
+
+        l2.adjust_wts_pp_ff(l1)  # adjust FF wts projecting to Layer 2
+
+        # Do FF and FB sweeps so wt changes show their effects.
+        self.__do_ff_sweep()
+        if use_nudge:
+            l3.nudge_output_layer_neurons(self._nudge1, self._nudge2, lambda_nudge=0.8)
+        self.__do_fb_sweep()
+
+    def __nudge_output_layer(self):
+        """
+        Prints all layer wts.
+        Imposes nudge on the output layer and prints output layer activations.
+        Does a FF sweep and then prints layer activations in reverse order.
+        """
+        self.layers[-2].print_fb_and_pi_wts_layer()
+        self.layers[-2].print_ff_and_ip_wts_for_layers(self.layers[-1])
+
+        last_layer = self.layers[-1]
+        logger.debug("Layer %d activations before nudge.", last_layer.id_num)
+        last_layer.print_pyr_activations()
+
+        logger.info("Imposing nudge now")
+
+        last_layer = self.layers[-1]
+        last_layer.nudge_output_layer_neurons(self._nudge1, self._nudge2, lambda_nudge=0.9)
+        logger.debug("Layer %d activations after nudge.", last_layer.id_num)
+        last_layer.print_pyr_activations()
+
+        logger.info("Starting FB sweep")
+        self.__do_fb_sweep()  # prints state
+
+        logger.info("Finished 1st FB sweep after nudge: pilot_exp_2b")  # shows effect of nudge in earlier layers
+        self.print_pyr_activations_all_layers_topdown()
+
+    def _hook_post_train_step(self):
+        l1, l2, l3 = self.layers
+
+        self._metrics[KEY_LAYER_1] = np.append(
+            self._metrics[KEY_LAYER_1],
+            create_column_vector(*map(lambda p: p.apical_mp, l1.pyrs)),
+            axis=1
+        )
+        self._metrics[KEY_LAYER_2] = np.append(
+            self._metrics[KEY_LAYER_2],
+            create_column_vector(*map(lambda p: p.apical_mp, l2.pyrs)),
+            axis=1
+        )
+
+        soma_act = l3.pyr_soma_acts()[0]
+        basal_hat_act = l3.pyr_basal_hat_acts()[0]
+        post_soma_mp = l3.pyr_soma_mps()[0]
+        post_basal_mp = l3.pyr_basal_mps()[0]
+        post_val = post_soma_mp - post_basal_mp
+
+        self._metrics[KEY_RULE_13_POST_DATA] = np.append(
+            self._metrics[KEY_RULE_13_POST_DATA],
+            create_column_vector(soma_act, basal_hat_act, post_soma_mp, post_basal_mp, post_val),
+            axis=1)
+
+        self._metrics[KEY_RULE_13_WT_DATA_L2_PYR0] = np.append(
+            self._metrics[KEY_RULE_13_WT_DATA_L2_PYR0],
+            create_column_vector(l3.pyrs[0].W_PP_ff[0], l3.pyrs[0].W_PP_ff[1], l3.pyrs[0].W_PP_ff[2]),
+            axis=1
+        )
+
+        self._metrics[KEY_RULE_13_WT_DATA_L2_PYR1] = np.append(
+            self._metrics[KEY_RULE_13_WT_DATA_L2_PYR1],
+            create_column_vector(l3.pyrs[1].W_PP_ff[0], l3.pyrs[1].W_PP_ff[1], l3.pyrs[1].W_PP_ff[2]),
+            axis=1
+        )
+
+        self._metrics[KEY_RULE_16B_WT_DATA_L2_PYR0] = np.append(
+            self._metrics[KEY_RULE_16B_WT_DATA_L2_PYR0],
+            create_column_vector(l2.pyrs[0].W_PI_lat[0], l2.pyrs[0].W_PI_lat[1], l2.pyrs[0].W_PI_lat[2]),
+            axis=1
+        )
+
+        self._metrics[KEY_RULE_16B_WT_DATA_L2_PYR1] = np.append(
+            self._metrics[KEY_RULE_16B_WT_DATA_L2_PYR1],
+            create_column_vector(l2.pyrs[1].W_PI_lat[0], l2.pyrs[1].W_PI_lat[1], l2.pyrs[1].W_PI_lat[2]),
+            axis=1
+        )
+
+        self._metrics[KEY_RULE_16B_WT_DATA_L2_PYR2] = np.append(
+            self._metrics[KEY_RULE_16B_WT_DATA_L2_PYR2],
+            create_column_vector(l2.pyrs[2].W_PI_lat[0], l2.pyrs[2].W_PI_lat[1], l2.pyrs[2].W_PI_lat[2]),
+            axis=1
+        )
+
+        soma_act = l2.pyr_soma_acts()[0]
+        basal_hat_act = l2.pyr_basal_hat_acts()[0]
+        post_soma_mp = l2.pyr_soma_mps()[0]
+        post_basal_mp = l2.pyr_basal_mps()[0]
+        post_val2 = post_soma_mp - post_basal_mp
+
+        self._metrics[KEY_RULE_13_POST_DATA_L1] = np.append(
+            self._metrics[KEY_RULE_13_POST_DATA_L1],
+            create_column_vector(soma_act, basal_hat_act, post_soma_mp, post_basal_mp, post_val2),
+            axis=1)
+        self._metrics[KEY_RULE_13_WT_DATA_L1] = np.append(self._metrics[KEY_RULE_13_WT_DATA_L1],
+                                                          l2.pyrs[0].W_PP_ff[0])
+
+        self._metrics[KEY_OUTPUT_LAYER_VALUES] = np.append(
+            self._metrics[KEY_OUTPUT_LAYER_VALUES],
+            create_column_vector(*map(lambda p: p.soma_act, l3.pyrs)),
+            axis=1)
+
+        self._metrics[KEY_OUTPUT_LAYER_BASAL_MPS] = np.append(
+            self._metrics[KEY_OUTPUT_LAYER_BASAL_MPS],
+            create_column_vector(*map(lambda p: p.basal_mp, l3.pyrs)),
+            axis=1)
+
+        self._metrics[KEY_HIDDEN_LAYER_PYR_ACT_VALUES] = np.append(
+            self._metrics[KEY_HIDDEN_LAYER_PYR_ACT_VALUES],
+            create_column_vector(*map(lambda p: p.soma_act, l2.pyrs)),
+            axis=1)
+
+        self._metrics[KEY_HIDDEN_LAYER_APICAL_FB_VALUES] = np.append(
+            self._metrics[KEY_HIDDEN_LAYER_APICAL_FB_VALUES],
+            create_column_vector(*map(lambda p: p.apical_fb, l2.pyrs)),
+            axis=1)
+
+        self._metrics[KEY_HIDDEN_LAYER_APICAL_LAT_VALUES] = np.append(
+            self._metrics[KEY_HIDDEN_LAYER_APICAL_LAT_VALUES],
+            create_column_vector(*map(lambda p: p.apical_lat, l2.pyrs)),
+            axis=1)
+
+        self._metrics[KEY_HIDDEN_LAYER_INHIB_ACT_VALUES] = np.append(
+            self._metrics[KEY_HIDDEN_LAYER_INHIB_ACT_VALUES],
+            create_column_vector(*map(lambda p: p.soma_act, l2.inhibs)),
+            axis=1)
+
+    def _train_1_step(self, nudge_predicate: bool):  # Signature matched its abstract method b/c *args can be empty.
+        """
+        This is the concrete version of the abstract train-1-step defined in superclass Experiment.
+        :param nudge_predicate:
+        :return:
+        """
+        self.__train_1_step_rule_16b_and_rule_13(use_nudge=nudge_predicate)  # defined in superclass
 
     def extract_metrics(self):
         data_l1 = self._metrics[KEY_LAYER_1]
@@ -248,148 +421,12 @@ class NudgeExperiment(Experiment):
                   yaxis="Activation level")
         ]
 
-    def hook_post_train_step(self):
-        l1, l2, l3 = self.layers
-
-        self._metrics[KEY_LAYER_1] = np.append(
-            self._metrics[KEY_LAYER_1],
-            create_column_vector(*map(lambda p: p.apical_mp, l1.pyrs)),
-            axis=1
-        )
-        self._metrics[KEY_LAYER_2] = np.append(
-            self._metrics[KEY_LAYER_2],
-            create_column_vector(*map(lambda p: p.apical_mp, l2.pyrs)),
-            axis=1
-        )
-
-        soma_act = l3.pyr_soma_acts()[0]
-        basal_hat_act = l3.pyr_basal_hat_acts()[0]
-        post_soma_mp = l3.pyr_soma_mps()[0]
-        post_basal_mp = l3.pyr_basal_mps()[0]
-        post_val = post_soma_mp - post_basal_mp
-
-        self._metrics[KEY_RULE_13_POST_DATA] = np.append(
-            self._metrics[KEY_RULE_13_POST_DATA],
-            create_column_vector(soma_act, basal_hat_act, post_soma_mp, post_basal_mp, post_val),
-            axis=1)
-
-        self._metrics[KEY_RULE_13_WT_DATA_L2_PYR0] = np.append(
-            self._metrics[KEY_RULE_13_WT_DATA_L2_PYR0],
-            create_column_vector(l3.pyrs[0].W_PP_ff[0], l3.pyrs[0].W_PP_ff[1], l3.pyrs[0].W_PP_ff[2]),
-            axis=1
-        )
-
-        self._metrics[KEY_RULE_13_WT_DATA_L2_PYR1] = np.append(
-            self._metrics[KEY_RULE_13_WT_DATA_L2_PYR1],
-            create_column_vector(l3.pyrs[1].W_PP_ff[0], l3.pyrs[1].W_PP_ff[1], l3.pyrs[1].W_PP_ff[2]),
-            axis=1
-        )
-
-        self._metrics[KEY_RULE_16B_WT_DATA_L2_PYR0] = np.append(
-            self._metrics[KEY_RULE_16B_WT_DATA_L2_PYR0],
-            create_column_vector(l2.pyrs[0].W_PI_lat[0], l2.pyrs[0].W_PI_lat[1], l2.pyrs[0].W_PI_lat[2]),
-            axis=1
-        )
-
-        self._metrics[KEY_RULE_16B_WT_DATA_L2_PYR1] = np.append(
-            self._metrics[KEY_RULE_16B_WT_DATA_L2_PYR1],
-            create_column_vector(l2.pyrs[1].W_PI_lat[0], l2.pyrs[1].W_PI_lat[1], l2.pyrs[1].W_PI_lat[2]),
-            axis=1
-        )
-
-        self._metrics[KEY_RULE_16B_WT_DATA_L2_PYR2] = np.append(
-            self._metrics[KEY_RULE_16B_WT_DATA_L2_PYR2],
-            create_column_vector(l2.pyrs[2].W_PI_lat[0], l2.pyrs[2].W_PI_lat[1], l2.pyrs[2].W_PI_lat[2]),
-            axis=1
-        )
-
-        soma_act = l2.pyr_soma_acts()[0]
-        basal_hat_act = l2.pyr_basal_hat_acts()[0]
-        post_soma_mp = l2.pyr_soma_mps()[0]
-        post_basal_mp = l2.pyr_basal_mps()[0]
-        post_val2 = post_soma_mp - post_basal_mp
-
-        self._metrics[KEY_RULE_13_POST_DATA_L1] = np.append(
-            self._metrics[KEY_RULE_13_POST_DATA_L1],
-            create_column_vector(soma_act, basal_hat_act, post_soma_mp, post_basal_mp, post_val2),
-            axis=1)
-        self._metrics[KEY_RULE_13_WT_DATA_L1] = np.append(self._metrics[KEY_RULE_13_WT_DATA_L1],
-                                                          l2.pyrs[0].W_PP_ff[0])
-
-        self._metrics[KEY_OUTPUT_LAYER_VALUES] = np.append(
-            self._metrics[KEY_OUTPUT_LAYER_VALUES],
-            create_column_vector(*map(lambda p: p.soma_act, l3.pyrs)),
-            axis=1)
-
-        self._metrics[KEY_OUTPUT_LAYER_BASAL_MPS] = np.append(
-            self._metrics[KEY_OUTPUT_LAYER_BASAL_MPS],
-            create_column_vector(*map(lambda p: p.basal_mp, l3.pyrs)),
-            axis=1)
-
-        self._metrics[KEY_HIDDEN_LAYER_PYR_ACT_VALUES] = np.append(
-            self._metrics[KEY_HIDDEN_LAYER_PYR_ACT_VALUES],
-            create_column_vector(*map(lambda p: p.soma_act, l2.pyrs)),
-            axis=1)
-
-        self._metrics[KEY_HIDDEN_LAYER_APICAL_FB_VALUES] = np.append(
-            self._metrics[KEY_HIDDEN_LAYER_APICAL_FB_VALUES],
-            create_column_vector(*map(lambda p: p.apical_fb, l2.pyrs)),
-            axis=1)
-
-        self._metrics[KEY_HIDDEN_LAYER_APICAL_LAT_VALUES] = np.append(
-            self._metrics[KEY_HIDDEN_LAYER_APICAL_LAT_VALUES],
-            create_column_vector(*map(lambda p: p.apical_lat, l2.pyrs)),
-            axis=1)
-
-        self._metrics[KEY_HIDDEN_LAYER_INHIB_ACT_VALUES] = np.append(
-            self._metrics[KEY_HIDDEN_LAYER_INHIB_ACT_VALUES],
-            create_column_vector(*map(lambda p: p.soma_act, l2.inhibs)),
-            axis=1)
-
-
-    def do_ff_sweep(self):
-        """Standard FF sweep"""
-        #logger.debug("Starting FF sweep...")
-
-        # Iterates over layers from start to end. From ai.utils.
-        for prev, layer in iter_with_prev(self.layers):  # Yields prev layer and current layer
-            if prev is None:
-                layer.apply_inputs_to_test_self_predictive_convergence([.5, .5])
-            else:
-                layer.update_pyrs_basal_and_soma_ff(prev)
-            layer.update_dend_mps_via_ip()
-            #logger.debug(layer)
-
-        #logger.info("FF sweep done.")
-
-    def do_fb_sweep(self):
-        """Standard FB sweep"""
-        #logger.debug("Starting FB sweep...")
-
-        for prev, layer in iter_with_prev(reversed(self.layers)):  # [l3, l2, l1]
-            if prev is None:  # Skip first layer (L3)
-                continue
-            # update current layer pyrs using somatic pyr acts from previous layer and inhib acts from current layer
-            layer.update_pyrs_apical_soma_fb(prev)  # in 2nd iter, layer = l2 and prev = l3
-            #logger.debug(layer)
-
-        #logger.info("FB sweep done.")
-
-
-    def train_1_step(self, nudge_predicate: bool):  # Signature matched its abstract method b/c *args can be empty.
-        """
-        This is the concrete version of the abstract train-1-step defined in superclass Experiment.
-        :param nudge_predicate:
-        :return:
-        """
-        self._train_1_step_rule_16b_and_rule_13(use_nudge=nudge_predicate)  # defined in superclass
-
     def run(self, self_prediction_steps: int, training_steps: int, after_training_steps: int):
         logger.info("START: Performing nudge experiment with rules 16b and 13.")
-        self.do_ff_sweep()  # prints state
+        self.__do_ff_sweep()  # prints state
         logger.info("Finished 1st FF sweep: nudge_experiment")
 
-        self.do_fb_sweep()  # prints state
+        self.__do_fb_sweep()  # prints state
         logger.info("Finished 1st FB sweep: nudge_experiment")
 
         logger.info(f"Starting training {self_prediction_steps} steps to 1b2b self predictive.")
@@ -397,7 +434,7 @@ class NudgeExperiment(Experiment):
         self.train(self_prediction_steps, nudge_predicate=False)
 
         logger.info("Calling function to impose nudge.")
-        self._nudge_output_layer()
+        self.__nudge_output_layer()
 
         logger.info(f"Starting training {training_steps} steps for p_exp 3b")
 
@@ -414,56 +451,3 @@ class NudgeExperiment(Experiment):
         logger.info("Final activations after nudging is removed")
         self.print_pyr_activations_all_layers_topdown()  # shows the true effect of learning
         logger.info("FINISH: Performing nudge experiment with rules 16b and 13.")
-
-    def _nudge_output_layer(self):
-        """
-        Prints all layer wts.
-        Imposes nudge on the output layer and prints output layer activations.
-        Does a FF sweep and then prints layer activations in reverse order.
-        """
-        self.layers[-2].print_fb_and_pi_wts_layer()
-        self.layers[-2].print_ff_and_ip_wts_for_layers(self.layers[-1])
-
-        last_layer = self.layers[-1]
-        logger.debug("Layer %d activations before nudge.", last_layer.id_num)
-        last_layer.print_pyr_activations()
-
-        logger.info("Imposing nudge now")
-
-        last_layer = self.layers[-1]
-        last_layer.nudge_output_layer_neurons(self._nudge1, self._nudge2, lambda_nudge=0.9)
-        logger.debug("Layer %d activations after nudge.", last_layer.id_num)
-        last_layer.print_pyr_activations()
-
-        logger.info("Starting FB sweep")
-        self.do_fb_sweep()  # prints state
-
-        logger.info("Finished 1st FB sweep after nudge: pilot_exp_2b")  # shows effect of nudge in earlier layers
-        self.print_pyr_activations_all_layers_topdown()
-
-    def _train_1_step_rule_16b_and_rule_13(self, use_nudge=False, use_rule_ip = False):
-        """
-        Learning step that uses both rules 16b and 13.
-        Does one training step.
-        """
-        l1, l2, l3 = self.layers
-        l2.adjust_wts_lat_pi()  # adjust lateral PI wts in Layer 2
-
-        # l2.adjust_wts_lat_ip()      # adjust lateral IP wts in Layer 2
-
-        # Adjust FF wts projecting to Layer 3.
-        l3.adjust_wts_pp_ff(l2)  # adjust FF wts projecting to Layer 3
-
-        # continue learning
-        l1.adjust_wts_lat_pi()  # adjust lateral PI wts in Layer 1
-
-        if use_rule_ip:  # also known as Rule 16a
-            l1.adjust_wts_lat_ip()      # adjust lateral IP wts in Layer 1
-
-        l2.adjust_wts_pp_ff(l1)  # adjust FF wts projecting to Layer 2
-
-        # Do FF and FB sweeps so wt changes show their effects.
-        self.do_ff_sweep()
-        if use_nudge:
-            l3.nudge_output_layer_neurons(self._nudge1, self._nudge2, lambda_nudge=0.8)
-        self.do_fb_sweep()

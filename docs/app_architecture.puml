@@ -1,0 +1,148 @@
+@startuml
+package "metrics" {
+    class "Graph" {
+        + type: GraphType
+        + title: str
+        + precision: int
+        + series: List[Serie]
+        + xaxis?: str
+        + yaxis?: str
+        + categories?: List[str]
+    }
+
+    class "GraphType" {
+        + EMPTY
+        + LINE
+        + COLUMN
+    }
+
+    class "Serie" {
+        + title: str
+        + data: List[Number]
+    }
+
+    "GraphType" - "Graph" : < uses
+    "Graph" -- "Serie" : > contains
+}
+
+package "ai" {
+    package "experiments" {
+        abstract class "Experiment" {
+            ~ _beta: float
+            ~ _learning_rate: float
+            ~ _metrics: dict
+            ~ _rng_wts: np.random.Generator
+            + layers: List[Layer]
+            + __init__(wt_init_seed: int, beta: float, learning_rate: float)
+            ~ _hook_pre_train_step()
+            ~ _hook_post_train_step()
+            + build_small_three_layer_network(n_input_pyr_nrns: int, n_hidden_pyr_nrns: int, n_output_pyr_nrns: int)
+            + train(n_steps: int, *args, **kwargs)
+            ~ {abstract} _train_1_step(*args, **kwargs)
+            + {abstract} extract_metrics(): List[Graph]
+            + {abstract} run(*args, **kwargs)
+        }
+
+        class "NudgeExperiment" implements "Experiment" {
+            ~ _nudge1: float
+            ~ _nudge2: float
+            + __init__(wt_init_seed: int, beta: float, learning_rate: float, nudge1: float, nudge2: float)
+            - __do_ff_sweep()
+            - __do_fb_sweep()
+            - __train_1_step_rule_16b_and_rule_13(use_nudge: bool = False, use_rule_ip: bool = False)
+            - __nudge_output_layer()
+            ~ _hook_post_train_step()
+            ~ _train_1_step(nudge_predicate: bool)
+            + extract_metrics(): List[Graph]
+            + run(self_prediction_steps: int, training_steps: int, after_training_steps: int)
+        }
+
+        class "XorExperiment" implements "Experiment" {
+            - _X: np.ndarray
+            - _Y: np.ndarray
+
+            - _current_index?: int
+            - _current_X?: np.ndarray
+            - _current_Y?: int
+
+            + __init__(wt_init_seed: int, label_init_seed: int, beta: float, learning_rate: float)
+            - __do_ff_sweep()
+            - __do_fb_sweep()
+            - __gather_layer_metrics(key_post: str, key_wts: str, layer: Layer)
+            - __nudge_output_layer()
+            ~ _hook_pre_train_step()
+            ~ _hook_post_train_step()
+            ~ _train_1_step(nudge_predicate: bool)
+            + extract_metrics(): List[Graph]
+            + run(self_prediction_steps: int, training_steps: int, after_training_steps: int)
+        }
+    }
+
+    class "Layer" {
+        + id_num: int
+        + pyrs: List[PyrNRN]
+        + inhibs: List[InhibNRN]
+        + __init__(learning_rate: float, rng: np.random.Generator, n_pyrs: int, n_inhibs: int, n_pyr_ff_wt: int, n_pi_lat_wt: int, n_pyr_fb_wt: int, beta: float, n_ip_lat_wt: int)
+        + apply_inputs_to_test_self_predictive_convergence(inputs: list)
+        + update_dend_mps_via_ip()
+        + update_pyrs_basal_and_soma_ff(prev_layer: Layer)
+        + update_pyrs_apical_soma_fb(higher_layer: Layer)
+        + nudge_output_layer_neurons(targ_vals: List[Number], lambda_nudge: float = 0.9)
+        + adjust_wts_lat_pi()
+        + adjust_wts_pp_ff(prev_layer: Layer)
+        + adjust_wts_lat_ip()
+    }
+
+    class "PyrNRN" {
+        + type = "pyr"
+        + soma_mp: float
+        + apical_mp: float
+        + apical_fb: float
+        + apical_lat: float
+        + basal_mp: float
+        + basal_hat: float
+        + basal_hat_act: float
+        + soma_act: float
+        + apical_act: float
+        + apical_hat: float
+        + apical_hat_act: float
+        + W_PP_ff: np.ndarray
+        + W_PI_lat: np.ndarray
+        + W_PP_fb: np.ndarray
+        + __init__(rng: np.random.Generator, beta: float, n_ff_wt: int, n_pi_lat_wt: int, n_fb_wt: int)
+        + update_pyr_soma_ff()
+    }
+
+    class "InhibNRN" {
+        + type = "inhib"
+        + soma_mp: float
+        + dend_mp: float
+        + dend_hat_mp: float
+        + soma_act: float
+        + dend_hat_mp_act: float
+        + W_IP_lat: np.ndarray
+        + __init__(rng: np.random.Generator, beta: float, n_lat_wt: int)
+        + update_inhib_soma_ff()
+    }
+
+    class "Main" << "entry point" >> {
+        - nudge_experiment(params?: MultiDict) -> List[Graph]
+        - xor_experiment(params?: MultiDict) -> List[Graph]
+        + {static} main(experiment_name: str, params?: MultiDict) -> List[Graph]
+    }
+
+    "Experiment" -> "Layer" : > contains
+    "Layer" --> "PyrNRN" : > contains
+    "Layer" --> "InhibNRN" : > contains
+    "Main" --> "Experiment" : > uses
+}
+
+class "App" << Flask App >> {
+    + {static} list_experiments()
+    + {static} get_experiment_form()
+    + {static} get_experiment_data()
+}
+
+"App" --> "ai.Main" : > uses
+"metrics.Graph" <- "ai.Main" : < returns
+@enduml
