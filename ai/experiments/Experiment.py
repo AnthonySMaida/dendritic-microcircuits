@@ -21,15 +21,31 @@ class Experiment:
 
         self.layers: List[Layer] = []  # list is made of layers. List type assists code completion.
 
-    @abstractmethod
-    def extract_metrics(self) -> List[Graph]:  # declares return type
+    def _hook_pre_train_step(self):
         """
-        This method must return all data that will be plotted
-        This should also process the "raw" data to be in the correct return format
+        Hook called before each training step
+        """
+        pass
 
-        :return: list of `Graph`
+    def _hook_post_train_step(self):
         """
-        raise NotImplementedError
+        Hook called after each training step
+        """
+        pass
+
+    def print_pyr_activations_all_layers_topdown(self):
+        """Prints the pyr activations for all layers in the network, starting with the top layer"""
+        for layer in reversed(self.layers):
+            layer.print_pyr_activations()
+
+    def print_ff_and_fb_wts_last_layer(self):
+        """Print incoming and outgoing wts of last layer"""
+        last_layer = self.layers[-1]
+        prev_last_layer = self.layers[-2]
+        logger.info("FF wts coming into Layer %d", last_layer.id_num)
+        last_layer.print_ff_wts()
+        logger.info("FB wts coming into Layer %d", prev_last_layer.id_num)
+        prev_last_layer.print_fb_wts()
 
     def build_small_three_layer_network(self, n_input_pyr_nrns: int = 2, n_hidden_pyr_nrns: int = 3, n_output_pyr_nrns: int = 2):
         """Build 3-layer network"""
@@ -59,20 +75,6 @@ class Experiment:
 
         logger.info("Finished building model.")
 
-    def print_pyr_activations_all_layers_topdown(self):
-        """Prints the pyr activations for all layers in the network, starting with the top layer"""
-        for layer in reversed(self.layers):
-            layer.print_pyr_activations()
-
-    def print_ff_and_fb_wts_last_layer(self):
-        """Print incoming and outgoing wts of last layer"""
-        last_layer = self.layers[-1]
-        prev_last_layer = self.layers[-2]
-        logger.info("FF wts coming into Layer %d", last_layer.id_num)
-        last_layer.print_ff_wts()
-        logger.info("FB wts coming into Layer %d", prev_last_layer.id_num)
-        prev_last_layer.print_fb_wts()
-
     def train(self, n_steps: int, *args, **kwargs):
         """
         Previously called: train_data
@@ -83,26 +85,24 @@ class Experiment:
         :return:
         """
         for _ in range(n_steps):
-            self.hook_pre_train_step()
-            self.train_1_step(*args, **kwargs)  # do training.
-            self.hook_post_train_step()
-
-    def hook_pre_train_step(self):
-        """
-        Hook called before each training step
-        """
-        pass
-
-    def hook_post_train_step(self):
-        """
-        Hook called after each training step
-        """
-        pass
+            self._hook_pre_train_step()
+            self._train_1_step(*args, **kwargs)  # do training.
+            self._hook_post_train_step()
 
     @abstractmethod
-    def train_1_step(self, *args, **kwargs):  # I would have never figured out the signature.
+    def _train_1_step(self, *args, **kwargs):  # I would have never figured out the signature.
         """
         Formerly called "train()". Abstract method implemented in subclass.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def extract_metrics(self) -> List[Graph]:  # declares return type
+        """
+        This method must return all data that will be plotted
+        This should also process the "raw" data to be in the correct return format
+
+        :return: list of `Graph`
         """
         raise NotImplementedError
 

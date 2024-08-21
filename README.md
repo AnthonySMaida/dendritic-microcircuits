@@ -33,8 +33,12 @@ python -m pip install -r requirements.txt
 
 ```bash
 # *NIX
-python3 -m flask run
+python3 -m flask run --debug
 
 # Windows 
-python -m flask run
+python -m flask run --debug
 ```
+
+## Current app architecture
+
+![App architecture](docs/app_architecture.svg)
