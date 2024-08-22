@@ -1,0 +1,31 @@
+{% extends 'base/experiment.html' %}
+
+{% block params %}
+  <label for="wt_init_seed">Initial seed for weights</label>
+  <input type="number" id="wt_init_seed" value="42" step="1">
+
+  <label for="label_init_seed">Initial seed for labels</label>
+  <input type="number" id="label_init_seed" value="42" step="1">
+
+  <label for="beta">Beta</label>
+  <input type="number" id="beta" value=".333" step=".001">
+
+  <label for="learning_rate">Learning Rate</label>
+  <input type="number" id="learning_rate" value=".05" step=".01">
+
+  <label for="n_pyr_layer1">Layer 1 pyrs</label>
+  <input type="number" id="n_pyr_layer1" value="2" step="1" min="1" disabled>
+
+  <label for="n_pyr_layer3">Layer 2 pyrs</label>
+  <input type="number" id="n_pyr_layer2" value="2" step="1" min="1" disabled>
+
+  <label for="self_prediction_steps">Steps to self predictive state</label>
+  <input type="number" id="self_prediction_steps" value="400" step="1" min="0">
+
+  <label for="training_steps">Training steps</label>
+  <input type="number" id="training_steps" value="200" step="1" min="0">
+{% endblock %}
+
+{% block actions %}
+  <button onclick="getData()">Run experiment</button>
+{% endblock %}
