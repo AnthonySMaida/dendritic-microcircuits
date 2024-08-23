@@ -195,6 +195,7 @@ class XorExperiment(Experiment):
         return [
             Graph(type=GraphType.LINE,
                   title="Layer 1 Apical MPs",
+                  caption="This graph shows the membrane potentials of the apical dendrites of the pyramidal neurons in Layer 1.",
                   precision=2,
                   series=[
                       Serie("Apical MP 1", data_l1[0].tolist()),
@@ -280,7 +281,6 @@ class XorExperiment(Experiment):
                   xaxis="Training steps",
                   yaxis="...",
                   extra=extra),
-            Graph.empty(),
             # Graph(type=GraphType.COLUMN,
             #       title="Output Activations",
             #       precision=4,
