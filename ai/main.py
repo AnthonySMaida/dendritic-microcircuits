@@ -45,17 +45,12 @@ def and_or_experiment(params: MultiDict = None) -> List[Graph]:
     label_init_seed = params.get('label_init_seed', 42, type=int)
     beta = params.get('beta', 1.0 / 3.0, type=float)
     learning_rate = params.get('learning_rate', 0.05, type=float)
-    n_pyr_by_layer = (
-        params.get('n_pyr_layer1', 2, type=int),
-        params.get('n_pyr_layer2', 2, type=int),
-    )
     self_prediction_steps = params.get('self_prediction_steps', 400, type=int)
     training_steps = params.get('training_steps', 190, type=int)
-    after_training_steps = params.get('after_training_steps', 10, type=int)
 
     experiment = AndOrExperiment(wt_init_seed, label_init_seed, beta, learning_rate)
-    experiment.build_small_three_layer_network(*n_pyr_by_layer)
-    experiment.run(self_prediction_steps, training_steps, after_training_steps)
+    experiment.build_network(2, (2, 2, 2, 2), (2, 0, 0, 0))
+    experiment.run(self_prediction_steps, training_steps)
 
     return experiment.extract_metrics()
 
