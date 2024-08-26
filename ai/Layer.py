@@ -83,14 +83,14 @@ class Layer:
             self.inhibs[i].dend_mp = np.dot(self.inhibs[i].W_IP_lat, temp)
             self.inhibs[i].update_inhib_soma_ff()
 
-    def update_pyrs_basal_and_soma_ff(self, prev_layer: Layer):
+    def update_pyrs_basal_and_soma_ff(self, prev_layer: "Layer"):
         """update pyrs bottom up from prev layer"""
         temp = prev_layer.pyr_soma_acts()  # get activations from prev layer
         for i in range(len(self.pyrs)):  # update each pyramid in current layer
             self.pyrs[i].basal_mp = np.dot(self.pyrs[i].W_PP_ff, temp)
             self.pyrs[i].update_pyr_soma_ff()
 
-    def update_pyrs_apical_soma_fb(self, higher_layer: Layer):
+    def update_pyrs_apical_soma_fb(self, higher_layer: "Layer"):
         """propagates input from apical dends to soma"""
         fb_acts = higher_layer.pyr_soma_acts()
         inhib_acts = self.inhib_soma_acts()  # inhibs in current layer
@@ -165,7 +165,7 @@ class Layer:
                 self.pyrs[i].W_PI_lat[j] -= self._learning_rate * self.pyrs[i].apical_mp * self.inhibs[j].soma_act
                 # change for wt projecting to pyr i from inhib j.
 
-    def adjust_wts_pp_ff(self, prev_layer: Layer):  # Adjust FF wts for layer. Eqn 13
+    def adjust_wts_pp_ff(self, prev_layer: "Layer"):  # Adjust FF wts for layer. Eqn 13
         """Simplified from Rule 13. Drop nonlinearities. Replace basal_hat_mp w/ basal_mp"""
         pre = prev_layer.pyr_soma_acts()  # Need activations from prev layer.
         # post_a        = self.pyr_soma_acts()

@@ -6,7 +6,7 @@ function cleanContainer() {
 }
 
 function genGraph(data) {
-  switch(data.type) {
+  switch (data.type) {
     case 'column':
       return genColumnGraph(data)
     case 'line':
@@ -14,7 +14,7 @@ function genGraph(data) {
     case '':
       return null
     default:
-      throw new Error(`Unknown graph type: ${data.type}`)
+      throw new Error(`Unknown graph type: ${ data.type }`)
   }
 }
 
@@ -32,7 +32,21 @@ function handleApiData(json) {
   cleanContainer()
 
   for (const data of json) {
-    const canvas = document.createElement('div')
+    const canvas = Object.assign(
+      document.createElement('div'),
+      { className: 'canvas' }
+    )
+    const caption = Object.assign(
+      document.createElement('div'),
+      { className: 'caption', innerText: data.caption }
+    )
+
+    const graphContainer = Object.assign(
+      document.createElement('div'),
+      { className: 'container-graph-inner' }
+    )
+    graphContainer.appendChild(canvas)
+    graphContainer.appendChild(caption)
 
     const options = genGraph(data)
 
@@ -41,7 +55,7 @@ function handleApiData(json) {
       canvas.style.width = '502px'
     }
 
-    container.appendChild(canvas)
+    container.appendChild(graphContainer)
 
     if (options) {
       const chart = new ApexCharts(canvas, options)
@@ -65,5 +79,5 @@ function getData() {
    *  Fetch tells browser to send a request to the flask backend on the '/data' route.
    */
   const params = new URLSearchParams(getFormValues())
-  fetch(`/data/${ENDPOINT}?${params}`).then(r => r.ok ? r.json().then(handleApiData) : r.text().then(catchApiErrors))
+  fetch(`/data/${ ENDPOINT }?${ params }`).then(r => r.ok ? r.json().then(handleApiData) : r.text().then(catchApiErrors))
 }
