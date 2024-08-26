@@ -74,10 +74,15 @@ function catchApiErrors(body) {
   iframeDoc.body.innerHTML = body
 }
 
-function getData() {
+function getData(endpoint) {
   /**
    *  Fetch tells browser to send a request to the flask backend on the '/data' route.
    */
+  if (!endpoint) {
+    alert('No endpoint provided')
+    return
+  }
+
   const params = new URLSearchParams(getFormValues())
-  fetch(`/data/${ ENDPOINT }?${ params }`).then(r => r.ok ? r.json().then(handleApiData) : r.text().then(catchApiErrors))
+  fetch(`/data/${ endpoint }?${ params }`).then(r => r.ok ? r.json().then(handleApiData) : r.text().then(catchApiErrors))
 }

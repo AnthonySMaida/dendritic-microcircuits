@@ -1,11 +1,12 @@
 #import logging
 from abc import abstractmethod
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 
 from ai.Layer import Layer
 from ai.colorized_logger import get_logger
+from ai.utils import iter_with_prev
 from metrics import Graph
 
 logger = get_logger('ai.experiments.Experiment')
@@ -46,6 +47,30 @@ class Experiment:
         last_layer.print_ff_wts()
         logger.info("FB wts coming into Layer %d", prev_last_layer.id_num)
         prev_last_layer.print_fb_wts()
+
+    def build_network(self, n_layer: int, *n_pyr_nrns: Tuple[int, int, int, int]):
+        """
+        Build a n-layer network
+
+        :param n_layer: int number of layers
+        :param n_pyr_nrns: Tuple of 4 ints, representing the number of pyramidal neurons, inhibitory neurons,
+                            lateral inhibitory neurons, and lateral pyramidal neurons in each layer
+        """
+        Layer.next_id = 1
+        layers = []
+        for i, (prev_n_pyr, n_pyr) in zip(range(n_layer), iter_with_prev(n_pyr_nrns)):
+            layer = Layer(learning_rate=self._learning_rate,
+                          rng=self._rng_wts,
+                          beta=self._beta,
+                          n_pyrs=n_pyr[0],
+                          n_inhibs=n_pyr[1],
+                          n_pyr_ff_wt=prev_n_pyr[0] if prev_n_pyr is not None else None,
+                          n_pyr_fb_wt=n_pyr[0] if i < n_layer - 1 else None,
+                          n_ip_lat_wt=n_pyr[2],
+                          n_pi_lat_wt=n_pyr[3])
+            layers.append(layer)
+        self.layers = layers
+
 
     def build_small_three_layer_network(self, n_input_pyr_nrns: int = 2, n_hidden_pyr_nrns: int = 3, n_output_pyr_nrns: int = 2):
         """Build 3-layer network"""
