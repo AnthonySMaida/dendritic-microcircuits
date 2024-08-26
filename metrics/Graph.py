@@ -17,6 +17,8 @@ class Graph:
     """Optional y-axis label"""
     categories: Optional[List[str]] = None
     """Optional list of categories for the x-axis (column type only)"""
+    caption: Optional[str] = None
+    """Optional caption for the graph"""
     extra: Optional[dict] = None
 
     @staticmethod
