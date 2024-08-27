@@ -30,7 +30,7 @@ from typing import List
 from werkzeug.datastructures import MultiDict
 
 from ai.colorized_logger import get_logger
-from ai.experiments import KEYS, NudgeExperiment, XorExperiment, AndOrExperiment
+from ai.experiments import KEYS, BasicNudgeExper, NudgeExperFB, XorExperiment, AndOrExperiment
 from metrics import Graph
 
 logger = get_logger('ai.sacramento_main')
@@ -74,7 +74,40 @@ def nudge_experiment(params: MultiDict = None) -> List[Graph]:  # Why is MultiDi
     after_training_steps = params.get('after_training_steps', 10, type=int)
 
     logger.info('Starting sacramento_main')
-    experiment = NudgeExperiment(wt_init_seed, beta, learning_rate, nudge1, nudge2)  # make instance
+    experiment =BasicNudgeExper(wt_init_seed, beta, learning_rate, nudge1, nudge2)  # make instance
+    experiment.build_small_three_layer_network(*n_pyr_by_layer)
+    logger.info('Finished building network')
+    logger.info('Starting to run experiment')
+    experiment.run(self_prediction_steps, training_steps, after_training_steps)
+    experiment.print_ff_and_fb_wts_last_layer()
+
+    logger.info("nudge1 = %s; nudge2 = %s", nudge1, nudge2)
+    logger.info("wt_init_seed = %d", wt_init_seed)
+
+    return experiment.extract_metrics()
+
+def nudge_experiment_FB(params: MultiDict = None) -> List[Graph]:  # Why is MultiDict needed?
+    """Do an experiment"""
+    if params is None:
+        params = MultiDict()
+
+    wt_init_seed = params.get('wt_init_seed', 42, type=int)
+    beta = params.get('beta', 1.0 / 3.0, type=float)  # beta = 1/lambda => lambda = 3. beta is scale param for rng.exponential.
+    learning_rate = params.get('learning_rate', 0.05, type=float)
+    nudge1 = params.get('nudge1', 1.0, type=float)
+    nudge2 = params.get('nudge2', 0.0, type=float)
+    n_pyr_by_layer = (
+        params.get('n_pyr_layer1', 2, type=int),
+        params.get('n_pyr_layer2', 3, type=int),
+        params.get('n_pyr_layer3', 2, type=int),
+    )
+    self_prediction_steps = params.get('self_prediction_steps', 400, type=int)
+    training_steps = params.get('training_steps', 190, type=int)
+    after_training_steps = params.get('after_training_steps', 10, type=int)
+    nudge_fb_weight = params.get('nudge_fb_weight', 3.0, type=float)
+
+    logger.info('Starting sacramento_main')
+    experiment =NudgeExperFB(wt_init_seed, beta, learning_rate, nudge1, nudge2, nudge_fb_weight)  # make instance
     experiment.build_small_three_layer_network(*n_pyr_by_layer)
     logger.info('Finished building network')
     logger.info('Starting to run experiment')
@@ -117,6 +150,8 @@ def main(experiment_name: str, params: MultiDict) -> List[Graph]:
             return and_or_experiment(params)
         case KEYS.NUDGE_EXPERIMENT:
             return nudge_experiment(params)
+        case KEYS.NUDGE_EXPERIMENT_FB:
+            return nudge_experiment_FB(params)
         case KEYS.XOR_EXPERIMENT:
             return xor_experiment(params)
         case _:

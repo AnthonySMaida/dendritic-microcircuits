@@ -14,7 +14,7 @@ def list_experiments():
     routes this request to the "home" function b/c of the route decorator.
     """
     return render_template('list.html',
-                           title='crtfvygb',
+                           title='Dendritic Microcircuits',
                            experiments=EXPERIMENTS)
 
 

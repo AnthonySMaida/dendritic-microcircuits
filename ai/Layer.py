@@ -83,7 +83,7 @@ class Layer:
             self.inhibs[i].dend_mp = np.dot(self.inhibs[i].W_IP_lat, temp)
             self.inhibs[i].update_inhib_soma_ff()
 
-    def update_pyrs_basal_and_soma_ff(self, prev_layer: "Layer"):
+    def update_pyrs_basal_and_soma_ff(self, prev_layer: "Layer"):  # forward decl
         """update pyrs bottom up from prev layer"""
         temp = prev_layer.pyr_soma_acts()  # get activations from prev layer
         for i in range(len(self.pyrs)):  # update each pyramid in current layer
@@ -102,8 +102,9 @@ class Layer:
             self.pyrs[i].apical_act = logsig(self.pyrs[i].apical_mp)
             self.pyrs[i].apical_hat = 0.5 * self.pyrs[i].apical_mp  # approximation to Eqn (14)
             self.pyrs[i].apical_hat_act = logsig(self.pyrs[i].apical_hat)
-            self.pyrs[i].soma_mp = ((self.pyrs[i].basal_mp - self.pyrs[i].soma_mp)
-                                    + (self.pyrs[i].apical_mp - self.pyrs[i].soma_mp))
+            self.pyrs[i].soma_mp = self.pyrs[i].basal_minus_soma_mp + self.pyrs[i].apical_minus_soma_mp
+#            self.pyrs[i].soma_mp = ((self.pyrs[i].basal_mp - self.pyrs[i].soma_mp)
+#                                    + (self.pyrs[i].apical_mp - self.pyrs[i].soma_mp))
             self.pyrs[i].soma_act = logsig(self.pyrs[i].soma_mp)
 
     ########################

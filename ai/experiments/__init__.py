@@ -1,7 +1,8 @@
 from .AndOrExperiment import AndOrExperiment
 from .KEYS import KEYS
 from .Experiment import Experiment
-from .NudgeExperiment import NudgeExperiment
+from .BasicNudgeExper import BasicNudgeExper
+from .NudgeExperFB import NudgeExperFB
 from .XorExperiment import XorExperiment
 
 EXPERIMENTS: dict[str, dict[str, str | Experiment]] = {
@@ -10,8 +11,12 @@ EXPERIMENTS: dict[str, dict[str, str | Experiment]] = {
         "class": AndOrExperiment
     },
     KEYS.NUDGE_EXPERIMENT: {
-        "title": "Nudge Experiment",
-        "class": NudgeExperiment,
+        "title": "Basic Nudge Experiment",
+        "class": BasicNudgeExper,
+    },
+    KEYS.NUDGE_EXPERIMENT_FB: {
+        "title": "Nudge Experiment with FB",
+        "class": NudgeExperFB,
     },
     KEYS.XOR_EXPERIMENT: {
         "title": "XOR Experiment",

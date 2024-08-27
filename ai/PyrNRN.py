@@ -36,6 +36,14 @@ class PyrNRN:
         self.W_PP_fb = rng.exponential(beta, (n_fb_wt,)) if n_fb_wt else None
         PyrNRN.next_id += 1
 
+    @property
+    def basal_minus_soma_mp(self):
+        return self.basal_mp - self.soma_mp
+
+    @property
+    def apical_minus_soma_mp(self):
+        return self.apical_mp - self.soma_mp
+
     def __repr__(self):  # Uses f string (format string)
         return f"""
     id_num:            {self.id_num},

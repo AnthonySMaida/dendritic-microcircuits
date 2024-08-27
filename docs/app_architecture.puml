@@ -10,7 +10,7 @@ package "metrics" {
         + categories?: List[str]
     }
 
-    class "GraphType" {
+    enum "GraphType" {
         + EMPTY
         + LINE
         + COLUMN

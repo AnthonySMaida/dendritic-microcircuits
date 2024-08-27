@@ -22,16 +22,22 @@ KEY_OUTPUT_LAYER_BASAL_MPS = "output_layer_basal_mps"
 KEY_HIDDEN_LAYER_PYR_ACT_VALUES = "hidden_layer_pyr_act_values"
 KEY_HIDDEN_LAYER_APICAL_FB_VALUES = "hidden_layer_calc_pyr_apical_values"
 KEY_HIDDEN_LAYER_APICAL_LAT_VALUES = "hidden_layer_calc_pyr_lat_values"
+KEY_HIDDEN_LAYER_WTD_INPUT_FROM_NUDGE = "hidden_layer_wtd_input_from_nudge"
+KEY_HIDDEN_LAYER_INHIB_DENDR_MP_VALUES = "hidden_layer_calc_inhib_dendr_mp_values"
+KEY_HIDDEN_LAYER_INHIB_SOMA_MP_VALUES = "hidden_layer_calc_inhib_soma_mp_values"
 KEY_HIDDEN_LAYER_INHIB_ACT_VALUES = "hidden_layer_inhib_act_values"
+KEY_L2_BASAL_MINUS_SOMA_PYR_MP = "l2_basal_minus_soma_pyr_mp"
+KEY_L2_APICAL_MINUS_SOMA_PYR_MP = "l2_apical_minus_soma_pyr_mp"
 
-
-class NudgeExperiment(Experiment):
-    def __init__(self, wt_init_seed: int, beta: float, learning_rate: float, nudge1: float, nudge2: float):
+class NudgeExperFB(Experiment):
+    def __init__(self, wt_init_seed: int, beta: float, learning_rate: float,
+                 nudge1: float, nudge2: float, nudge_fb_weight: float):
         # call the constructor of the parent class (aka superclass)
         super().__init__(wt_init_seed, beta, learning_rate)
 
         self._nudge1 = nudge1
         self._nudge2 = nudge2
+        self._nudge_fb_weight = nudge_fb_weight
 
         self._metrics[KEY_LAYER_1] = np.empty(shape=(2, 0))
         self._metrics[KEY_LAYER_2] = np.empty(shape=(3, 0))
@@ -48,7 +54,12 @@ class NudgeExperiment(Experiment):
         self._metrics[KEY_HIDDEN_LAYER_PYR_ACT_VALUES] = np.empty(shape=(3, 0))
         self._metrics[KEY_HIDDEN_LAYER_APICAL_FB_VALUES] = np.empty(shape=(3, 0))
         self._metrics[KEY_HIDDEN_LAYER_APICAL_LAT_VALUES] =  np.empty(shape=(3, 0))
+        self._metrics[KEY_HIDDEN_LAYER_WTD_INPUT_FROM_NUDGE] = np.empty(shape=(3, 0))
+        self._metrics[KEY_HIDDEN_LAYER_INHIB_DENDR_MP_VALUES] = np.empty(shape=(3, 0))
+        self._metrics[KEY_HIDDEN_LAYER_INHIB_SOMA_MP_VALUES] = np.empty(shape=(3, 0))
         self._metrics[KEY_HIDDEN_LAYER_INHIB_ACT_VALUES] = np.empty(shape=(3, 0))
+        self._metrics[KEY_L2_BASAL_MINUS_SOMA_PYR_MP] = np.empty(shape=(3, 0))
+        self._metrics[KEY_L2_APICAL_MINUS_SOMA_PYR_MP] = np.empty(shape=(3, 0))
 
     def __do_ff_sweep(self):
         """Standard FF sweep"""
@@ -61,11 +72,19 @@ class NudgeExperiment(Experiment):
                 layer.update_pyrs_basal_and_soma_ff(prev)
             layer.update_dend_mps_via_ip()
 
-    def __do_fb_sweep(self):
+    def __do_fb_sweep(self):  # this version assumes the interneurons have nudging feedback connections
         """Standard FB sweep"""
+        nudge_fb_weight = self._nudge_fb_weight
         for prev, layer in iter_with_prev(reversed(self.layers)):  # [l3, l2, l1]
             if prev is None:  # Skip first layer (L3)
-                continue
+                continue      # Would pass do the same thing?
+            if layer.id_num == 2: # handles the nudging FB connections to Layer 2
+                layer.inhibs[0].wtd_input_from_nudge = nudge_fb_weight * prev.pyrs[0].soma_act
+                layer.inhibs[0].dend_mp += nudge_fb_weight * prev.pyrs[0].soma_act
+                layer.inhibs[0].update_inhib_soma_ff()
+                layer.inhibs[1].wtd_input_from_nudge = nudge_fb_weight * prev.pyrs[1].soma_act
+                layer.inhibs[1].dend_mp += nudge_fb_weight * prev.pyrs[1].soma_act
+                layer.inhibs[1].update_inhib_soma_ff()
             # update current layer pyrs using somatic pyr acts from previous layer and inhib acts from current layer
             layer.update_pyrs_apical_soma_fb(prev)  # in 2nd iter, prev = l3 and layer = l2
 
@@ -213,6 +232,31 @@ class NudgeExperiment(Experiment):
             create_column_vector(*map(lambda p: p.apical_lat, l2.pyrs)),
             axis=1)
 
+        self._metrics[KEY_L2_BASAL_MINUS_SOMA_PYR_MP] = np.append(
+            self._metrics[KEY_L2_BASAL_MINUS_SOMA_PYR_MP],
+            create_column_vector(*map(lambda p: p.basal_minus_soma_mp, l2.pyrs)),
+            axis=1)
+
+        self._metrics[KEY_L2_APICAL_MINUS_SOMA_PYR_MP] = np.append(
+            self._metrics[KEY_L2_APICAL_MINUS_SOMA_PYR_MP],
+            create_column_vector(*map(lambda p: p.apical_minus_soma_mp, l2.pyrs)),
+            axis=1)
+
+        self._metrics[KEY_HIDDEN_LAYER_WTD_INPUT_FROM_NUDGE] = np.append(
+            self._metrics[KEY_HIDDEN_LAYER_WTD_INPUT_FROM_NUDGE],
+            create_column_vector(*map(lambda p: p.wtd_input_from_nudge, l2.inhibs)),
+            axis=1)
+
+        self._metrics[KEY_HIDDEN_LAYER_INHIB_DENDR_MP_VALUES] = np.append(
+            self._metrics[KEY_HIDDEN_LAYER_INHIB_DENDR_MP_VALUES],
+            create_column_vector(*map(lambda p: p.dend_mp, l2.inhibs)),
+            axis=1)
+
+        self._metrics[KEY_HIDDEN_LAYER_INHIB_SOMA_MP_VALUES] = np.append(
+            self._metrics[KEY_HIDDEN_LAYER_INHIB_SOMA_MP_VALUES],
+            create_column_vector(*map(lambda p: p.soma_mp, l2.inhibs)),
+            axis=1)
+
         self._metrics[KEY_HIDDEN_LAYER_INHIB_ACT_VALUES] = np.append(
             self._metrics[KEY_HIDDEN_LAYER_INHIB_ACT_VALUES],
             create_column_vector(*map(lambda p: p.soma_act, l2.inhibs)),
@@ -242,7 +286,12 @@ class NudgeExperiment(Experiment):
         soma_acts_l2 = self._metrics[KEY_HIDDEN_LAYER_PYR_ACT_VALUES]
         apical_fb_l2 = self._metrics[KEY_HIDDEN_LAYER_APICAL_FB_VALUES]
         apical_lat_l2 = self._metrics[KEY_HIDDEN_LAYER_APICAL_LAT_VALUES]
+        inhib_wtd_inp_nudge = self._metrics[KEY_HIDDEN_LAYER_WTD_INPUT_FROM_NUDGE]
+        inhib_dendr_mps_l2 = self._metrics[KEY_HIDDEN_LAYER_INHIB_DENDR_MP_VALUES]
+        inhib_soma_mps_l2 = self._metrics[KEY_HIDDEN_LAYER_INHIB_SOMA_MP_VALUES]
         inhib_soma_acts_l2 = self._metrics[KEY_HIDDEN_LAYER_INHIB_ACT_VALUES]
+        basal_minus_soma_mp_l2 = self._metrics[KEY_L2_BASAL_MINUS_SOMA_PYR_MP]
+        apical_minus_soma_mp_l2 = self._metrics[KEY_L2_APICAL_MINUS_SOMA_PYR_MP]
 
         return [
             Graph(type=GraphType.LINE,
@@ -256,6 +305,7 @@ class NudgeExperiment(Experiment):
                   yaxis="Membrane potential (mV)"),
             Graph(type=GraphType.LINE,
                   title="Layer 2 Apical MPs",
+                  caption="Compare this nudge response to the basic nudge experiment w/o feedback.",
                   precision=2,
                   series=[
                       Serie("Apical MP 1", data_l2[0].tolist()),
@@ -265,19 +315,21 @@ class NudgeExperiment(Experiment):
                   xaxis="Training steps",
                   yaxis="Membrane potential (mV)"),
             Graph(type=GraphType.LINE,
-                  title="Learning Rule PP_FF Triggers",
+                  title="LR W_PP_FF(3,2) Triggers in L3",
+                  caption="Operation of the learning rule for the FF wt connecting pyr neuron 0 in layer 2 to pyr 0 in layer 3. The learning trigger is the difference (yellow) btw the somatic (blue) and basal (green) mps of pyr 0 in layer 3. A nudge causes the somatic mp to jump. Yellow estimates the amount of wt change per timestep.",
                   precision=2,
                   series=[
-                      Serie("Soma act", triggers_l2[0].tolist()),
-                      Serie("Basal hat act", triggers_l2[1].tolist()),
-                      Serie("Post soma MP", triggers_l2[2].tolist()),
-                      Serie("Post basal MP", triggers_l2[3].tolist()),
-                      Serie("Post val", triggers_l2[4].tolist()),
+                      #Serie("Soma act", triggers_l2[0].tolist()),
+                      #Serie("Basal hat act", triggers_l2[1].tolist()),
+                      Serie("L3 post soma MP", triggers_l2[2].tolist()),
+                      Serie("L3 post basal MP", triggers_l2[3].tolist()),
+                      Serie("L3 post val", triggers_l2[4].tolist()),
                   ],
                   # xaxis="Training steps",
                   yaxis="..."),
             Graph(type=GraphType.LINE,  # This and the next graph interferred w/ each other when series strings were the same.
                   title="PP_FF wts projecting to L3 Pyr0",
+                  caption="Above shows the three weights projecting to pyr neuron 0 in layer 3 from the three pyr neurons in layer 2. The blue graph shows the wt adjustment be the learning rule in the previous panel.",
                   precision=2,
                   series=[
                       Serie("PP_FF wt[0] to P0", wts_r13_l2_pyr0[0].tolist()),
@@ -327,14 +379,14 @@ class NudgeExperiment(Experiment):
                   xaxis="Training steps",
                   yaxis="Lat wt values to Pyr2 in L2"),
             Graph(type=GraphType.LINE,
-                  title="Learning Rule PP_FF Triggers L1",
+                  title="LR W_PP_FF(2,1) Triggers L2",
                   precision=2,
                   series=[
-                      Serie("Soma act", triggers_l1[0].tolist()),
-                      Serie("Basal hat act", triggers_l1[1].tolist()),
-                      Serie("Post soma MP", triggers_l1[2].tolist()),
-                      Serie("Post basal MP", triggers_l1[3].tolist()),
-                      Serie("Post val", triggers_l1[4].tolist()),
+                      #Serie("Soma act", triggers_l1[0].tolist()),
+                      #Serie("Basal hat act", triggers_l1[1].tolist()),
+                      Serie("L2 post soma MP", triggers_l1[2].tolist()),
+                      Serie("L2 post basal MP", triggers_l1[3].tolist()),
+                      Serie("L2 post val", triggers_l1[4].tolist()),
                   ],
                   xaxis="Training steps",
                   yaxis="..."),
@@ -366,6 +418,7 @@ class NudgeExperiment(Experiment):
                   yaxis="Basal MP"),
             Graph(type=GraphType.LINE,
                   title="Layer 2 Pyr Soma Activations",
+                  caption="The nudge response is puzzling in the above grapn",
                   precision=2,
                   series=[
                       Serie("Act Pyr 0", soma_acts_l2[0].tolist()),
@@ -374,6 +427,28 @@ class NudgeExperiment(Experiment):
                   ],
                   xaxis="Training steps",
                   yaxis="Pyr Hidden activation"),
+            Graph(type=GraphType.LINE,
+                  title="L2 Basal - Soma MP Pyr",
+                  caption="Soma membrane potential subtracted from basal membrane potential for pyramidal neurons in layer 2. Used to compute change in somatic potential.",
+                  precision=2,
+                  series=[
+                      Serie("Basal-soma mp Pyr 0", basal_minus_soma_mp_l2[0].tolist()),
+                      Serie("Basal-soma mp Pyr 1", basal_minus_soma_mp_l2[1].tolist()),
+                      Serie("Basal-soma mp Pyr 2", basal_minus_soma_mp_l2[2].tolist()),
+                  ],
+                  xaxis="Training steps",
+                  yaxis="L2 Pyr basal - soma mp"),
+            Graph(type=GraphType.LINE,
+                  title="L2 Apical - Soma MP Pyr",
+                  caption="Soma membrane potential subtracted from apical membrane potential for pyramidal neurons in layer 2. Used to compute change in somatic potential.",
+                  precision=2,
+                  series=[
+                      Serie("Basal-soma mp Pyr 0", apical_minus_soma_mp_l2[0].tolist()),
+                      Serie("Basal-soma mp Pyr 1", apical_minus_soma_mp_l2[1].tolist()),
+                      Serie("Basal-soma mp Pyr 2", apical_minus_soma_mp_l2[2].tolist()),
+                  ],
+                  xaxis="Training steps",
+                  yaxis="L2 Pyr apical - soma mp"),
             Graph(type=GraphType.LINE,
                   title="Layer 2 Pyr Apical FB Values",
                   precision=2,
@@ -395,6 +470,39 @@ class NudgeExperiment(Experiment):
                   xaxis="Training steps",
                   yaxis="Pyr Hidden apical LAT values"),
             Graph(type=GraphType.LINE,
+                  title="Layer 2 wtd input from nudge",
+                  caption="Layer 3 pyr soma activation multiplied by nudge weight. This contributes to dendritic mp of inhib neuron in layer 2. Connections from layer 3 to layer 2 are pt-2-pt. The nudge wt for soma 2 is zero.",
+                  precision=2,
+                  series=[
+                      Serie("wtd nudge Inhib 0", inhib_wtd_inp_nudge[0].tolist()),
+                      Serie("wtd nudge Inhib 1", inhib_wtd_inp_nudge[1].tolist()),
+                      Serie("wtd nudge Inhib 2", inhib_wtd_inp_nudge[2].tolist()),
+                  ],
+                  xaxis="Training steps",
+                  yaxis="Inhib wtd nudge input"),
+            Graph(type=GraphType.LINE,
+                  title="Layer 2 Inhib Dendritic MPs",
+                  caption="Layer 2 inhib dendritic mps corresponding to previous panel.",
+                  precision=2,
+                  series=[
+                      Serie("Dendr MP Inhib 0", inhib_dendr_mps_l2[0].tolist()),
+                      Serie("Dendr MP Inhib 1", inhib_dendr_mps_l2[1].tolist()),
+                      Serie("Dendr MP Inhib 2", inhib_dendr_mps_l2[2].tolist()),
+                  ],
+                  xaxis="Training steps",
+                  yaxis="Inhib Hidden Dendritic MP"),
+            Graph(type=GraphType.LINE,
+                  title="Layer 2 Inhib Soma MPs",
+                  caption="Layer 2 inhib somatic mps corresponding to previous panel. Current flows from dendrite to soma.",
+                  precision=2,
+                  series=[
+                      Serie("Soma MP Inhib 0", inhib_soma_mps_l2[0].tolist()),
+                      Serie("Soma MP Inhib 1", inhib_soma_mps_l2[1].tolist()),
+                      Serie("Soma MP Inhib 2", inhib_soma_mps_l2[2].tolist()),
+                  ],
+                  xaxis="Training steps",
+                  yaxis="Inhib Hidden Soma MP"),
+            Graph(type=GraphType.LINE,
                   title="Layer 2 Inhib Soma Activations",
                   precision=2,
                   series=[
@@ -406,6 +514,7 @@ class NudgeExperiment(Experiment):
                   yaxis="Inhib Hidden activation"),
             Graph(type=GraphType.COLUMN,
                   title="Output Activations",
+                  caption="Activations of the two output neurons in response to nudging events.",
                   precision=4,
                   series=[
                       Serie("Neuron 1", [self._metrics[KEY_OUTPUT_LAYER_VALUES][0][399],  # 0.6535

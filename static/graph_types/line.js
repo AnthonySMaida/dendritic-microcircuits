@@ -20,7 +20,7 @@ function genLineGraph(data) {
     },
     title: {
       text: data.title,
-      align: 'center'
+      align: 'left'
     },
     xaxis: {
       title: data.xaxis ? {

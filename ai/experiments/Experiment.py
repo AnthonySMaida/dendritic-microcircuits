@@ -15,7 +15,7 @@ logger = get_logger('ai.experiments.Experiment')
 
 class Experiment:
     def __init__(self, wt_init_seed: int, beta: float, learning_rate: float):
-        self._beta = beta
+        self._beta = beta  # for exponential sampling
         self._learning_rate = learning_rate
         self._metrics = {}
         self._rng_wts = np.random.default_rng(seed=wt_init_seed)
