@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 import numpy as np
 
@@ -55,9 +55,9 @@ class XorExperiment(Experiment):
             else:
                 layer.update_pyrs_basal_and_soma_ff(prev)
             layer.update_dend_mps_via_ip()
-            #logger.debug(layer)
+            # logger.debug(layer)
 
-        #logger.info("FF sweep done.")
+        # logger.info("FF sweep done.")
 
     def __do_fb_sweep(self):
         """Standard FB sweep"""
@@ -68,9 +68,9 @@ class XorExperiment(Experiment):
                 continue
             # update current layer pyrs using somatic pyr acts from previous layer and inhib acts from current layer
             layer.update_pyrs_apical_soma_fb(prev)
-            #logger.debug(layer)
+            # logger.debug(layer)
 
-        #logger.info("FB sweep done.")
+        # logger.info("FB sweep done.")
 
     def __gather_layer_metrics(self, key_post: str, key_wts: str, layer: Layer):
         soma_act = layer.pyr_soma_acts()[0]

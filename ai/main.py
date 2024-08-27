@@ -34,7 +34,6 @@ from ai.experiments import KEYS, BasicNudgeExper, NudgeExperFB, XorExperiment, A
 from metrics import Graph
 
 logger = get_logger('ai.sacramento_main')
-#logger.setLevel(logging.DEBUG)
 
 
 def and_or_experiment(params: MultiDict = None) -> List[Graph]:
@@ -60,7 +59,8 @@ def nudge_experiment(params: MultiDict = None) -> List[Graph]:  # Why is MultiDi
         params = MultiDict()
 
     wt_init_seed = params.get('wt_init_seed', 42, type=int)
-    beta = params.get('beta', 1.0 / 3.0, type=float)  # beta = 1/lambda => lambda = 3. beta is scale param for rng.exponential.
+    # beta = 1/lambda => lambda = 3. beta is scale param for rng.exponential.
+    beta = params.get('beta', 1.0 / 3.0, type=float)
     learning_rate = params.get('learning_rate', 0.05, type=float)
     nudge1 = params.get('nudge1', 1.0, type=float)
     nudge2 = params.get('nudge2', 0.0, type=float)
@@ -119,13 +119,14 @@ def nudge_experiment_FB(params: MultiDict = None) -> List[Graph]:  # Why is Mult
 
     return experiment.extract_metrics()
 
+
 def xor_experiment(params: MultiDict = None) -> List[Graph]:
     if params is None:
         params = MultiDict()
 
     wt_init_seed = params.get('wt_init_seed', 42, type=int)
     label_init_seed = params.get('label_init_seed', 42, type=int)
-    beta = params.get('beta', 1.0 / 3.0, type=float)  # beta = 1/lambda => lambda = 3. beta is scale param for rng.exponential.
+    beta = params.get('beta', 1.0 / 3.0, type=float)
     learning_rate = params.get('learning_rate', 0.05, type=float)
     n_pyr_by_layer = (
         params.get('n_pyr_layer1', 2, type=int),

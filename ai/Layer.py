@@ -2,26 +2,23 @@ import numpy as np
 
 from ai.InhibNRN import InhibNRN
 from ai.PyrNRN import PyrNRN
-from ai.utils import logsig
 from ai.colorized_logger import get_logger
+from ai.utils import logsig
 
 logger = get_logger("ai.Layer")
-#logger.setLevel(logging.DEBUG)
 
 
 # Allocate storage, then allocate objects
 # wt_counts are per neuron. Thus, 'pyr_ff_wt_cnt' is the num of ff wts
 # per neuron in the layer.
 class Layer:
-    next_id = 1
-
-    def __init__(self, learning_rate, rng, n_pyrs, n_inhibs, n_pyr_ff_wt, n_pi_lat_wt, n_pyr_fb_wt, beta, n_ip_lat_wt):
+    def __init__(self, i: int, learning_rate, rng, n_pyrs, n_inhibs, n_pyr_ff_wt, n_pi_lat_wt, n_pyr_fb_wt, beta,
+                 n_ip_lat_wt):
         self._learning_rate = learning_rate
 
-        self.id_num = Layer.next_id
+        self.id_num = i
         self.pyrs = [PyrNRN(rng, beta, n_pyr_ff_wt, n_pi_lat_wt, n_pyr_fb_wt) for _ in range(n_pyrs)]
         self.inhibs = [InhibNRN(rng, beta, n_ip_lat_wt) for _ in range(n_inhibs)]
-        Layer.next_id += 1
 
     def __repr__(self):
         temp = f"Layer id_num: {self.id_num}\n"
@@ -98,7 +95,7 @@ class Layer:
             self.pyrs[i].apical_fb = np.dot(self.pyrs[i].W_PP_fb, fb_acts)
             self.pyrs[i].apical_lat = np.dot(self.pyrs[i].W_PI_lat, inhib_acts)
             self.pyrs[i].apical_mp = self.pyrs[i].apical_fb + self.pyrs[i].apical_lat
-            #self.pyrs[i].apical_mp = np.dot(self.pyrs[i].W_PP_fb, fb_acts) + np.dot(self.pyrs[i].W_PI_lat, inhib_acts)
+            # self.pyrs[i].apical_mp = np.dot(self.pyrs[i].W_PP_fb, fb_acts) + np.dot(self.pyrs[i].W_PI_lat, inhib_acts)
             self.pyrs[i].apical_act = logsig(self.pyrs[i].apical_mp)
             self.pyrs[i].apical_hat = 0.5 * self.pyrs[i].apical_mp  # approximation to Eqn (14)
             self.pyrs[i].apical_hat_act = logsig(self.pyrs[i].apical_hat)
@@ -183,7 +180,7 @@ class Layer:
     def adjust_wts_lat_ip(self):  # Equation 16a
         pre = self.pyr_soma_acts()
         # post = self.inhib_soma_acts() - self.inhib_soma_acts()  # Original Rule 16a
-        post = self.inhib_soma_mps() - self.inhib_dend_mps()      # Simplified for debugging
+        post = self.inhib_soma_mps() - self.inhib_dend_mps()  # Simplified for debugging
         for i in range(post.size):
             for j in range(pre.size):
                 self.inhibs[i].W_IP_lat[j] += self._learning_rate * post[i] * pre[j]

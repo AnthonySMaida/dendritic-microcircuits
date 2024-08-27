@@ -4,10 +4,12 @@
 """
 
 import logging
+
 from colorama import Fore, Style, init
 
 # Initialize colorama
 init(autoreset=True)
+
 
 # Custom formatter class
 class ColoredFormatter(logging.Formatter):
@@ -23,6 +25,7 @@ class ColoredFormatter(logging.Formatter):
         log_color = self.COLORS.get(record.levelno, Fore.WHITE)
         log_message = super().format(record)
         return f"{log_color}{log_message}{Style.RESET_ALL}"
+
 
 # Example usage
 def get_logger(name):

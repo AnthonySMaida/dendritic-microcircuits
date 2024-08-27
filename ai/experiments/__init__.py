@@ -1,6 +1,6 @@
 from .AndOrExperiment import AndOrExperiment
-from .KEYS import KEYS
 from .Experiment import Experiment
+from .KEYS import KEYS
 from .BasicNudgeExper import BasicNudgeExper
 from .NudgeExperFB import NudgeExperFB
 from .XorExperiment import XorExperiment
