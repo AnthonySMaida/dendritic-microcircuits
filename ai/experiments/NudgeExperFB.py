@@ -82,6 +82,7 @@ class NudgeExperFB(Experiment):
                 layer.inhibs[0].wtd_input_from_nudge = nudge_fb_weight * prev.pyrs[0].soma_act
                 layer.inhibs[0].dend_mp += nudge_fb_weight * prev.pyrs[0].soma_act
                 layer.inhibs[0].update_inhib_soma_ff()
+
                 layer.inhibs[1].wtd_input_from_nudge = nudge_fb_weight * prev.pyrs[1].soma_act
                 layer.inhibs[1].dend_mp += nudge_fb_weight * prev.pyrs[1].soma_act
                 layer.inhibs[1].update_inhib_soma_ff()
@@ -153,10 +154,10 @@ class NudgeExperFB(Experiment):
             axis=1
         )
 
-        soma_act = l3.pyr_soma_acts()[0]
-        basal_hat_act = l3.pyr_basal_hat_acts()[0]
-        post_soma_mp = l3.pyr_soma_mps()[0]
-        post_basal_mp = l3.pyr_basal_mps()[0]
+        soma_act = l3.pyr_soma_acts[0]
+        basal_hat_act = l3.pyr_basal_hat_acts[0]
+        post_soma_mp = l3.pyr_soma_mps[0]
+        post_basal_mp = l3.pyr_basal_mps[0]
         post_val = post_soma_mp - post_basal_mp
 
         self._metrics[KEY_RULE_13_POST_DATA] = np.append(
@@ -194,10 +195,10 @@ class NudgeExperFB(Experiment):
             axis=1
         )
 
-        soma_act = l2.pyr_soma_acts()[0]
-        basal_hat_act = l2.pyr_basal_hat_acts()[0]
-        post_soma_mp = l2.pyr_soma_mps()[0]
-        post_basal_mp = l2.pyr_basal_mps()[0]
+        soma_act = l2.pyr_soma_acts[0]
+        basal_hat_act = l2.pyr_basal_hat_acts[0]
+        post_soma_mp = l2.pyr_soma_mps[0]
+        post_basal_mp = l2.pyr_basal_mps[0]
         post_val2 = post_soma_mp - post_basal_mp
 
         self._metrics[KEY_RULE_13_POST_DATA_L1] = np.append(
