@@ -73,10 +73,10 @@ class XorExperiment(Experiment):
         # logger.info("FB sweep done.")
 
     def __gather_layer_metrics(self, key_post: str, key_wts: str, layer: Layer):
-        soma_act = layer.pyr_soma_acts()[0]
-        basal_hat_act = layer.pyr_basal_hat_acts()[0]
-        post_soma_mp = layer.pyr_soma_mps()[0]
-        post_basal_mp = layer.pyr_basal_mps()[0]
+        soma_act = layer.pyr_soma_acts[0]
+        basal_hat_act = layer.pyr_basal_hat_acts[0]
+        post_soma_mp = layer.pyr_soma_mps[0]
+        post_basal_mp = layer.pyr_basal_mps[0]
         post_val2 = post_soma_mp - post_basal_mp
 
         self._metrics[key_post] = np.append(

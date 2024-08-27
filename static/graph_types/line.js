@@ -3,7 +3,10 @@ function genLineGraph(data) {
     chart: {
       height: 334,
       width: 500,
-      type: 'line'
+      type: 'line',
+      zoom: {
+        autoScaleYaxis: true
+      }
     },
     dataLabels: {
       enabled: false
