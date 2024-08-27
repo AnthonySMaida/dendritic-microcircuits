@@ -66,18 +66,23 @@ class Layer:
 
     def apply_inputs_to_test_self_predictive_convergence(self, input_val: list):
         """apply uniform inputs of 0.5 to get the system running"""
-        for i, pyr in enumerate(self.pyrs):
-            pyr.update_ff(input_val[i])
+        for i in range(len(self.pyrs)):
+            self.pyrs[i].basal_mp = input_val[i]
+            self.pyrs[i].update_pyr_soma_ff()  # updates soma mp and activation
 
     def update_dend_mps_via_ip(self):  # update dendritic membrane potentials
         """update inhibs via lateral IP wts"""
-        for inhib in self.inhibs:
-            inhib.update_ff(self.pyr_soma_acts)
+        temp = self.pyr_soma_acts  # for current layer
+        for i in range(len(self.inhibs)):
+            self.inhibs[i].dend_mp = np.dot(self.inhibs[i].W_IP_lat, temp)
+            self.inhibs[i].update_inhib_soma_ff()
 
     def update_pyrs_basal_and_soma_ff(self, prev_layer: "Layer"):  # forward decl
         """update pyrs bottom up from prev layer"""
-        for pyr in self.pyrs:  # update each pyramid in current layer
-            pyr.update_ff(pyr.W_PP_ff @ prev_layer.pyr_soma_acts)  # update basal mp and soma mp
+        temp = prev_layer.pyr_soma_acts  # get activations from prev layer
+        for i in range(len(self.pyrs)):  # update each pyramid in current layer
+            self.pyrs[i].basal_mp = np.dot(self.pyrs[i].W_PP_ff, temp)
+            self.pyrs[i].update_pyr_soma_ff()
 
     def update_pyrs_apical_soma_fb(self, higher_layer: "Layer"):
         """propagates input from apical dends to soma"""
