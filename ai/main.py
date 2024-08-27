@@ -48,7 +48,8 @@ def and_or_experiment(params: MultiDict = None) -> List[Graph]:
     training_steps = params.get('training_steps', 190, type=int)
 
     experiment = AndOrExperiment(wt_init_seed, label_init_seed, beta, learning_rate)
-    experiment.build_network(2, (2, 2, 2, 2), (2, 0, 0, 0))
+    experiment.build_small_two_layer_network(2, 2)
+    #experiment.build_network(2, (2, 1, 2, 2), (2, 0, 0, 0))
     experiment.run(self_prediction_steps, training_steps)
 
     return experiment.extract_metrics()

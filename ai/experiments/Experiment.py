@@ -70,6 +70,25 @@ class Experiment:
             layers.append(layer)
         self.layers = layers
 
+    def build_small_two_layer_network(self, n_input_pyr_nrns: int = 2, n_output_pyr_nrns: int = 2):
+        """Build 2-layer network
+        Layer 1 is the input layer w/ 2 pyrs and 1 inhib cell.
+        No FF connections in input layer. They are postponed to receiving layer.
+        Each layer 1 pyr projects a FF connection to each of 2 pyrs in output layer.
+        Wts associated w/ a neuron instance are always incoming wts.
+        """
+        logger.info("Building model...")
+
+        l1 = Layer(1, self._learning_rate, self._rng_wts, n_input_pyr_nrns, 1, None, 1, 2, self._beta,2)
+        logger.warning("""Layer 1:\n========\n%s""", l1)
+
+        # Layer 2 is output layer w/ 2 pyrs. No inhib neurons.
+        l2 = Layer(2, self._learning_rate, self._rng_wts, n_output_pyr_nrns, 0, n_input_pyr_nrns, None, None, self._beta,None )
+        logger.warning("""Layer 2:\n========\n%s""", l2)
+
+        self.layers = [l1, l2]
+        logger.info("Finished building 2-layer model.")
+
     def build_small_three_layer_network(self, n_input_pyr_nrns: int = 2, n_hidden_pyr_nrns: int = 3,
                                         n_output_pyr_nrns: int = 2):
         """Build 3-layer network"""
@@ -77,9 +96,9 @@ class Experiment:
         # No FF connections in input layer. They are postponed to receiving layer.
         # Each pyramid projects a FF connection to each of 3 pyrs in Layer 2 (hidden).
         # wts are always incoming weights.
+        logger.info("Building model...")
         l1 = Layer(1, self._learning_rate, self._rng_wts, n_input_pyr_nrns, 1, None, 1, n_hidden_pyr_nrns, self._beta,
                    2)
-        logger.info("Building model...")
         logger.warning("""Layer 1:\n========\n%s""", l1)
 
         # Layer 2 is hidden layer w/ 3 pyrs.
@@ -96,7 +115,7 @@ class Experiment:
 
         self.layers = [l1, l2, l3]
 
-        logger.info("Finished building model.")
+        logger.info("Finished building 3-layer model.")
 
     def train(self, n_steps: int, *args, **kwargs):
         """
