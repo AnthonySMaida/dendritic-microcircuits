@@ -61,7 +61,8 @@ class PyrNRN:
     incoming W_PI_lat: {self.W_PI_lat}"""
 
     # simplified update. See Section 5.3 of paper, point 1.
-    def update_pyr_soma_ff(self):
+    def update_ff(self, new_basal_mp):
+        self.basal_mp = new_basal_mp
         self.soma_mp = self.basal_mp  # start from basal_mp
         # 1.0 / (g_lk + g_A + g_B) = 1.0 / (0.1 + 0.8 + 1.0) = 1.0 / 1.9 = 0.5263157894736842
         self.basal_hat = .5263157894736842 * self.basal_mp
