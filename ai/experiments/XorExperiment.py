@@ -1,6 +1,7 @@
 from typing import Optional
 
 import numpy as np
+from werkzeug.datastructures import MultiDict
 
 from ai.Layer import Layer
 from ai.colorized_logger import get_logger
@@ -22,8 +23,16 @@ KEY_HIDDEN_LAYER_INHIB_ACTS = "hidden_layer_inhib_acts"
 
 
 class XorExperiment(Experiment):
-    def __init__(self, wt_init_seed: int, label_init_seed: int, beta: float, learning_rate: float):
-        super().__init__(wt_init_seed, beta, learning_rate)
+    def __init__(self, params: MultiDict):
+        super().__init__(params)
+
+        self.__label_init_seed = params.get('label_init_seed', 42, type=int)
+        self.__n_pyr_layer1 = params.get('n_pyr_layer1', 2, type=int)
+        self.__n_pyr_layer2 = params.get('n_pyr_layer2', 3, type=int)
+        self.__n_pyr_layer3 = params.get('n_pyr_layer3', 2, type=int)
+        self.__self_prediction_steps = params.get('self_prediction_steps', 400, type=int)
+        self.__training_steps = params.get('training_steps', 190, type=int)
+        self.__after_training_steps = params.get('after_training_steps', 10, type=int)
 
         self._metrics[KEY_LAYER_1] = np.empty(shape=(2, 0))
         self._metrics[KEY_LAYER_2] = np.empty(shape=(3, 0))
@@ -42,7 +51,9 @@ class XorExperiment(Experiment):
         self._current_X: Optional[np.ndarray] = None
         self._current_label: Optional[int] = None
 
-        self._rng_labels = np.random.default_rng(seed=label_init_seed)
+        self._rng_labels = np.random.default_rng(seed=self.__label_init_seed)
+
+        self.build_small_three_layer_network(self.__n_pyr_layer1, self.__n_pyr_layer2, self.__n_pyr_layer3)
 
     def __do_ff_sweep(self):
         """Standard FF sweep"""
@@ -303,28 +314,28 @@ class XorExperiment(Experiment):
                   extra=extra),
         ]
 
-    def run(self, self_prediction_steps: int, training_steps: int, after_training_steps: int):
+    def run(self):
         logger.info("START: Performing nudge experiment with rules 16b and 13.")
         # self.do_ff_sweep()  # prints state
         # logger.info("Finished 1st FF sweep: NudgeExperiment")
         # self.do_fb_sweep()  # prints state
         # logger.info("Finished 1st FB sweep: nudge_experiment")
 
-        logger.info(f"Starting training {self_prediction_steps} steps to XOR self predictive.")
+        logger.info(f"Starting training {self.__self_prediction_steps} steps to XOR self predictive.")
         # trains and SAVES apical results in 'datasets' attr
-        self.train(self_prediction_steps, nudge_predicate=False)
+        self.train(self.__self_prediction_steps, nudge_predicate=False)
 
         # logger.info("Calling function to impose nudge.")
         # self._nudge_output_layer()
 
-        logger.info(f"Starting training {training_steps} steps for XOR exp")
+        logger.info(f"Starting training {self.__training_steps} steps for XOR exp")
 
         # trains and APPENDS apical results in 'datasets' attr
-        self.train(training_steps, nudge_predicate=True)
-        logger.info(f"Finished training {training_steps} steps for XOR exp")
+        self.train(self.__training_steps, nudge_predicate=True)
+        logger.info(f"Finished training {self.__training_steps} steps for XOR exp")
 
-        self.train(after_training_steps, nudge_predicate=False)
-        logger.info(f"Finished training {training_steps} steps for XOR exp")
+        self.train(self.__after_training_steps, nudge_predicate=False)
+        logger.info(f"Finished training {self.__after_training_steps} steps for XOR exp")
         self.print_pyr_activations_all_layers_topdown()  # print activations while nudging is still on
 
         # self.do_ff_sweep()  # to get new activations without nudging

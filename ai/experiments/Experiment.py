@@ -3,6 +3,7 @@ from abc import abstractmethod
 from typing import List, Tuple
 
 import numpy as np
+from werkzeug.datastructures.structures import MultiDict
 
 from ai.Layer import Layer
 from ai.colorized_logger import get_logger
@@ -13,11 +14,13 @@ logger = get_logger('ai.experiments.Experiment')
 
 
 class Experiment:
-    def __init__(self, wt_init_seed: int, beta: float, learning_rate: float):
-        self._beta = beta  # for exponential sampling
-        self._learning_rate = learning_rate
+    def __init__(self, params: MultiDict):
+        self._wt_init_seed = params.get('wt_init_seed', 42, type=int)
+
+        self._beta = params.get('beta', 1.0 / 3.0, type=float)  # for exponential sampling
+        self._learning_rate = params.get('learning_rate', 0.05, type=float)
         self._metrics = {}
-        self._rng_wts = np.random.default_rng(seed=wt_init_seed)
+        self._rng_wts = np.random.default_rng(seed=self._wt_init_seed)
 
         self.layers: List[Layer] = []  # list is made of layers. List type assists code completion.
 
@@ -149,5 +152,5 @@ class Experiment:
         raise NotImplementedError
 
     @abstractmethod
-    def run(self, *args, **kwargs):
+    def run(self):
         raise NotImplementedError

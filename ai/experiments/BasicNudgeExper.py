@@ -1,4 +1,5 @@
 import numpy as np
+from werkzeug.datastructures import MultiDict
 
 from ai.colorized_logger import get_logger
 from ai.experiments.Experiment import Experiment
@@ -28,12 +29,19 @@ KEY_L2_APICAL_MINUS_SOMA_PYR_MP = "l2_apical_minus_soma_pyr_mp"
 
 
 class BasicNudgeExper(Experiment):
-    def __init__(self, wt_init_seed: int, beta: float, learning_rate: float, nudge1: float, nudge2: float):
+    def __init__(self, params: MultiDict):
         # call the constructor of the parent class (aka superclass)
-        super().__init__(wt_init_seed, beta, learning_rate)
+        super().__init__(params)
 
-        self._nudge1 = nudge1
-        self._nudge2 = nudge2
+        self._nudge1 = params.get('nudge1', 1.0, type=float)
+        self._nudge2 = params.get('nudge2', 0.0, type=float)
+
+        self.__n_pyr_layer1 = params.get('n_pyr_layer1', 2, type=int)
+        self.__n_pyr_layer2 = params.get('n_pyr_layer2', 3, type=int)
+        self.__n_pyr_layer3 = params.get('n_pyr_layer3', 2, type=int)
+        self.__self_prediction_steps = params.get('self_prediction_steps', 400, type=int)
+        self.__training_steps = params.get('training_steps', 190, type=int)
+        self.__after_training_steps = params.get('after_training_steps', 10, type=int)
 
         self._metrics[KEY_LAYER_1] = np.empty(shape=(2, 0))
         self._metrics[KEY_LAYER_2] = np.empty(shape=(3, 0))
@@ -53,6 +61,8 @@ class BasicNudgeExper(Experiment):
         self._metrics[KEY_HIDDEN_LAYER_INHIB_ACT_VALUES] = np.empty(shape=(3, 0))
         self._metrics[KEY_L2_BASAL_MINUS_SOMA_PYR_MP] = np.empty(shape=(3, 0))
         self._metrics[KEY_L2_APICAL_MINUS_SOMA_PYR_MP] = np.empty(shape=(3, 0))
+
+        self.build_small_three_layer_network(self.__n_pyr_layer1, self.__n_pyr_layer2, self.__n_pyr_layer3)
 
     def __do_ff_sweep(self):
         """Standard FF sweep"""
@@ -457,7 +467,7 @@ class BasicNudgeExper(Experiment):
                   yaxis="Activation level")
         ]
 
-    def run(self, self_prediction_steps: int, training_steps: int, after_training_steps: int):
+    def run(self):
         logger.info("START: Performing nudge experiment with rules 16b and 13.")
         self.__do_ff_sweep()  # prints state
         logger.info("Finished 1st FF sweep: nudge_experiment")
@@ -465,21 +475,21 @@ class BasicNudgeExper(Experiment):
         self.__do_fb_sweep()  # prints state
         logger.info("Finished 1st FB sweep: nudge_experiment")
 
-        logger.info(f"Starting training {self_prediction_steps} steps to 1b2b self predictive.")
+        logger.info(f"Starting training {self.__self_prediction_steps} steps to 1b2b self predictive.")
         # trains and SAVES apical results in 'datasets' attr
-        self.train(self_prediction_steps, nudge_predicate=False)
+        self.train(self.__self_prediction_steps, nudge_predicate=False)
 
         logger.info("Calling function to impose nudge.")
         self.__nudge_output_layer()
 
-        logger.info(f"Starting training {training_steps} steps for p_exp 3b")
+        logger.info(f"Starting training {self.__training_steps} steps for p_exp 3b")
 
         # trains and APPENDS apical results in 'datasets' attr
-        self.train(training_steps, nudge_predicate=True)
-        logger.info(f"Finished training {training_steps} steps for p_exp 3b")
+        self.train(self.__training_steps, nudge_predicate=True)
+        logger.info(f"Finished training {self.__training_steps} steps for p_exp 3b")
 
-        self.train(after_training_steps, nudge_predicate=False)
-        logger.info(f"Finished training {training_steps} steps for p_exp 3b")
+        self.train(self.__after_training_steps, nudge_predicate=False)
+        logger.info(f"Finished training {self.__after_training_steps} steps for p_exp 3b")
         self.print_pyr_activations_all_layers_topdown()  # print activations while nudging is still on
 
         # self.do_ff_sweep()  # to get new activations without nudging
