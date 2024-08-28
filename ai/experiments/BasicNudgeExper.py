@@ -1,7 +1,8 @@
 import numpy as np
+from werkzeug.datastructures import MultiDict
 
-from ai.experiments.Experiment import Experiment
 from ai.colorized_logger import get_logger
+from ai.experiments.Experiment import Experiment
 from ai.utils import create_column_vector, iter_with_prev
 from metrics import Graph, Serie, GraphType
 
@@ -28,12 +29,19 @@ KEY_L2_APICAL_MINUS_SOMA_PYR_MP = "l2_apical_minus_soma_pyr_mp"
 
 
 class BasicNudgeExper(Experiment):
-    def __init__(self, wt_init_seed: int, beta: float, learning_rate: float, nudge1: float, nudge2: float):
+    def __init__(self, params: MultiDict):
         # call the constructor of the parent class (aka superclass)
-        super().__init__(wt_init_seed, beta, learning_rate)
+        super().__init__(params)
 
-        self._nudge1 = nudge1
-        self._nudge2 = nudge2
+        self._nudge1 = params.get('nudge1', 1.0, type=float)
+        self._nudge2 = params.get('nudge2', 0.0, type=float)
+
+        self.__n_pyr_layer1 = params.get('n_pyr_layer1', 2, type=int)
+        self.__n_pyr_layer2 = params.get('n_pyr_layer2', 3, type=int)
+        self.__n_pyr_layer3 = params.get('n_pyr_layer3', 2, type=int)
+        self.__self_prediction_steps = params.get('self_prediction_steps', 400, type=int)
+        self.__training_steps = params.get('training_steps', 190, type=int)
+        self.__after_training_steps = params.get('after_training_steps', 10, type=int)
 
         self._metrics[KEY_LAYER_1] = np.empty(shape=(2, 0))
         self._metrics[KEY_LAYER_2] = np.empty(shape=(3, 0))
@@ -43,16 +51,18 @@ class BasicNudgeExper(Experiment):
         self._metrics[KEY_RULE_16B_WT_DATA_L2_PYR0] = np.empty(shape=(3, 0))
         self._metrics[KEY_RULE_16B_WT_DATA_L2_PYR1] = np.empty(shape=(3, 0))
         self._metrics[KEY_RULE_16B_WT_DATA_L2_PYR2] = np.empty(shape=(3, 0))
-        self._metrics[KEY_RULE_13_POST_DATA_L1] = np.empty(shape=(5,0))
+        self._metrics[KEY_RULE_13_POST_DATA_L1] = np.empty(shape=(5, 0))
         self._metrics[KEY_RULE_13_WT_DATA_L1] = np.empty(shape=(0,))
         self._metrics[KEY_OUTPUT_LAYER_VALUES] = np.empty(shape=(2, 0))
         self._metrics[KEY_OUTPUT_LAYER_BASAL_MPS] = np.empty(shape=(2, 0))
         self._metrics[KEY_HIDDEN_LAYER_PYR_ACT_VALUES] = np.empty(shape=(3, 0))
         self._metrics[KEY_HIDDEN_LAYER_APICAL_FB_VALUES] = np.empty(shape=(3, 0))
-        self._metrics[KEY_HIDDEN_LAYER_APICAL_LAT_VALUES] =  np.empty(shape=(3, 0))
+        self._metrics[KEY_HIDDEN_LAYER_APICAL_LAT_VALUES] = np.empty(shape=(3, 0))
         self._metrics[KEY_HIDDEN_LAYER_INHIB_ACT_VALUES] = np.empty(shape=(3, 0))
         self._metrics[KEY_L2_BASAL_MINUS_SOMA_PYR_MP] = np.empty(shape=(3, 0))
         self._metrics[KEY_L2_APICAL_MINUS_SOMA_PYR_MP] = np.empty(shape=(3, 0))
+
+        self.build_small_three_layer_network(self.__n_pyr_layer1, self.__n_pyr_layer2, self.__n_pyr_layer3)
 
     def __do_ff_sweep(self):
         """Standard FF sweep"""
@@ -73,7 +83,7 @@ class BasicNudgeExper(Experiment):
             # update current layer pyrs using somatic pyr acts from previous layer and inhib acts from current layer
             layer.update_pyrs_apical_soma_fb(prev)  # in 2nd iter, prev = l3 and layer = l2
 
-    def __train_1_step_rule_16b_and_rule_13(self, use_nudge = False, use_rule_ip = False):
+    def __train_1_step_rule_16b_and_rule_13(self, use_nudge=False, use_rule_ip=False):
         """
         Learning step that uses both rules 16b and 13.
         Does one training step.
@@ -88,7 +98,7 @@ class BasicNudgeExper(Experiment):
         l1.adjust_wts_lat_pi()  # adjust lateral PI wts in Layer 1
 
         if use_rule_ip:  # also known as Rule 16a
-            l1.adjust_wts_lat_ip()      # adjust lateral IP wts in Layer 1
+            l1.adjust_wts_lat_ip()  # adjust lateral IP wts in Layer 1
 
         l2.adjust_wts_pp_ff(l1)  # adjust FF wts projecting to Layer 2
 
@@ -138,10 +148,10 @@ class BasicNudgeExper(Experiment):
             axis=1
         )
 
-        soma_act = l3.pyr_soma_acts()[0]
-        basal_hat_act = l3.pyr_basal_hat_acts()[0]
-        post_soma_mp = l3.pyr_soma_mps()[0]
-        post_basal_mp = l3.pyr_basal_mps()[0]
+        soma_act = l3.pyr_soma_acts[0]
+        basal_hat_act = l3.pyr_basal_hat_acts[0]
+        post_soma_mp = l3.pyr_soma_mps[0]
+        post_basal_mp = l3.pyr_basal_mps[0]
         post_val = post_soma_mp - post_basal_mp
 
         self._metrics[KEY_RULE_13_POST_DATA] = np.append(
@@ -179,10 +189,10 @@ class BasicNudgeExper(Experiment):
             axis=1
         )
 
-        soma_act = l2.pyr_soma_acts()[0]
-        basal_hat_act = l2.pyr_basal_hat_acts()[0]
-        post_soma_mp = l2.pyr_soma_mps()[0]
-        post_basal_mp = l2.pyr_basal_mps()[0]
+        soma_act = l2.pyr_soma_acts[0]
+        basal_hat_act = l2.pyr_basal_hat_acts[0]
+        post_soma_mp = l2.pyr_soma_mps[0]
+        post_basal_mp = l2.pyr_basal_mps[0]
         post_val2 = post_soma_mp - post_basal_mp
 
         self._metrics[KEY_RULE_13_POST_DATA_L1] = np.append(
@@ -290,9 +300,9 @@ class BasicNudgeExper(Experiment):
                       Serie("L3 post basal MP", triggers_l2[3].tolist()),
                       Serie("L3 post val", triggers_l2[4].tolist()),
                   ],
-                  # xaxis="Training steps",
                   yaxis="..."),
-            Graph(type=GraphType.LINE,  # This and the next graph interferred w/ each other when series strings were the same.
+            # This and the next graph interferred w/ each other when series strings were the same.
+            Graph(type=GraphType.LINE,
                   title="PP_FF wts projecting to L3 Pyr0",
                   precision=2,
                   series=[
@@ -447,17 +457,17 @@ class BasicNudgeExper(Experiment):
                       Serie("Neuron 1", [self._metrics[KEY_OUTPUT_LAYER_VALUES][0][399],  # 0.6535
                                          self._metrics[KEY_OUTPUT_LAYER_VALUES][0][400],  # 0.7165
                                          self._metrics[KEY_OUTPUT_LAYER_VALUES][0][598],  # 0.7310
-                                         self._metrics[KEY_OUTPUT_LAYER_VALUES][0][599]]), # 0.7309
+                                         self._metrics[KEY_OUTPUT_LAYER_VALUES][0][599]]),  # 0.7309
                       Serie("Neuron 2", [self._metrics[KEY_OUTPUT_LAYER_VALUES][1][399],  # 0.6051,
                                          self._metrics[KEY_OUTPUT_LAYER_VALUES][1][400],  # 0.5213,
                                          self._metrics[KEY_OUTPUT_LAYER_VALUES][1][598],  # 0.5000,
-                                         self._metrics[KEY_OUTPUT_LAYER_VALUES][1][599]]) # 0.5002
+                                         self._metrics[KEY_OUTPUT_LAYER_VALUES][1][599]])  # 0.5002
                   ],
-                  categories=["Before Nudge","Nudged", "After learning", "Nudged removed"],
+                  categories=["Before Nudge", "Nudged", "After learning", "Nudged removed"],
                   yaxis="Activation level")
         ]
 
-    def run(self, self_prediction_steps: int, training_steps: int, after_training_steps: int):
+    def run(self):
         logger.info("START: Performing nudge experiment with rules 16b and 13.")
         self.__do_ff_sweep()  # prints state
         logger.info("Finished 1st FF sweep: nudge_experiment")
@@ -465,24 +475,24 @@ class BasicNudgeExper(Experiment):
         self.__do_fb_sweep()  # prints state
         logger.info("Finished 1st FB sweep: nudge_experiment")
 
-        logger.info(f"Starting training {self_prediction_steps} steps to 1b2b self predictive.")
+        logger.info(f"Starting training {self.__self_prediction_steps} steps to 1b2b self predictive.")
         # trains and SAVES apical results in 'datasets' attr
-        self.train(self_prediction_steps, nudge_predicate=False)
+        self.train(self.__self_prediction_steps, nudge_predicate=False)
 
         logger.info("Calling function to impose nudge.")
         self.__nudge_output_layer()
 
-        logger.info(f"Starting training {training_steps} steps for p_exp 3b")
+        logger.info(f"Starting training {self.__training_steps} steps for p_exp 3b")
 
         # trains and APPENDS apical results in 'datasets' attr
-        self.train(training_steps, nudge_predicate=True)
-        logger.info(f"Finished training {training_steps} steps for p_exp 3b")
+        self.train(self.__training_steps, nudge_predicate=True)
+        logger.info(f"Finished training {self.__training_steps} steps for p_exp 3b")
 
-        self.train(after_training_steps, nudge_predicate=False)
-        logger.info(f"Finished training {training_steps} steps for p_exp 3b")
+        self.train(self.__after_training_steps, nudge_predicate=False)
+        logger.info(f"Finished training {self.__after_training_steps} steps for p_exp 3b")
         self.print_pyr_activations_all_layers_topdown()  # print activations while nudging is still on
 
-        #self.do_ff_sweep()  # to get new activations without nudging
+        # self.do_ff_sweep()  # to get new activations without nudging
 
         logger.info("Final activations after nudging is removed")
         self.print_pyr_activations_all_layers_topdown()  # shows the true effect of learning

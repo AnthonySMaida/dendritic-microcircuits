@@ -1,7 +1,7 @@
 from flask import Flask, render_template, jsonify, request
 
 import ai
-from ai.experiments import EXPERIMENTS
+from ai.experiments import EXPERIMENTS, KEYS
 
 app = Flask(__name__)
 app.secret_key = r'4c44309dd5a080a06e7d67c91cd53fa30012e6296e6258ceb06276a8c06c5e01'
@@ -19,14 +19,14 @@ def list_experiments():
 
 
 @app.route('/experiments/<experiment_name>')
-def get_experiment_form(experiment_name: str):
+def get_experiment_form(experiment_name: KEYS):
     return render_template(f'experiments/{experiment_name}.html',
-                           title=EXPERIMENTS[experiment_name]['title'],
+                           title=EXPERIMENTS[experiment_name].title,
                            key=experiment_name)
 
 
 @app.route('/data/<experiment_name>')
-def get_experiment_data(experiment_name: str):
+def get_experiment_data(experiment_name: KEYS):
     return jsonify(ai.main(experiment_name, request.args))
 
 

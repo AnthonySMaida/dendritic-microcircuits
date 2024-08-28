@@ -1,6 +1,7 @@
 from typing import List, Optional
 
 import numpy as np
+from werkzeug.datastructures import MultiDict
 
 from ai.colorized_logger import get_logger
 from ai.experiments.Experiment import Experiment
@@ -14,8 +15,12 @@ KEY_LAYER_2 = "layer2"
 
 
 class AndOrExperiment(Experiment):
-    def __init__(self, wt_init_seed: int, label_init_seed: int, beta: float, learning_rate: float):
-        super().__init__(wt_init_seed, beta, learning_rate)
+    def __init__(self, params: MultiDict):
+        super().__init__(params)
+
+        self.__label_init_seed = params.get('label_init_seed', 42, type=int)
+        self.__self_prediction_steps = params.get('self_prediction_steps', 400, type=int)
+        self.__training_steps = params.get('training_steps', 190, type=int)
 
         self._metrics[KEY_LAYER_1] = [np.empty(shape=(2, 0)) for _ in range(4)]
         self._metrics[KEY_LAYER_2] = [np.empty(shape=(2, 0)) for _ in range(4)]
@@ -29,7 +34,9 @@ class AndOrExperiment(Experiment):
         self._current_X: Optional[np.ndarray] = None
         self._current_label: Optional[np.ndarray] = None
 
-        self._rng_labels = np.random.default_rng(seed=label_init_seed)
+        self._rng_labels = np.random.default_rng(seed=self.__label_init_seed)
+
+        self.build_small_two_layer_network(2, 2)
 
     def __do_ff_sweep(self):
         """Standard FF sweep"""
@@ -104,12 +111,7 @@ class AndOrExperiment(Experiment):
     def extract_metrics(self) -> List[Graph]:
         return self.__extract_layer_metrics(KEY_LAYER_1) + self.__extract_layer_metrics(KEY_LAYER_2)
 
-    def run(self, self_prediction_steps: int, training_steps: int):
-        # self.__do_ff_sweep()
-        # self.__do_fb_sweep()
-
-        self.train(self_prediction_steps, nudge_predicate=False)
-
+    def run(self):
+        self.train(self.__self_prediction_steps, nudge_predicate=False)
         self.__nudge_output_layer()
-
-        self.train(training_steps, nudge_predicate=True)
+        self.train(self.__training_steps, nudge_predicate=True)

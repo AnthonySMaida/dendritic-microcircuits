@@ -1,8 +1,9 @@
-#import logging
+# import logging
 from abc import abstractmethod
 from typing import List, Tuple
 
 import numpy as np
+from werkzeug.datastructures.structures import MultiDict
 
 from ai.Layer import Layer
 from ai.colorized_logger import get_logger
@@ -10,15 +11,16 @@ from ai.utils import iter_with_prev
 from metrics import Graph
 
 logger = get_logger('ai.experiments.Experiment')
-#logger.setLevel(logging.DEBUG)
 
 
 class Experiment:
-    def __init__(self, wt_init_seed: int, beta: float, learning_rate: float):
-        self._beta = beta  # for exponential sampling
-        self._learning_rate = learning_rate
+    def __init__(self, params: MultiDict):
+        self._wt_init_seed = params.get('wt_init_seed', 42, type=int)
+
+        self._beta = params.get('beta', 1.0 / 3.0, type=float)  # for exponential sampling
+        self._learning_rate = params.get('learning_rate', 0.05, type=float)
         self._metrics = {}
-        self._rng_wts = np.random.default_rng(seed=wt_init_seed)
+        self._rng_wts = np.random.default_rng(seed=self._wt_init_seed)
 
         self.layers: List[Layer] = []  # list is made of layers. List type assists code completion.
 
@@ -56,10 +58,10 @@ class Experiment:
         :param n_pyr_nrns: Tuple of 4 ints, representing the number of pyramidal neurons, inhibitory neurons,
                             lateral inhibitory neurons, and lateral pyramidal neurons in each layer
         """
-        Layer.next_id = 1
         layers = []
         for i, (prev_n_pyr, n_pyr) in zip(range(n_layer), iter_with_prev(n_pyr_nrns)):
-            layer = Layer(learning_rate=self._learning_rate,
+            layer = Layer(i=i,
+                          learning_rate=self._learning_rate,
                           rng=self._rng_wts,
                           beta=self._beta,
                           n_pyrs=n_pyr[0],
@@ -71,34 +73,52 @@ class Experiment:
             layers.append(layer)
         self.layers = layers
 
+    def build_small_two_layer_network(self, n_input_pyr_nrns: int = 2, n_output_pyr_nrns: int = 2):
+        """Build 2-layer network
+        Layer 1 is the input layer w/ 2 pyrs and 1 inhib cell.
+        No FF connections in input layer. They are postponed to receiving layer.
+        Each layer 1 pyr projects a FF connection to each of 2 pyrs in output layer.
+        Wts associated w/ a neuron instance are always incoming wts.
+        """
+        logger.info("Building model...")
 
-    def build_small_three_layer_network(self, n_input_pyr_nrns: int = 2, n_hidden_pyr_nrns: int = 3, n_output_pyr_nrns: int = 2):
+        l1 = Layer(1, self._learning_rate, self._rng_wts, n_input_pyr_nrns, 1, None, 1, 2, self._beta,2)
+        logger.warning("""Layer 1:\n========\n%s""", l1)
+
+        # Layer 2 is output layer w/ 2 pyrs. No inhib neurons.
+        l2 = Layer(2, self._learning_rate, self._rng_wts, n_output_pyr_nrns, 0, n_input_pyr_nrns, None, None, self._beta,None )
+        logger.warning("""Layer 2:\n========\n%s""", l2)
+
+        self.layers = [l1, l2]
+        logger.info("Finished building 2-layer model.")
+
+    def build_small_three_layer_network(self, n_input_pyr_nrns: int = 2, n_hidden_pyr_nrns: int = 3,
+                                        n_output_pyr_nrns: int = 2):
         """Build 3-layer network"""
-
-        # Ensures the first layer is always 1 for a new network
-        Layer.next_id = 1
-
         # Layer 1 is the input layer w/ 2 pyrs and 1 inhib cell.
         # No FF connections in input layer. They are postponed to receiving layer.
         # Each pyramid projects a FF connection to each of 3 pyrs in Layer 2 (hidden).
         # wts are always incoming weights.
-        l1 = Layer(self._learning_rate, self._rng_wts, n_input_pyr_nrns, 1, None, 1, n_hidden_pyr_nrns, self._beta, 2)
         logger.info("Building model...")
+        l1 = Layer(1, self._learning_rate, self._rng_wts, n_input_pyr_nrns, 1, None, 1, n_hidden_pyr_nrns, self._beta,
+                   2)
         logger.warning("""Layer 1:\n========\n%s""", l1)
 
         # Layer 2 is hidden layer w/ 3 pyrs.
         # Also has 3 inhib neurons.
         # Has feedback connections to Layer 1
-        l2 = Layer(self._learning_rate, self._rng_wts, n_hidden_pyr_nrns, 3, n_input_pyr_nrns, 3, n_output_pyr_nrns, self._beta, 3)
+        l2 = Layer(2, self._learning_rate, self._rng_wts, n_hidden_pyr_nrns, 3, n_input_pyr_nrns, 3, n_output_pyr_nrns,
+                   self._beta, 3)
         logger.warning("""Layer 2:\n========\n%s""", l2)
 
         # Layer 3 is output layer w/ 2 pyrs. No inhib neurons.
-        l3 = Layer(self._learning_rate, self._rng_wts, n_output_pyr_nrns, 0, n_hidden_pyr_nrns, None, None, self._beta, None)
+        l3 = Layer(3, self._learning_rate, self._rng_wts, n_output_pyr_nrns, 0, n_hidden_pyr_nrns, None, None,
+                   self._beta, None)
         logger.warning("""Layer 3:\n========\n%s""", l3)
 
         self.layers = [l1, l2, l3]
 
-        logger.info("Finished building model.")
+        logger.info("Finished building 3-layer model.")
 
     def train(self, n_steps: int, *args, **kwargs):
         """
@@ -132,5 +152,5 @@ class Experiment:
         raise NotImplementedError
 
     @abstractmethod
-    def run(self, *args, **kwargs):
+    def run(self):
         raise NotImplementedError

@@ -1,40 +1,41 @@
-import numpy as np
-
 from ai.utils import logsig
 
 
 class PyrNRN:
-    next_id: np.int32 = 1  # You can declare data types.
-
-    def __init__(self, rng, beta: float, n_ff_wt: int, n_pi_lat_wt: int, n_fb_wt: int):  # wt_counts
+    def __init__(self, i: int, rng, beta: float, n_ff_wt: int, n_pi_lat_wt: int, n_fb_wt: int):  # wt_counts
         """
         :param n_ff_wt: num of incoming feedforward wts
         :param n_pi_lat_wt: num of incoming lateral wts
         :param n_fb_wt: num of incoming feedback wts
         """
-        self.id_num = PyrNRN.next_id
+        self.id_num = i
         self.type = "pyr"
-        self.soma_mp = 0.0  # somatic membrane potential
-        self.apical_mp = 0.0  # apical membrane potential
-        self.apical_fb = 0.0   # for debugging
+        self.soma_mp = 0.0
+        """somatic membrane potential"""
+        self.apical_mp = 0.0
+        """apical membrane potential"""
+        self.apical_fb = 0.0  # for debugging
         self.apical_lat = 0.0  # for debugging
-        self.basal_mp = 0.0  # basal membrane potential
-        self.basal_hat = 0.0  # predicted basal membrane potential
-        self.basal_hat_act = 0.0  # predicted basal activation
-        self.soma_act = 0.0  # activation value for soma
-        self.apical_act = 0.0  # activation for apical dendrite
-        self.apical_hat = 0.0  # predicted apical membrane potential
-        self.apical_hat_act = 0.0  # used in W_PP_ff learning rule
-        # Below: feedforward wts
-        # self.W_PP_ff     = rng.normal(wt_mu, wt_sig, (n_ff_wt,))     if n_ff_wt else None
+        self.basal_mp = 0.0
+        """basal membrane potential"""
+        self.basal_hat = 0.0
+        """predicted basal membrane potential"""
+        self.basal_hat_act = 0.0
+        """predicted basal activation"""
+        self.soma_act = 0.0
+        """activation value for soma"""
+        self.apical_act = 0.0
+        """activation for apical dendrite"""
+        self.apical_hat = 0.0
+        """predicted apical membrane potential"""
+        self.apical_hat_act = 0.0
+        """used in W_PP_ff learning rule"""
         self.W_PP_ff = rng.exponential(beta, (n_ff_wt,)) if n_ff_wt else None
-        # Below: wts coming in from inhib 1, 2 ... but 0-based indexing.
-        # self.W_PI_lat    = rng.normal(wt_mu, wt_sig, (n_PI_lat_wt,)) if n_PI_lat_wt else None
+        """feedforward wts"""
         self.W_PI_lat = -rng.exponential(beta, (n_pi_lat_wt,)) if n_pi_lat_wt else None
-        # Below: feedback wts
-        # self.W_PP_fb     = rng.normal(wt_mu, wt_sig, (n_fb_wt,))     if n_fb_wt else None
+        """wts coming in from inhib 1, 2 ... but 0-based indexing."""
         self.W_PP_fb = rng.exponential(beta, (n_fb_wt,)) if n_fb_wt else None
-        PyrNRN.next_id += 1
+        """feedback wts"""
 
     @property
     def basal_minus_soma_mp(self):

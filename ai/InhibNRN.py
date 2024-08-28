@@ -2,13 +2,11 @@ from ai.utils import logsig
 
 
 class InhibNRN:
-    next_id = 1
-
-    def __init__(self, rng, beta: float, n_lat_wt: int):
+    def __init__(self, i: int, rng, beta: float, n_lat_wt: int):
         """
         :param n_lat_wt: lateral weight count
         """
-        self.id_num = InhibNRN.next_id
+        self.id_num = i
         self.type = "inhib"
         self.soma_mp = 0.0
         self.dend_mp = 0.0
@@ -18,7 +16,6 @@ class InhibNRN:
         self.wtd_input_from_nudge = 0.0
         # self.W_IP_lat = rng.normal(wt_mu, wt_sig, (n_lat_wt,))  # replace Gaussian w/ exponential
         self.W_IP_lat = -rng.exponential(beta, (n_lat_wt,)) if n_lat_wt else None
-        InhibNRN.next_id += 1
 
     def __repr__(self):
         return f"""

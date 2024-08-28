@@ -1,4 +1,4 @@
-Flask
-matplotlib
-numpy
-colorama
+Flask~=3.0.3
+numpy~=2.0.1
+colorama~=0.4.6
+Werkzeug~=3.0.3
