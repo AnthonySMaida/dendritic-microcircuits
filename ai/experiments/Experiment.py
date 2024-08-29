@@ -82,7 +82,7 @@ class Experiment:
         """
         logger.info("Building model...")
 
-        l1 = Layer(1, self._learning_rate, self._rng_wts, n_input_pyr_nrns, 1, None, 1, 2, self._beta,2)
+        l1 = Layer(1, self._learning_rate, self._rng_wts, n_input_pyr_nrns, 1, None, 1, n_output_pyr_nrns, self._beta,2)
         logger.warning("""Layer 1:\n========\n%s""", l1)
 
         # Layer 2 is output layer w/ 2 pyrs. No inhib neurons.

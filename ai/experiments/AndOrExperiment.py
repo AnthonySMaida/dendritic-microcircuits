@@ -13,6 +13,7 @@ logger = get_logger('ai.experiments.AndOrExperiment')
 KEY_LAYER_1 = "layer1"
 KEY_OUTPUT_ACTIVATIONS_AND = "Output activations AND"
 KEY_OUTPUT_ACTIVATIONS_OR = "Output activations OR"
+KEY_OUTPUT_ACTIVATIONS_XOR = "Output activations XOR"
 
 
 class AndOrExperiment(Experiment):
@@ -24,7 +25,7 @@ class AndOrExperiment(Experiment):
         self.__training_steps = params.get('training_steps', 190, type=int)
 
         self._X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
-        self._Y = np.array([[0, 0], [0, 1], [0, 1], [1, 1]])
+        self._Y = np.array([[0, 0, 0], [0, 1, 1], [0, 1, 1], [1, 1, 0]])
 
         self._current_step = 0
         self._nudge_steps = [0] * 4
@@ -37,8 +38,9 @@ class AndOrExperiment(Experiment):
         self._metrics[KEY_LAYER_1] = [np.empty(shape=(2, 0)) for _ in range(len(self._X))]
         self._metrics[KEY_OUTPUT_ACTIVATIONS_AND] = [np.empty(shape=(0,)) for _ in range(len(self._X))]
         self._metrics[KEY_OUTPUT_ACTIVATIONS_OR] = [np.empty(shape=(0,)) for _ in range(len(self._X))]
+        self._metrics[KEY_OUTPUT_ACTIVATIONS_XOR] = [np.empty(shape=(0,)) for _ in range(len(self._X))]
 
-        self.build_small_two_layer_network(2, 2)
+        self.build_small_two_layer_network(2, 3)
 
     def __do_ff_sweep(self):
         """Standard FF sweep"""
@@ -80,6 +82,10 @@ class AndOrExperiment(Experiment):
         self._metrics[KEY_OUTPUT_ACTIVATIONS_OR][self._current_X_index] = np.append(
             self._metrics[KEY_OUTPUT_ACTIVATIONS_OR][self._current_X_index],
             l2.pyr_soma_mps[1]
+        )
+        self._metrics[KEY_OUTPUT_ACTIVATIONS_XOR][self._current_X_index] = np.append(
+            self._metrics[KEY_OUTPUT_ACTIVATIONS_XOR][self._current_X_index],
+            l2.pyr_soma_mps[2]
         )
 
     def _train_1_step(self, nudge_predicate: bool):
@@ -140,8 +146,9 @@ class AndOrExperiment(Experiment):
         layer1_mps = self.__extract_layer_metrics(KEY_LAYER_1)
         output_acts_and = self.__extract_output_activations_metrics(KEY_OUTPUT_ACTIVATIONS_AND, 0)
         output_acts_or = self.__extract_output_activations_metrics(KEY_OUTPUT_ACTIVATIONS_OR, 1)
+        output_acts_xor = self.__extract_output_activations_metrics(KEY_OUTPUT_ACTIVATIONS_XOR, 2)
 
-        return layer1_mps + output_acts_and + output_acts_or
+        return layer1_mps + output_acts_and + output_acts_or + output_acts_xor
 
     def run(self):
         self.train(self.__self_prediction_steps, nudge_predicate=False)
