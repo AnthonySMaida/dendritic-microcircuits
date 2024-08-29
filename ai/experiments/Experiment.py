@@ -74,7 +74,7 @@ class Experiment:
             layers.append(layer)
         self.layers = layers
 
-    def build_small_two_layer_network(self, n_input_pyr_nrns: int = 2, n_output_pyr_nrns: int = 2):
+    def build_small_two_layer_network(self, n_input_pyr_nrns: int = 2, n_output_pyr_nrns: int = 2, n_input_inhib_nrns: int = 1):
         """Build 2-layer network
         Layer 1 is the input layer w/ 2 pyrs and 1 inhib cell.
         No FF connections in input layer. They are postponed to receiving layer.
@@ -83,7 +83,7 @@ class Experiment:
         """
         logger.info("Building model...")
 
-        l1 = Layer(1, self._learning_rate, self._rng_wts, n_input_pyr_nrns, 1, None, 1, n_output_pyr_nrns, self._beta,2)
+        l1 = Layer(1, self._learning_rate, self._rng_wts, n_input_pyr_nrns, n_input_inhib_nrns, None, n_input_inhib_nrns, n_output_pyr_nrns, self._beta,n_input_pyr_nrns*n_input_inhib_nrns)
         logger.warning("""Layer 1:\n========\n%s""", l1)
 
         # Layer 2 is output layer w/ 2 pyrs. No inhib neurons.
