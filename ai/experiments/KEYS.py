@@ -6,3 +6,4 @@ class KEYS(StrEnum):
     NUDGE_EXPERIMENT = "NudgeExperiment"
     NUDGE_EXPERIMENT_FB = "NudgeExperimentFB"
     XOR_EXPERIMENT = "XorExperiment"
+    APICAL_CONVERGENCE_TEST = "ApicalConvergenceTest"
