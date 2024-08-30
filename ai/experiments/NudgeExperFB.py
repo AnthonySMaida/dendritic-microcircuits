@@ -349,7 +349,7 @@ class NudgeExperFB(Experiment):
                   yaxis="Membrane potential (mV)"),
             Graph(type=GraphType.LINE,
                   title="2: Layer 2 Apical MPs",
-                  caption="Compare this nudge response to the basic nudge experiment w/o feedback.",
+                  caption="Compare this nudge response to the basic nudge experiment w/o feedback. Response saturates when nudge wt is about 3. Why: see caption in panel 'L2 inhib soma acts'. Inputs are from FB and PI lat wts. FB component to nudge is 10 times smaller than lat wts.",
                   precision=2,
                   series=[
                       Serie("Apical MP 1", data_l2[0].tolist()),
@@ -533,7 +533,8 @@ class NudgeExperFB(Experiment):
                   xaxis="Training steps",
                   yaxis="L2 Pyr apical - soma mp"),
             Graph(type=GraphType.LINE,
-                  title="19: Layer 2 Pyr Apical FB input Values",
+                  title="19: Layer 2 Pyr Apical FB input Values from Layer 3",
+                  caption="Weighted sum of FB from two layer 3 pyrs.",
                   caption="Wtd sum of FB from apical activations in Layer 3. Response to nudge is persistent.",
                   precision=2,
                   series=[
@@ -589,6 +590,7 @@ class NudgeExperFB(Experiment):
                   yaxis="Inhib Hidden Soma MP"),
             Graph(type=GraphType.LINE,
                   title="24: Layer 2 Inhib Soma Activations",
+                  caption="If logsig activations are operating in the saturated regime, response to increases in nudge weight will be muted.",
                   precision=2,
                   series=[
                       Serie("Act Inhib 0", inhib_soma_acts_l2[0].tolist()),
