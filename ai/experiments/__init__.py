@@ -12,7 +12,7 @@ from .ApicalConvergenceTest import ApicalConvergenceTest
 @dataclass
 class ExperimentMetaData:
     title: str
-    class_: type[Experiment]
+    class_: type[Experiment]  # what does underscore mean?
 
 EXPERIMENTS: dict[KEYS, ExperimentMetaData] = {
     KEYS.AND_OR_EXPERIMENT: ExperimentMetaData("And/Or Experiment", AndOrExperiment),

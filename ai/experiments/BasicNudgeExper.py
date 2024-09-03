@@ -52,7 +52,7 @@ class BasicNudgeExper(Experiment):
         self._metrics[KEY_RULE_16B_WT_DATA_L2_PYR1] = np.empty(shape=(3, 0))
         self._metrics[KEY_RULE_16B_WT_DATA_L2_PYR2] = np.empty(shape=(3, 0))
         self._metrics[KEY_RULE_13_POST_DATA_L1] = np.empty(shape=(5, 0))
-        self._metrics[KEY_RULE_13_WT_DATA_L1] = np.empty(shape=(0,))
+        self._metrics[KEY_RULE_13_WT_DATA_L1] = np.empty(shape=(2,0))
         self._metrics[KEY_OUTPUT_LAYER_VALUES] = np.empty(shape=(2, 0))
         self._metrics[KEY_OUTPUT_LAYER_BASAL_MPS] = np.empty(shape=(2, 0))
         self._metrics[KEY_HIDDEN_LAYER_PYR_ACT_VALUES] = np.empty(shape=(3, 0))
@@ -199,8 +199,11 @@ class BasicNudgeExper(Experiment):
             self._metrics[KEY_RULE_13_POST_DATA_L1],
             create_column_vector(soma_act, basal_hat_act, post_soma_mp, post_basal_mp, post_val2),
             axis=1)
-        self._metrics[KEY_RULE_13_WT_DATA_L1] = np.append(self._metrics[KEY_RULE_13_WT_DATA_L1],
-                                                          l2.pyrs[0].W_PP_ff[0])
+
+        self._metrics[KEY_RULE_13_WT_DATA_L1] = np.append(
+            self._metrics[KEY_RULE_13_WT_DATA_L1],
+            create_column_vector(l2.pyrs[0].W_PP_ff[0], l2.pyrs[0].W_PP_ff[1]),
+            axis=1)
 
         self._metrics[KEY_OUTPUT_LAYER_VALUES] = np.append(
             self._metrics[KEY_OUTPUT_LAYER_VALUES],
@@ -365,10 +368,11 @@ class BasicNudgeExper(Experiment):
                   xaxis="Training steps",
                   yaxis="..."),
             Graph(type=GraphType.LINE,
-                  title="PP_FF wt projecting to L2 Pyr0",
+                  title="PP_FF wts projecting to L2 Pyr0",
                   precision=2,
                   series=[
-                      Serie("PP_FF wt L1", wts_l1.tolist()),
+                      Serie("PP_FF wt from L1_0", wts_l1[0].tolist()),
+                      Serie("PP_FF wt from L1_1", wts_l1[1].tolist()),
                   ],
                   xaxis="Training steps",
                   yaxis="..."),

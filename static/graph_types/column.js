@@ -26,7 +26,7 @@ function genColumnGraph(data) {
     },
     title: {
       text: data.title,
-      align: 'center'
+      align: 'left'
     },
     xaxis: {
       categories: data.categories,
