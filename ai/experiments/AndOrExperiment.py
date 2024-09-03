@@ -11,7 +11,9 @@ from metrics import Graph, GraphType, Serie
 logger = get_logger('ai.experiments.AndOrExperiment')
 
 KEY_LAYER_1 = "layer1"
-KEY_LAYER_2 = "layer2"
+KEY_OUTPUT_ACTIVATIONS_AND = "Output activations AND"
+KEY_OUTPUT_ACTIVATIONS_OR = "Output activations OR"
+KEY_OUTPUT_ACTIVATIONS_XOR = "Output activations XOR"
 
 
 class AndOrExperiment(Experiment):
@@ -22,11 +24,8 @@ class AndOrExperiment(Experiment):
         self.__self_prediction_steps = params.get('self_prediction_steps', 400, type=int)
         self.__training_steps = params.get('training_steps', 190, type=int)
 
-        self._metrics[KEY_LAYER_1] = [np.empty(shape=(2, 0)) for _ in range(4)]
-        self._metrics[KEY_LAYER_2] = [np.empty(shape=(2, 0)) for _ in range(4)]
-
         self._X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
-        self._Y = np.array([[0, 0], [0, 1], [0, 1], [1, 1]])
+        self._Y = np.array([[0, 0, 0], [0, 1, 1], [0, 1, 1], [1, 1, 0]])
 
         self._current_step = 0
         self._nudge_steps = [0] * 4
@@ -36,7 +35,12 @@ class AndOrExperiment(Experiment):
 
         self._rng_labels = np.random.default_rng(seed=self.__label_init_seed)
 
-        self.build_small_two_layer_network(2, 2)
+        self._metrics[KEY_LAYER_1] = [np.empty(shape=(2, 0)) for _ in range(len(self._X))]
+        self._metrics[KEY_OUTPUT_ACTIVATIONS_AND] = [np.empty(shape=(0,)) for _ in range(len(self._X))]
+        self._metrics[KEY_OUTPUT_ACTIVATIONS_OR] = [np.empty(shape=(0,)) for _ in range(len(self._X))]
+        self._metrics[KEY_OUTPUT_ACTIVATIONS_XOR] = [np.empty(shape=(0,)) for _ in range(len(self._X))]
+
+        self.build_small_two_layer_network(2, 3)
 
     def __do_ff_sweep(self):
         """Standard FF sweep"""
@@ -71,10 +75,17 @@ class AndOrExperiment(Experiment):
             create_column_vector(*map(lambda p: p.apical_mp, l1.pyrs)),
             axis=1
         )
-        self._metrics[KEY_LAYER_2][self._current_X_index] = np.append(
-            self._metrics[KEY_LAYER_2][self._current_X_index],
-            create_column_vector(*map(lambda p: p.apical_mp, l2.pyrs)),
-            axis=1
+        self._metrics[KEY_OUTPUT_ACTIVATIONS_AND][self._current_X_index] = np.append(
+            self._metrics[KEY_OUTPUT_ACTIVATIONS_AND][self._current_X_index],
+            l2.pyr_soma_mps[0]
+        )
+        self._metrics[KEY_OUTPUT_ACTIVATIONS_OR][self._current_X_index] = np.append(
+            self._metrics[KEY_OUTPUT_ACTIVATIONS_OR][self._current_X_index],
+            l2.pyr_soma_mps[1]
+        )
+        self._metrics[KEY_OUTPUT_ACTIVATIONS_XOR][self._current_X_index] = np.append(
+            self._metrics[KEY_OUTPUT_ACTIVATIONS_XOR][self._current_X_index],
+            l2.pyr_soma_mps[2]
         )
 
     def _train_1_step(self, nudge_predicate: bool):
@@ -91,11 +102,11 @@ class AndOrExperiment(Experiment):
         data = self._metrics[key]
 
         return [Graph(type=GraphType.LINE,
-                      title=f"{key} Apical MPs (input {i}: {self._X[i]})",
+                      title=f"{key} Apical MPs: X={self._X[i]}; Y={self._Y[i]}",
                       precision=2,
                       series=[
-                          Serie("Apical MP 1", data[i][0].tolist()),
-                          Serie("Apical MP 2", data[i][1].tolist()),
+                          Serie("PyrNRN 1", data[i][0].tolist()),
+                          Serie("PyrNRN 2", data[i][1].tolist()),
                       ],
                       xaxis="Training steps",
                       yaxis="Membrane potential (mV)",
@@ -106,10 +117,38 @@ class AndOrExperiment(Experiment):
                               ]
                           }
                       })
-                for i in range(4)]
+                for i in range(len(self._X))]
+
+    def __extract_output_activations_metrics(self, key: str, label_index: int) -> List[Graph]:
+        data = self._metrics[key]
+
+        return [Graph(type=GraphType.LINE,
+                      title=f"{key}: X={self._X[i]}; Y={self._Y[i][label_index]}",
+                      precision=2,
+                      series=[
+                          Serie("Soma MP", data[i].tolist()),
+                      ],
+                      xaxis="Training steps",
+                      yaxis="Membrane potential (mV)",
+                      extra={
+                          "annotations": {
+                              "xaxis": [
+                                  {"x": self._nudge_steps[i], "label": {"text": "nudged"}}
+                              ],
+                              "yaxis": [
+                                  {"y": .5, "borderColor": "red"}
+                              ]
+                          }
+                      })
+                for i in range(len(self._X))]
 
     def extract_metrics(self) -> List[Graph]:
-        return self.__extract_layer_metrics(KEY_LAYER_1) + self.__extract_layer_metrics(KEY_LAYER_2)
+        layer1_mps = self.__extract_layer_metrics(KEY_LAYER_1)
+        output_acts_and = self.__extract_output_activations_metrics(KEY_OUTPUT_ACTIVATIONS_AND, 0)
+        output_acts_or = self.__extract_output_activations_metrics(KEY_OUTPUT_ACTIVATIONS_OR, 1)
+        output_acts_xor = self.__extract_output_activations_metrics(KEY_OUTPUT_ACTIVATIONS_XOR, 2)
+
+        return layer1_mps + output_acts_and + output_acts_or + output_acts_xor
 
     def run(self):
         self.train(self.__self_prediction_steps, nudge_predicate=False)
