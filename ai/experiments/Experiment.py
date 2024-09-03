@@ -17,6 +17,7 @@ class Experiment:
     def __init__(self, params: MultiDict):
         self._wt_init_seed = params.get('wt_init_seed', 42, type=int)
 
+        self._alpha = params.get('alpha', 1.0, type=float)
         self._beta = params.get('beta', 1.0 / 3.0, type=float)  # for exponential sampling
         self._learning_rate = params.get('learning_rate', 0.05, type=float)
         self._metrics = {}
