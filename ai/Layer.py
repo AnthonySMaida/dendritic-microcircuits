@@ -9,9 +9,9 @@ logger = get_logger("ai.Layer")
 
 
 class Layer:
-    def __init__(self, i: int, learning_rate, rng, n_pyrs, n_inhibs, n_pyr_ff_wt, n_pi_lat_wt, n_pyr_fb_wt, beta,
-                 n_ip_lat_wt):
-        self._learning_rate = learning_rate
+    def __init__(self, i: int, learning_rate_ff, learning_rate_lat, rng, n_pyrs, n_inhibs, n_pyr_ff_wt, n_pi_lat_wt, n_pyr_fb_wt, beta, n_ip_lat_wt):
+        self._learning_rate_ff = learning_rate_ff
+        self._learning_rate_lat = learning_rate_lat
 
         self.id_num = i
         self.pyrs = [PyrNRN(i + 1, rng, beta, n_pyr_ff_wt, n_pi_lat_wt, n_pyr_fb_wt) for i in range(n_pyrs)]
@@ -157,7 +157,7 @@ class Layer:
     def adjust_wts_lat_pi(self):  # adjust PI wts for layer. Eqn 16b
         for i in range(len(self.pyrs)):
             for j in range(len(self.inhibs)):  # V_rest is not include below b/c its value is zero.
-                self.pyrs[i].W_PI_lat[j] -= self._learning_rate * self.pyrs[i].apical_mp * self.inhibs[j].soma_act
+                self.pyrs[i].W_PI_lat[j] -= self._learning_rate_lat * self.pyrs[i].apical_mp * self.inhibs[j].soma_act
                 # change for wt projecting to pyr i from inhib j.
 
     def adjust_wts_pp_ff(self, prev_layer: "Layer"):  # Adjust FF wts for layer. Eqn 13
@@ -168,7 +168,7 @@ class Layer:
         post = post_soma_mp - post_basal_mp  # use unprocessed raw mps.
         for i in range(post.size):
             for j in range(pre.size):
-                self.pyrs[i].W_PP_ff[j] += self._learning_rate * post[i] * pre[j]
+                self.pyrs[i].W_PP_ff[j] += self._learning_rate_ff * post[i] * pre[j]
 
     def adjust_wts_lat_ip(self):  # Equation 16a
         pre = self.pyr_soma_acts
@@ -176,7 +176,7 @@ class Layer:
         post = self.inhib_soma_mps - self.inhib_dend_mps  # Simplified for debugging
         for i in range(post.size):
             for j in range(pre.size):
-                self.inhibs[i].W_IP_lat[j] += self._learning_rate * post[i] * pre[j]
+                self.inhibs[i].W_IP_lat[j] += self._learning_rate_lat * post[i] * pre[j]
 
     ########################
     # Printing information #

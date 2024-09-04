@@ -7,6 +7,7 @@ from werkzeug.datastructures.structures import MultiDict
 
 from ai.Layer import Layer
 from ai.colorized_logger import get_logger
+from ai.config import Config
 from ai.utils import iter_with_prev
 from metrics import Graph
 
@@ -17,9 +18,15 @@ class Experiment:
     def __init__(self, params: MultiDict):
         self._wt_init_seed = params.get('wt_init_seed', 42, type=int)
 
-        self._alpha = params.get('alpha', 1.0, type=float)
+        Config.alpha = params.get('alpha', 1.0, type=float)
         self._beta = params.get('beta', 1.0 / 3.0, type=float)  # for exponential sampling
-        self._learning_rate = params.get('learning_rate', 0.05, type=float)
+        _learning_rate = params.get('learning_rate', None, type=float)
+        if _learning_rate:
+            self._learning_rate_ff = _learning_rate
+            self._learning_rate_lat = _learning_rate
+        else:
+            self._learning_rate_ff = params.get('learning_rate_ff', 0.05, type=float)
+            self._learning_rate_lat = params.get('learning_rate_lat', 0.05, type=float)
         self._metrics = {}
         self._rng_wts = np.random.default_rng(seed=self._wt_init_seed)
 
@@ -60,11 +67,11 @@ class Experiment:
         """
         logger.info("Building model...")
 
-        l1 = Layer(1, self._learning_rate, self._rng_wts, n_input_pyr_nrns, 1, None, 1, n_output_pyr_nrns, self._beta,2)
+        l1 = Layer(1, self._learning_rate_ff, self._learning_rate_lat, self._rng_wts, n_input_pyr_nrns, 1, None, 1, n_output_pyr_nrns, self._beta,2)
         logger.warning("""Layer 1:\n========\n%s""", l1)
 
         # Layer 2 is output layer w/ 2 pyrs. No inhib neurons.
-        l2 = Layer(2, self._learning_rate, self._rng_wts, n_output_pyr_nrns, 0, n_input_pyr_nrns, None, None, self._beta,None )
+        l2 = Layer(2, self._learning_rate_ff, self._learning_rate_lat, self._rng_wts, n_output_pyr_nrns, 0, n_input_pyr_nrns, None, None, self._beta,None )
         logger.warning("""Layer 2:\n========\n%s""", l2)
 
         self.layers = [l1, l2]
@@ -78,19 +85,19 @@ class Experiment:
         # Each pyramid projects a FF connection to each of 3 pyrs in Layer 2 (hidden).
         # wts are always incoming weights.
         logger.info("Building model...")
-        l1 = Layer(1, self._learning_rate, self._rng_wts, n_input_pyr_nrns, 1, None, 1, n_hidden_pyr_nrns, self._beta,
+        l1 = Layer(1, self._learning_rate_ff, self._learning_rate_lat, self._rng_wts, n_input_pyr_nrns, 1, None, 1, n_hidden_pyr_nrns, self._beta,
                    2)
         logger.warning("""Layer 1:\n========\n%s""", l1)
 
         # Layer 2 is hidden layer w/ 3 pyrs.
         # Also has 3 inhib neurons.
         # Has feedback connections to Layer 1
-        l2 = Layer(2, self._learning_rate, self._rng_wts, n_hidden_pyr_nrns, 3, n_input_pyr_nrns, 3, n_output_pyr_nrns,
+        l2 = Layer(2, self._learning_rate_ff, self._learning_rate_lat, self._rng_wts, n_hidden_pyr_nrns, 3, n_input_pyr_nrns, 3, n_output_pyr_nrns,
                    self._beta, 3)
         logger.warning("""Layer 2:\n========\n%s""", l2)
 
         # Layer 3 is output layer w/ 2 pyrs. No inhib neurons.
-        l3 = Layer(3, self._learning_rate, self._rng_wts, n_output_pyr_nrns, 0, n_hidden_pyr_nrns, None, None,
+        l3 = Layer(3, self._learning_rate_ff, self._learning_rate_lat, self._rng_wts, n_output_pyr_nrns, 0, n_hidden_pyr_nrns, None, None,
                    self._beta, None)
         logger.warning("""Layer 3:\n========\n%s""", l3)
 
