@@ -53,8 +53,6 @@ class XorExperiment(Experiment):
 
         self._rng_labels = np.random.default_rng(seed=self.__label_init_seed)
 
-        self.build_small_three_layer_network(self.__n_pyr_layer1, self.__n_pyr_layer2, self.__n_pyr_layer3)
-
     def __do_ff_sweep(self):
         """Standard FF sweep"""
         logger.debug("Starting FF sweep...")
@@ -183,6 +181,9 @@ class XorExperiment(Experiment):
         if nudge_predicate:
             l3.nudge_output_layer_neurons(self._current_label, lambda_nudge=0.8)
         self.__do_fb_sweep()
+
+    def build_network(self, *args, **kwargs):
+        self.build_small_three_layer_network(self.__n_pyr_layer1, self.__n_pyr_layer2, self.__n_pyr_layer3)
 
     def extract_metrics(self):
         data_l1 = self._metrics[KEY_LAYER_1]

@@ -40,8 +40,6 @@ class AndOrExperiment(Experiment):
         self._metrics[KEY_OUTPUT_ACTIVATIONS_OR] = [np.empty(shape=(0,)) for _ in range(len(self._X))]
         self._metrics[KEY_OUTPUT_ACTIVATIONS_XOR] = [np.empty(shape=(0,)) for _ in range(len(self._X))]
 
-        self.build_small_two_layer_network(2, 3)
-
     def __do_ff_sweep(self):
         """Standard FF sweep"""
         self.layers[0].apply_inputs_to_test_self_predictive_convergence(self._current_X.tolist())
@@ -141,6 +139,9 @@ class AndOrExperiment(Experiment):
                           }
                       })
                 for i in range(len(self._X))]
+
+    def build_network(self, *args, **kwargs):
+        self.build_small_two_layer_network(2, 3)
 
     def extract_metrics(self) -> List[Graph]:
         layer1_mps = self.__extract_layer_metrics(KEY_LAYER_1)
