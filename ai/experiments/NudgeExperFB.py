@@ -74,8 +74,6 @@ class NudgeExperFB(Experiment):
         self._metrics[KEY_L2_BASAL_MINUS_SOMA_PYR_MP] = np.empty(shape=(3, 0))
         self._metrics[KEY_L2_APICAL_MINUS_SOMA_PYR_MP] = np.empty(shape=(3, 0))
 
-        self.build_small_three_layer_network(self.__n_pyr_layer1, self.__n_pyr_layer2, self.__n_pyr_layer3)
-
     def __do_ff_sweep(self):
         """Standard FF sweep"""
 
@@ -310,6 +308,9 @@ class NudgeExperFB(Experiment):
         :return:
         """
         self.__train_1_step_rule_16b_and_rule_13(use_nudge=nudge_predicate)  # defined in superclass
+
+    def build_network(self, *args, **kwargs):
+        self.build_small_three_layer_network(self.__n_pyr_layer1, self.__n_pyr_layer2, self.__n_pyr_layer3)
 
     def extract_metrics(self):
         data_l1 = self._metrics[KEY_LAYER_1]

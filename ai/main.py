@@ -39,6 +39,7 @@ def run_experiment(exp: ExperimentMetaData, params: MultiDict = None) -> List[Gr
         params = MultiDict()
 
     experiment = exp.class_(params)
+    experiment.build_network()
     experiment.run()
 
     return experiment.extract_metrics()
