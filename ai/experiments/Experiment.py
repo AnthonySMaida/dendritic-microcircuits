@@ -29,6 +29,7 @@ class Experiment:
             self._learning_rate_lat = params.get('learning_rate_lat', 0.05, type=float)
         self._metrics = {}
         self._rng_wts = np.random.default_rng(seed=self._wt_init_seed)
+        self._i = 0
 
         self.layers: List[Layer] = []  # list is made of layers. List type assists code completion.
 
@@ -114,7 +115,7 @@ class Experiment:
         :param kwargs: nudge_predicate (True or False), to indicate if nudging happens.
         :return:
         """
-        for _ in range(n_steps):
+        for self._i in range(n_steps):
             self._hook_pre_train_step()
             self._train_1_step(*args, **kwargs)  # do training.
             self._hook_post_train_step()

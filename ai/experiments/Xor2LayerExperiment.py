@@ -8,7 +8,7 @@ from ai.experiments.Experiment import Experiment
 from ai.utils import create_column_vector
 from metrics import Graph, GraphType, Serie
 
-logger = get_logger('ai.experiments.AndOrExperiment')
+logger = get_logger('ai.experiments.Xor2LayerExperiment')
 
 KEY_WTS_FB = "Weights FB"
 KEY_WTS_FF = "Weights FF"
@@ -24,12 +24,12 @@ class Xor2LayerExperiment(Experiment):
         self.__training_steps = params.get('training_steps', 190, type=int)
         self.__test_steps = params.get('test_steps', 10, type=int)
 
-        self._X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
-        self._Y = np.array([[0], [1], [1], [0]])
+        self._X = np.array([[0, 1], [1, 0]])
+        self._Y = np.array([[1], [1]])
 
         self._current_step = 0
-        self._nudge_steps = [0] * 4
-        self._test_steps = [0] * 4
+        self._nudge_steps = [0] * len(self._X)
+        self._test_steps = [0] * len(self._X)
         self._current_X_index: Optional[int] = None
         self._current_X: Optional[np.ndarray] = None
         self._current_label: Optional[np.ndarray] = None
@@ -58,10 +58,10 @@ class Xor2LayerExperiment(Experiment):
     def _hook_pre_train_step(self):
         self._current_step += 1
         if self._current_step == self.__self_prediction_steps:
-            for i in range(4):
+            for i in range(len(self._X)):
                 self._nudge_steps[i] = len(self._metrics[KEY_OUTPUT_ACTIVATIONS_XOR][i])
         if self._current_step == self.__self_prediction_steps + self.__training_steps:
-            for i in range(4):
+            for i in range(len(self._X)):
                 self._test_steps[i] = len(self._metrics[KEY_OUTPUT_ACTIVATIONS_XOR][i])
         self._current_X_index = index = self._rng_labels.integers(low=0, high=len(self._X))
         self._current_X = self._X[index]
@@ -80,6 +80,10 @@ class Xor2LayerExperiment(Experiment):
             self._metrics[KEY_OUTPUT_ACTIVATIONS_XOR][self._current_X_index],
             l2.pyr_soma_mps[0]
         )
+
+        if self._i == 5:
+            logger.warning(l1)
+            logger.warning(l2)
 
     def _train_1_step(self, nudge_predicate: bool):
         l1, l2 = self.layers
