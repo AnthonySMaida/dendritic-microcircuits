@@ -6,6 +6,7 @@ from .KEYS import KEYS
 from .BasicNudgeExper import BasicNudgeExper
 from .NudgeExperFB import NudgeExperFB
 from .XorExperiment import XorExperiment
+from .ApicalConvergenceTest import ApicalConvergenceTest
 
 
 @dataclass
@@ -18,4 +19,5 @@ EXPERIMENTS: dict[KEYS, ExperimentMetaData] = {
     KEYS.NUDGE_EXPERIMENT: ExperimentMetaData("Basic Nudge Experiment", BasicNudgeExper),
     KEYS.NUDGE_EXPERIMENT_FB: ExperimentMetaData("Nudge Experiment with FB", NudgeExperFB),
     KEYS.XOR_EXPERIMENT: ExperimentMetaData("XOR Experiment", XorExperiment),
+    KEYS.APICAL_CONVERGENCE_TEST: ExperimentMetaData("Apical Convergence Test", ApicalConvergenceTest),
 }

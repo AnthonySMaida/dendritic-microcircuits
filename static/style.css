@@ -42,7 +42,8 @@ h1 {
 }
 
 #container-graph .caption {
-  max-width: 502px;
+  width: 492px;
+  height: 72px;
 }
 
 #container-params {

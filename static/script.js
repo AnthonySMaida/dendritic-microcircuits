@@ -37,7 +37,7 @@ function handleApiData(json) {
       { className: 'canvas' }
     )
     const caption = Object.assign(
-      document.createElement('div'),
+      document.createElement('textarea'),
       { className: 'caption', innerText: data.caption }
     )
 
