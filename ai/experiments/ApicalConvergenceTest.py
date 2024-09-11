@@ -250,6 +250,9 @@ class ApicalConvergenceTest(Experiment):
         """
         self.__train_1_step_rule_16b_and_rule_13(use_nudge=nudge_predicate)  # defined in superclass
 
+    def build_network(self, *args, **kwargs):
+        self.build_small_three_layer_network(self.__n_pyr_layer1, self.__n_pyr_layer2, self.__n_pyr_layer3)
+
     def extract_metrics(self):
         data_l1 = self._metrics[KEY_LAYER_1]
         data_l2 = self._metrics[KEY_LAYER_2]

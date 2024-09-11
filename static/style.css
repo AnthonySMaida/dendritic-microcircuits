@@ -44,6 +44,7 @@ h1 {
 #container-graph .caption {
   width: 492px;
   height: 72px;
+  font-size: 12pt;
 }
 
 #container-params {
