@@ -124,3 +124,7 @@ button:hover, div.list-item-button-inner:hover {
 div.list-item-description {
   align-self: center;
 }
+
+textarea {
+  resize: none;
+}
