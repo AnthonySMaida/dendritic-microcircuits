@@ -1,0 +1,45 @@
+{% extends 'base/experiment.html' %}
+
+{% block params %}
+  <label for="wt_init_seed">Initial seed</label>
+  <input type="number" id="wt_init_seed" value="42" step="1">
+
+  <label for="alpha">Alpha</label>
+  <input type="number" id="alpha" value="1.0" step=".1">
+
+  <label for="beta">Beta</label>
+  <input type="number" id="beta" value=".333" step=".1">
+
+  <label for="learning_rate_ff">Learning Rate FF</label>
+  <input type="number" id="learning_rate_ff" value=".05" step=".01">
+
+  <label for="learning_rate_lat">Learning Rate Lat</label>
+  <input type="number" id="learning_rate_lat" value=".02" step=".01">
+
+  <label for="nudge1">Nudge 1</label>
+  <input type="number" id="nudge1" value="1.0" step=".1" min="0" max="1">
+
+  <label for="nudge2">Nudge 2</label>
+  <input type="number" id="nudge2" value="0.0" step=".1" min="0" max="1">
+
+  <label for="n_pyr_layer1">Layer 1 pyrs</label>
+  <input type="number" id="n_pyr_layer1" value="2" step="1" min="1">
+
+  <label for="n_pyr_layer2">Layer 2 pyrs</label>
+  <input type="number" id="n_pyr_layer2" value="3" step="1" min="1">
+
+  <label for="n_pyr_layer3">Layer 3 pyrs</label>
+  <input type="number" id="n_pyr_layer3" value="2" step="1" min="1">
+
+  <label for="self_prediction_steps">Steps to self predictive state</label>
+  <input type="number" id="self_prediction_steps" value="400" step="1" min="0">
+
+  <label for="training_steps">Training steps</label>
+  <input type="number" id="training_steps" value="190" step="1" min="0">
+
+  <label for="after_training_steps">After training steps</label>
+  <input type="number" id="after_training_steps" value="10" step="1" min="0">
+
+  <label for="nudge_fb_weight">Nudge FB weight</label>
+  <input type="number" id="nudge_fb_weight" value="3.0" step="0.2" min="0.0">
+{% endblock %}
