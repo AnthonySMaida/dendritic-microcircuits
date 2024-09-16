@@ -278,8 +278,8 @@ class ApicalConvergenceTest(Experiment):
                   title="Layer 1 Apical MPs",
                   precision=2,
                   series=[
-                      Serie("Apical MP 1", data_l1[0].tolist()),
-                      Serie("Apical MP 2", data_l1[1].tolist()),
+                      Serie("Apical MP 0", data_l1[0].tolist()),
+                      Serie("Apical MP 1", data_l1[1].tolist()),
                   ],
                   xaxis="Training steps",
                   yaxis="Membrane potential (mV)"),
@@ -287,9 +287,9 @@ class ApicalConvergenceTest(Experiment):
                   title="Layer 2 Apical MPs",
                   precision=2,
                   series=[
-                      Serie("Apical MP 1", data_l2[0].tolist()),
-                      Serie("Apical MP 2", data_l2[1].tolist()),
-                      Serie("Apical MP 3", data_l2[2].tolist()),
+                      Serie("Apical MP 0", data_l2[0].tolist()),
+                      Serie("Apical MP 1", data_l2[1].tolist()),
+                      Serie("Apical MP 2", data_l2[2].tolist()),
                   ],
                   xaxis="Training steps",
                   yaxis="Membrane potential (mV)"),

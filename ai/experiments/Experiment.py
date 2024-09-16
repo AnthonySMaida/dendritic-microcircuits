@@ -31,6 +31,7 @@ class Experiment:
         self._rng_wts = np.random.default_rng(seed=self._wt_init_seed)
 
         self.layers: List[Layer] = []  # list is made of layers. List type assists code completion.
+        self._training_steps_completed: int = 0
 
     def _hook_pre_train_step(self):
         """
@@ -67,11 +68,11 @@ class Experiment:
         """
         logger.info("Building model...")
 
-        l1 = Layer(1, self._learning_rate_ff, self._learning_rate_lat, self._rng_wts, n_input_pyr_nrns, 1, None, 1, n_output_pyr_nrns, self._beta,2)
+        l1 = Layer(0, self._learning_rate_ff, self._learning_rate_lat, self._rng_wts, n_input_pyr_nrns, 1, None, 1, n_output_pyr_nrns, self._beta,2)
         logger.warning("""Layer 1:\n========\n%s""", l1)
 
         # Layer 2 is output layer w/ 2 pyrs. No inhib neurons.
-        l2 = Layer(2, self._learning_rate_ff, self._learning_rate_lat, self._rng_wts, n_output_pyr_nrns, 0, n_input_pyr_nrns, None, None, self._beta,None )
+        l2 = Layer(1, self._learning_rate_ff, self._learning_rate_lat, self._rng_wts, n_output_pyr_nrns, 0, n_input_pyr_nrns, None, None, self._beta,None )
         logger.warning("""Layer 2:\n========\n%s""", l2)
 
         self.layers = [l1, l2]
@@ -117,6 +118,7 @@ class Experiment:
         for _ in range(n_steps):
             self._hook_pre_train_step()
             self._train_1_step(*args, **kwargs)  # do training.
+            self._training_steps_completed += 1
             self._hook_post_train_step()
 
     @abstractmethod

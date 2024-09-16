@@ -85,37 +85,50 @@ class NudgeExperFB(Experiment):
                 layer.update_pyrs_basal_and_soma_ff(prev)
             layer.update_dend_mps_via_ip()
 
-    def __do_fb_sweep(self):  # this version assumes the interneurons have nudging feedback connections
+    def __do_fb_sweep(self, use_nudge=False):  # this version assumes the interneurons have nudging feedback connections
         """Standard FB sweep"""
         nudge_fb_weight = self.__nudge_fb_weight
         for prev, layer in iter_with_prev(reversed(self.layers)):  # [l3, l2, l1]
             if prev is None:  # Skip first layer (L3)
                 continue      # Would pass do the same thing?
             if layer.id_num == 2:  # handles the nudging FB connections to Layer 2. Only sends FB to 2 inhibs.
-                layer.inhibs[0].wtd_input_from_nudge = nudge_fb_weight * prev.pyrs[0].soma_act  # for data collection
-                # Eqn below is not exactly right. I looked at Fig 5 and forgot to look at Eqns 10 & 23.
-                layer.inhibs[0].dend_mp += nudge_fb_weight * prev.pyrs[0].soma_act
-                layer.inhibs[0].update_inhib_soma_ff()
+                if use_nudge:
+                    layer.inhibs[0].wtd_input_from_nudge = nudge_fb_weight * prev.pyrs[0].soma_act  # for data collection
+                    # Eqn below is not exactly right. I looked at Fig 5 and forgot to look at Eqns 10 & 23.
+                    layer.inhibs[0].dend_mp += nudge_fb_weight * prev.pyrs[0].soma_act
+                    layer.inhibs[0].update_inhib_soma_ff()
 
-                layer.inhibs[1].wtd_input_from_nudge = nudge_fb_weight * prev.pyrs[1].soma_act  # for data collection
-                layer.inhibs[1].dend_mp += nudge_fb_weight * prev.pyrs[1].soma_act
-                layer.inhibs[1].update_inhib_soma_ff()
+                    layer.inhibs[1].wtd_input_from_nudge = nudge_fb_weight * prev.pyrs[1].soma_act  # for data collection
+                    layer.inhibs[1].dend_mp += nudge_fb_weight * prev.pyrs[1].soma_act
+                    layer.inhibs[1].update_inhib_soma_ff()
+                else:
+                    layer.inhibs[0].wtd_input_from_nudge = 0.0
+                    layer.inhibs[1].wtd_input_from_nudge = 0.0
             # update current layer pyrs using somatic pyr acts from previous layer and inhib acts from current layer
             layer.update_pyrs_apical_soma_fb(prev)  # in 2nd iter, prev = l3 and layer = l2
 
-    def __train_1_step_rule_16b_and_rule_13(self, use_nudge=False, use_rule_ip=False):
+    def __train_1_step_rule_16b_and_rule_13(self,
+                                            use_nudge=False,
+                                            use_rule_pi=True,
+                                            use_rule_ip=False):
         """
         Learning step that uses both rules 16b and 13.
         Does one training step.
         """
         l1, l2, l3 = self.layers
-        l2.adjust_wts_lat_pi()  # adjust lateral PI wts in Layer 2
+        # Adjust hidden layer lateral wts if enabled.
+        if use_rule_pi:
+            l2.adjust_wts_lat_pi()  # adjust lateral PI wts in Layer 2
 
-        # Adjust FF wts projecting to Layer 3.
+        if use_rule_ip:
+            l2.adjust_wts_lat_ip()
+
+        # Always adjust FF wts projecting to Layer 3.
         l3.adjust_wts_pp_ff(l2)  # adjust FF wts projecting to Layer 3
 
-        # continue learning
-        l1.adjust_wts_lat_pi()  # adjust lateral PI wts in Layer 1
+        # Adjust input layer lateral wts if enabled
+        if use_rule_pi:
+            l1.adjust_wts_lat_pi()  # adjust lateral PI wts in Layer 1
 
         if use_rule_ip:  # also known as Rule 16a
             l1.adjust_wts_lat_ip()      # adjust lateral IP wts in Layer 1
@@ -125,8 +138,10 @@ class NudgeExperFB(Experiment):
         # Do FF and FB sweeps so wt changes show their effects.
         self.__do_ff_sweep()
         if use_nudge:
-            l3.nudge_output_layer_neurons(self.__nudge1, self.__nudge2, lambda_nudge=0.8)
-        self.__do_fb_sweep()
+            l3.nudge_output_layer_neurons(self.__nudge1, self.__nudge2, lambda_nudge=0.9)
+            self.__do_fb_sweep(use_nudge=True)
+        else:
+            self.__do_fb_sweep(use_nudge=False)
 
     def __nudge_output_layer(self):
         """
@@ -144,12 +159,12 @@ class NudgeExperFB(Experiment):
         logger.info("Imposing nudge now")
 
         last_layer = self.layers[-1]
-        last_layer.nudge_output_layer_neurons(self.__nudge1, self.__nudge2, lambda_nudge=0.9)
+        last_layer.nudge_output_layer_neurons(self.__nudge1, self.__nudge2, lambda_nudge=0.9)  # the work
         logger.debug("Layer %d activations after nudge.", last_layer.id_num)
         last_layer.print_pyr_activations()
 
         logger.info("Starting FB sweep")
-        self.__do_fb_sweep()  # prints state
+        self.__do_fb_sweep(use_nudge=True)  # prints state
 
         logger.info("Finished 1st FB sweep after nudge: pilot_exp_2b")  # shows effect of nudge in earlier layers
         self.print_pyr_activations_all_layers_topdown()
@@ -301,13 +316,13 @@ class NudgeExperFB(Experiment):
             create_column_vector(*map(lambda p: p.soma_act, l2.inhibs)),
             axis=1)
 
-    def _train_1_step(self, nudge_predicate: bool):  # Signature matched its abstract method b/c *args can be empty.
+    def _train_1_step(self, use_nudge: bool, **kwargs):  # Signature matches abstract method b/c *args can be empty.
         """
         This is the concrete version of the abstract train-1-step defined in superclass Experiment.
-        :param nudge_predicate:
+        :param use_nudge:
         :return:
         """
-        self.__train_1_step_rule_16b_and_rule_13(use_nudge=nudge_predicate)  # defined in superclass
+        self.__train_1_step_rule_16b_and_rule_13(use_nudge=use_nudge, **kwargs)  # defined in superclass
 
     def build_network(self, *args, **kwargs):
         self.build_small_three_layer_network(self.__n_pyr_layer1, self.__n_pyr_layer2, self.__n_pyr_layer3)
@@ -341,27 +356,28 @@ class NudgeExperFB(Experiment):
         return [
             Graph(type=GraphType.LINE,
                   title="1: Layer 1 Apical MPs",
+                  caption="Layer 1 holds the input layer neurons. This graph shows their apical potentials.",
                   precision=2,
                   series=[
-                      Serie("Apical MP 1", data_l1[0].tolist()),
-                      Serie("Apical MP 2", data_l1[1].tolist()),
+                      Serie("Apical MP 0", data_l1[0].tolist()),
+                      Serie("Apical MP 1", data_l1[1].tolist()),
                   ],
                   xaxis="Training steps",
                   yaxis="Membrane potential (mV)"),
             Graph(type=GraphType.LINE,
                   title="2: Layer 2 Apical MPs",
-                  caption="Compare this nudge response to the basic nudge experiment w/o feedback.",
+                  caption="Layer 2 holds the hidden layer neurons. Compare this nudge response to the basic nudge experiment w/o feedback. The nudge occurs at timestep 400.",
                   precision=2,
                   series=[
-                      Serie("Apical MP 1", data_l2[0].tolist()),
-                      Serie("Apical MP 2", data_l2[1].tolist()),
-                      Serie("Apical MP 3", data_l2[2].tolist()),
+                      Serie("Apical MP 0", data_l2[0].tolist()),
+                      Serie("Apical MP 1", data_l2[1].tolist()),
+                      Serie("Apical MP 2", data_l2[2].tolist()),
                   ],
                   xaxis="Training steps",
                   yaxis="Membrane potential (mV)"),
             Graph(type=GraphType.LINE,
-                  title="3: LR W_PP_FF(3,2) Triggers in L3",
-                  caption="Trigger of the learning rule for the FF wt connecting pyr neuron 0 in layer 2 to pyr 0 in layer 3. The learning trigger is the difference (yellow) btw the somatic (blue) and basal (green) mps of pyr 0 in layer 3. A nudge causes the somatic mp to jump. Yellow estimates the amount of wt change per timestep.",
+                  title="3: LR W_PP_FF(3[0],2[0]) Triggers in L3",
+                  caption="Trigger of the learning rule for the FF wt connecting pyr neuron 0 in layer 2 to pyr 0 in layer 3. The learning trigger is the difference (yellow) btw the somatic (blue) and basal (green) mps of pyr 0 in layer 3. The nudge at timestep 400 causes the somatic mp to jump. Yellow estimates the amount of wt change per timestep.",
                   precision=2,
                   series=[
                       #Serie("Soma act", triggers_l2[0].tolist()),
@@ -374,7 +390,7 @@ class NudgeExperFB(Experiment):
                   yaxis="..."),
             Graph(type=GraphType.LINE,  # This and the next graph interferred w/ each other when series strings were the same.
                   title="4: PP_FF wts projecting to L3 Pyr0",
-                  caption="Above shows the three weights projecting to pyr neuron 0 in layer 3 from the three pyr neurons in layer 2. The blue graph shows the wt adjustment by the learning rule in the previous panel.",
+                  caption="Above shows the three weights projecting to pyr neuron 0 in layer 3 from the three pyr neurons in layer 2. The blue graph shows the wt adjustment calculated by the learning rule in the previous panel.",
                   precision=2,
                   series=[
                       Serie("PP_FF wt[0] to P0", wts_r13_l2_pyr0[0].tolist()),
@@ -396,6 +412,7 @@ class NudgeExperFB(Experiment):
                   yaxis="FF wt values to Pyr1 in L3"),
             Graph(type=GraphType.LINE,
                   title="6: PI_lat wts projecting to L2 Pyr0",
+                  caption="Shows lateral wt values projecting to Pyr0 in the hidden layer. Each of 3 inhib neurons in layer 2 project to Pyr0",
                   precision=2,
                   series=[
                       Serie("PI_lat wt[0] to P0", wts_16b_l2_pyr0[0].tolist()),
@@ -462,7 +479,7 @@ class NudgeExperFB(Experiment):
                   yaxis="..."),
             Graph(type=GraphType.LINE,
                   title="12: PP_FF wts projecting to L2 Pyr1",
-                  caption="Both plots above correspond to previous panel b/c they share the same trigger.",
+                  caption="Both plots above correspond to previous the panel (11) b/c they share the same trigger.",
                   precision=2,
                   series=[
                       Serie("PP_FF wt from L1_pyr0 to L2_pyr1", wts_l1_to_l1_pyr1[0].tolist()),
@@ -485,8 +502,8 @@ class NudgeExperFB(Experiment):
                   title="14: Layer 3 Pyr Soma MPs",
                   precision=3,
                   series=[
-                      Serie("Act Pyr 0", soma_mps_l3[0].tolist()),
-                      Serie("Act Pyr 1", soma_mps_l3[1].tolist()),
+                      Serie("Mem Pot Pyr 0", soma_mps_l3[0].tolist()),
+                      Serie("Mem Pot Pyr 1", soma_mps_l3[1].tolist()),
                   ],
                   xaxis="Training steps",
                   yaxis="Soma MP"),
@@ -495,8 +512,8 @@ class NudgeExperFB(Experiment):
                   caption="Basal mp decrease after nudge is not caused by direct somatic FB.",
                   precision=3,
                   series=[
-                      Serie("Act Pyr 0", basal_mps_l3[0].tolist()),
-                      Serie("Act Pyr 1", basal_mps_l3[1].tolist()),
+                      Serie("Mem Pot Pyr 0", basal_mps_l3[0].tolist()),
+                      Serie("Mem Pot Pyr 1", basal_mps_l3[1].tolist()),
                   ],
                   xaxis="Training steps",
                   yaxis="Basal MP"),
@@ -624,24 +641,23 @@ class NudgeExperFB(Experiment):
         self.__do_fb_sweep()  # prints state
         logger.info("Finished 1st FB sweep: nudge_experiment")
 
+        # self-prediction training and SAVES apical results in 'datasets' attr
         logger.info(f"Starting training {self.__self_prediction_steps} steps to 1b2b self predictive.")
-        # trains and SAVES apical results in 'datasets' attr
-        self.train(self.__self_prediction_steps, nudge_predicate=False)
+        self.train(self.__self_prediction_steps, use_nudge=False)
+        logger.info(f"Total training steps completed so far: {self._training_steps_completed}.")
 
-        logger.info("Calling function to impose nudge.")
-        self.__nudge_output_layer()
+        logger.info(f"Starting training {self.__training_steps} steps for Nudge exp FB.")
 
-        logger.info(f"Starting training {self.__training_steps} steps for p_exp 3b")
-
-        # trains and APPENDS apical results in 'datasets' attr
-        self.train(self.__training_steps, nudge_predicate=True)
-        logger.info(f"Finished training {self.__training_steps} steps for p_exp 3b")
-
-        self.train(self.__after_training_steps, nudge_predicate=False)
-        logger.info(f"Finished training {self.__after_training_steps} steps for p_exp 3b")
+        # nudge training and APPENDS apical results in 'datasets' attr
+        self.train(self.__training_steps, use_nudge=True, use_rule_pi=False)
+        logger.info(f"Finished training {self.__training_steps} steps for Nudge exp FB.")
+        logger.info(f"Total training steps completed so far: {self._training_steps_completed}.")
         self.print_pyr_activations_all_layers_topdown()  # print activations while nudging is still on
 
-        #self.do_ff_sweep()  # to get new activations without nudging
+        # post-nudge training and appends apical results in 'datasets' attr
+        self.train(self.__after_training_steps, use_nudge=False)
+        logger.info(f"Finished training {self.__after_training_steps} steps for p_exp 3b")
+        logger.info(f"Total training steps completed so far: {self._training_steps_completed}.")
 
         logger.info("Final activations after nudging is removed")
         self.print_pyr_activations_all_layers_topdown()  # shows the true effect of learning
