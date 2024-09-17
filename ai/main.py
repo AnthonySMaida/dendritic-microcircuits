@@ -42,7 +42,12 @@ def run_experiment(exp: ExperimentMetaData, params: MultiDict = None) -> List[Gr
     experiment.build_network()
     experiment.run()
 
-    return experiment.extract_metrics()
+    metrics = experiment.extract_metrics()
+
+    for i, metric in enumerate(metrics, start=1):
+        metric.title = f"{i}: {metric.title}"
+
+    return metrics
 
 
 def main(experiment_name: KEYS, params: MultiDict) -> List[Graph]:
