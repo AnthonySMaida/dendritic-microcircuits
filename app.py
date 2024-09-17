@@ -20,8 +20,10 @@ def list_experiments():
 
 @app.route('/experiments/<experiment_name>')
 def get_experiment_form(experiment_name: KEYS):
+    exp = EXPERIMENTS[experiment_name]
     return render_template(f'experiments/{experiment_name}.html',
-                           title=EXPERIMENTS[experiment_name].title,
+                           title=exp.title,
+                           description=exp.long_description,
                            key=experiment_name)
 
 

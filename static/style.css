@@ -13,6 +13,12 @@ h1 {
   color: #333;
 }
 
+div#description {
+  width: 80vw;
+  margin: 8px 0 32px 0;
+  font-size: 1.5em;
+}
+
 #error {
   height: 75vh;
   width: 80vw;
@@ -82,17 +88,27 @@ div.apexcharts-canvas {
 }
 
 div.list {
-  display: flex;
-  flex-direction: row;
-  gap: 16px;
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 10px;
 }
 
-button, div.list-item > a {
+div.list-item-button {
+  width: 100%;
+  display: flex;
+  justify-content: end;
+}
+
+div.list-item-button-inner {
+  width: fit-content;
+}
+
+button, div.list-item-button-inner > a {
   color: white;
   text-decoration: none;
 }
 
-div.list-item, button {
+button, div.list-item-button-inner {
   margin: 4px;
   padding: 8px 16px;
   border: none;
@@ -101,6 +117,14 @@ div.list-item, button {
   cursor: pointer;
 }
 
-div.list-item:hover, button:hover {
+button:hover, div.list-item-button-inner:hover {
   background-color: #0056b3;
+}
+
+div.list-item-description {
+  align-self: center;
+}
+
+textarea {
+  resize: none;
 }
