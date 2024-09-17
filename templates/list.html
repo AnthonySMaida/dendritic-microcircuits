@@ -4,11 +4,14 @@
   <h2>Available Experiments</h2>
   <div class="list">
     {% for key, props in experiments.items() %}
-      <div class="list-item">
-        <a href="{{ url_for('get_experiment_form', experiment_name=key) }}">
-          {{ props.title }}
-        </a>
+      <div class="list-item-button">
+        <div class="list-item-button-inner">
+          <a href="{{ url_for('get_experiment_form', experiment_name=key) }}">
+            {{ props.title }}
+          </a>
+        </div>
       </div>
+      <div class="list-item-description">{{ props.short_description }}</div>
     {% endfor %}
   </div>
 {% endblock %}
