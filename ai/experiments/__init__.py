@@ -6,6 +6,7 @@ from .BasicNudgeExper import BasicNudgeExper
 from .Experiment import Experiment
 from .KEYS import KEYS
 from .NudgeExperFB import NudgeExperFB
+from .NudgeExperFB2 import NudgeExperFB2
 from .XorExperiment import XorExperiment
 
 
@@ -33,6 +34,10 @@ EXPERIMENTS: dict[KEYS, ExperimentMetaData] = {
                                                  short_description=short,
                                                  long_description=long,
                                                  class_=NudgeExperFB),
+    KEYS.NUDGE_EXPERIMENT_FB_2: ExperimentMetaData(title="Nudge Experiment w/ FB and w/out lat",
+                                                   short_description=short,
+                                                   long_description=long,
+                                                   class_=NudgeExperFB2),
     KEYS.XOR_EXPERIMENT: ExperimentMetaData(title="XOR Experiment",
                                             short_description=short,
                                             long_description=long,
