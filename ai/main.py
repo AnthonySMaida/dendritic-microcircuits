@@ -29,7 +29,7 @@ from werkzeug.datastructures import MultiDict
 
 from ai.colorized_logger import get_logger
 from ai.experiments import EXPERIMENTS, ExperimentMetaData, KEYS
-from metrics import Graph
+from metrics import Graph, GraphType
 
 logger = get_logger('ai.sacramento_main')
 
@@ -44,8 +44,12 @@ def run_experiment(exp: ExperimentMetaData, params: MultiDict = None) -> List[Gr
 
     metrics = experiment.extract_metrics()
 
-    for i, metric in enumerate(metrics, start=1):
+    i = 1
+    for metric in metrics:
+        if metric.type == GraphType.EMPTY:
+            continue
         metric.title = f"{i}: {metric.title}"
+        i += 1
 
     return metrics
 
