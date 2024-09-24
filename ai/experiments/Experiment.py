@@ -19,7 +19,7 @@ class Experiment:
         self._wt_init_seed = params.get('wt_init_seed', 42, type=int)
 
         Config.alpha = params.get('alpha', 1.0, type=float)
-        self._beta = params.get('beta', 1.0 / 3.0, type=float)  # for exponential sampling
+        self._beta = params.get('beta', 1.0 / 10.0, type=float)  # for exponential sampling
         _learning_rate = params.get('learning_rate', None, type=float)
         if _learning_rate:
             self._learning_rate_ff = _learning_rate

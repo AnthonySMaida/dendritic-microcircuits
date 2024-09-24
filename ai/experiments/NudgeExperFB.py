@@ -6,7 +6,7 @@ from ai.colorized_logger import get_logger
 from ai.utils import create_column_vector, iter_with_prev
 from metrics import Graph, Serie, GraphType
 
-logger = get_logger('ai.experiments.NudgeExperiment')
+logger = get_logger('ai.experiments.NudgeExperimentFB')
 
 KEY_LAYER_1 = "layer1"
 KEY_LAYER_2 = "layer2"
