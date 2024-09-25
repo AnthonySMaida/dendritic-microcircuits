@@ -25,14 +25,3 @@ class ColoredFormatter(logging.Formatter):
         log_color = self.COLORS.get(record.levelno, Fore.WHITE)
         log_message = super().format(record)
         return f"{log_color}{log_message}{Style.RESET_ALL}"
-
-
-# Example usage
-def get_logger(name):
-    logger = logging.getLogger(name)
-    handler = logging.StreamHandler()
-    formatter = ColoredFormatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    logger.setLevel(logging.DEBUG)
-    return logger
