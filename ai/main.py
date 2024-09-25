@@ -23,15 +23,21 @@ Implemented in numpy. The code is not vectorized but the
 data structures used closely mimic the neural anatomy given in the paper.
 """
 
+import logging
 from typing import List
 
 from werkzeug.datastructures import MultiDict
 
-from ai.colorized_logger import get_logger
+from ai.colorized_logger import ColoredFormatter
 from ai.experiments import EXPERIMENTS, ExperimentMetaData, KEYS
 from metrics import Graph, GraphType
 
-logger = get_logger('ai.sacramento_main')
+logger = logging.getLogger("ai")
+handler = logging.StreamHandler()
+formatter = ColoredFormatter("[%(levelname)s] %(asctime)s: %(name)s :: %(message)s")
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+logger.setLevel(logging.DEBUG)
 
 
 def run_experiment(exp: ExperimentMetaData, params: MultiDict = None) -> List[Graph]:

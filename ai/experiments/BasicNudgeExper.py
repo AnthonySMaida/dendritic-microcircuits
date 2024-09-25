@@ -1,12 +1,9 @@
 import numpy as np
 from werkzeug.datastructures import MultiDict
 
-from ai.colorized_logger import get_logger
 from ai.experiments.Experiment import Experiment
 from ai.utils import create_column_vector, iter_with_prev
 from metrics import Graph, Serie, GraphType
-
-logger = get_logger('ai.experiments.NudgeExperiment')
 
 KEY_LAYER_1 = "layer1"
 KEY_LAYER_2 = "layer2"
@@ -116,20 +113,20 @@ class BasicNudgeExper(Experiment):
         self.layers[-2].print_ff_and_ip_wts_for_layers(self.layers[-1])
 
         last_layer = self.layers[-1]
-        logger.debug("Layer %d activations before nudge.", last_layer.id_num)
+        self._logger.debug("Layer %d activations before nudge.", last_layer.id_num)
         last_layer.print_pyr_activations()
 
-        logger.info("Imposing nudge now")
+        self._logger.info("Imposing nudge now")
 
         last_layer = self.layers[-1]
         last_layer.nudge_output_layer_neurons(self._nudge1, self._nudge2, lambda_nudge=0.9)
-        logger.debug("Layer %d activations after nudge.", last_layer.id_num)
+        self._logger.debug("Layer %d activations after nudge.", last_layer.id_num)
         last_layer.print_pyr_activations()
 
-        logger.info("Starting FB sweep")
+        self._logger.info("Starting FB sweep")
         self.__do_fb_sweep()  # prints state
 
-        logger.info("Finished 1st FB sweep after nudge: pilot_exp_2b")  # shows effect of nudge in earlier layers
+        self._logger.info("Finished 1st FB sweep after nudge: pilot_exp_2b")  # shows effect of nudge in earlier layers
         self.print_pyr_activations_all_layers_topdown()
 
     def _hook_post_train_step(self):
@@ -473,32 +470,32 @@ class BasicNudgeExper(Experiment):
         ]
 
     def run(self):
-        logger.info("START: Performing nudge experiment with rules 16b and 13.")
+        self._logger.info("START: Performing nudge experiment with rules 16b and 13.")
         self.__do_ff_sweep()  # prints state
-        logger.info("Finished 1st FF sweep: nudge_experiment")
+        self._logger.info("Finished 1st FF sweep: nudge_experiment")
 
         self.__do_fb_sweep()  # prints state
-        logger.info("Finished 1st FB sweep: nudge_experiment")
+        self._logger.info("Finished 1st FB sweep: nudge_experiment")
 
-        logger.info(f"Starting training {self.__self_prediction_steps} steps to 1b2b self predictive.")
+        self._logger.info(f"Starting training {self.__self_prediction_steps} steps to 1b2b self predictive.")
         # trains and SAVES apical results in 'datasets' attr
         self.train(self.__self_prediction_steps, nudge_predicate=False)
 
-        logger.info("Calling function to impose nudge.")
+        self._logger.info("Calling function to impose nudge.")
         self.__nudge_output_layer()
 
-        logger.info(f"Starting training {self.__training_steps} steps for p_exp 3b")
+        self._logger.info(f"Starting training {self.__training_steps} steps for p_exp 3b")
 
         # trains and APPENDS apical results in 'datasets' attr
         self.train(self.__training_steps, nudge_predicate=True)
-        logger.info(f"Finished training {self.__training_steps} steps for p_exp 3b")
+        self._logger.info(f"Finished training {self.__training_steps} steps for p_exp 3b")
 
         self.train(self.__after_training_steps, nudge_predicate=False)
-        logger.info(f"Finished training {self.__after_training_steps} steps for p_exp 3b")
+        self._logger.info(f"Finished training {self.__after_training_steps} steps for p_exp 3b")
         self.print_pyr_activations_all_layers_topdown()  # print activations while nudging is still on
 
         # self.do_ff_sweep()  # to get new activations without nudging
 
-        logger.info("Final activations after nudging is removed")
+        self._logger.info("Final activations after nudging is removed")
         self.print_pyr_activations_all_layers_topdown()  # shows the true effect of learning
-        logger.info("FINISH: Performing nudge experiment with rules 16b and 13.")
+        self._logger.info("FINISH: Performing nudge experiment with rules 16b and 13.")

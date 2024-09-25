@@ -3,12 +3,9 @@ from typing import List, Optional
 import numpy as np
 from werkzeug.datastructures import MultiDict
 
-from ai.colorized_logger import get_logger
 from ai.experiments.Experiment import Experiment
 from ai.utils import create_column_vector
 from metrics import Graph, GraphType, Serie
-
-logger = get_logger('ai.experiments.AndOrExperiment')
 
 KEY_LAYER_1 = "layer1"
 KEY_OUTPUT_ACTIVATIONS_AND = "Output activations AND"

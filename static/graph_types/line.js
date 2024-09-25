@@ -5,7 +5,8 @@ function genLineGraph(data) {
       width: 500,
       type: 'line',
       zoom: {
-        autoScaleYaxis: true
+        allowMouseWheelZoom: false,
+        autoScaleYaxis: true,
       }
     },
     dataLabels: {

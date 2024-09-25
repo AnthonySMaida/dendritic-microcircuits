@@ -1,11 +1,12 @@
+import logging
+
 import numpy as np
 
 from ai.InhibNRN import InhibNRN
 from ai.PyrNRN import PyrNRN
-from ai.colorized_logger import get_logger
 from ai.utils import logsig
 
-logger = get_logger("ai.Layer")
+logger = logging.getLogger("ai.Layer")
 
 
 class Layer:
