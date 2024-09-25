@@ -346,8 +346,8 @@ class NudgeExperFB(Experiment):
         triggers_l2 = self._metrics[KEY_RULE_13_POST_DATA]
         wts_r13_l2_pyr0 = self._metrics[KEY_RULE_13_WT_DATA_L2_PYR0]
         wts_r13_l2_pyr1 = self._metrics[KEY_RULE_13_WT_DATA_L2_PYR1]
-        triggers_l1_0_to_L2_0 = self._metrics[KEY_RULE_13_POST_DATA_L1_0_TO_L2_0]
-        triggers_l1_0_to_L2_1 = self._metrics[KEY_RULE_13_POST_DATA_L1_0_TO_L2_1]
+        triggers_l1_0_to_l2_0 = self._metrics[KEY_RULE_13_POST_DATA_L1_0_TO_L2_0]
+        triggers_l1_0_to_l2_1 = self._metrics[KEY_RULE_13_POST_DATA_L1_0_TO_L2_1]
         wts_l1_to_l1_pyr0 = self._metrics[KEY_RULE_13_WT_DATA_L1_TO_L2_PYR0]
         wts_l1_to_l1_pyr1 = self._metrics[KEY_RULE_13_WT_DATA_L1_TO_L2_PYR1]
         soma_acts_l3 = self._metrics[KEY_OUTPUT_LAYER_VALUES]
@@ -461,9 +461,9 @@ class NudgeExperFB(Experiment):
                   series=[
                       #Serie("Soma act", triggers_l1[0].tolist()),
                       #Serie("Basal hat act", triggers_l1[1].tolist()),
-                      Serie("L2 post soma MP", triggers_l1_0_to_L2_0[2].tolist()),
-                      Serie("L2 post basal MP", triggers_l1_0_to_L2_0[3].tolist()),
-                      Serie("L2 post val", triggers_l1_0_to_L2_0[4].tolist()),
+                      Serie("L2 post soma MP", triggers_l1_0_to_l2_0[2].tolist()),
+                      Serie("L2 post basal MP", triggers_l1_0_to_l2_0[3].tolist()),
+                      Serie("L2 post val", triggers_l1_0_to_l2_0[4].tolist()),
                   ],
                   xaxis="Training steps",
                   yaxis="..."),
@@ -484,9 +484,9 @@ class NudgeExperFB(Experiment):
                   series=[
                       #Serie("Soma act", triggers_l1[0].tolist()),
                       #Serie("Basal hat act", triggers_l1[1].tolist()),
-                      Serie("L2 post soma MP", triggers_l1_0_to_L2_1[2].tolist()),
-                      Serie("L2 post basal MP", triggers_l1_0_to_L2_1[3].tolist()),
-                      Serie("L2 post val", triggers_l1_0_to_L2_1[4].tolist()),
+                      Serie("L2 post soma MP", triggers_l1_0_to_l2_1[2].tolist()),
+                      Serie("L2 post basal MP", triggers_l1_0_to_l2_1[3].tolist()),
+                      Serie("L2 post val", triggers_l1_0_to_l2_1[4].tolist()),
                   ],
                   xaxis="Training steps",
                   yaxis="..."),

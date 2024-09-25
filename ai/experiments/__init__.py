@@ -41,11 +41,10 @@ EXPERIMENTS: dict[KEYS, ExperimentMetaData] = {
                                                                        ),
                                                      class_=ApicalConvergenceTest),
     KEYS.BASIC_NUDGE_EXPERIMENT: ExperimentMetaData(title="Basic Nudge Experiment",
-                                                    #short_description=short,
                                                     short_description="Tests nudging without feedback weights.",
                                                     long_description=long,
                                                     class_=BasicNudgeExper),
-    KEYS.NUDGE_EXPERIMENT_FB: ExperimentMetaData(title="Nudge Experiment with FB.",
+    KEYS.NUDGE_EXPERIMENT_FB: ExperimentMetaData(title="Nudge Experiment with FB",
                                                  short_description="This experiment tests the ability to learn a nudge (label) and uses nudge feedback connections.",
                                                  long_description=("This experiment uses point-to-point nudge feedback connections from pyramidal neurons in the output layer to matching inhbitory neurons in the hidden layer. "
                                                                    "The purpose of this experiment is to asses if this nudge feedback improves learning in the first feedforward layer."
