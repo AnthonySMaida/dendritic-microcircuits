@@ -38,13 +38,13 @@ class NudgeExperFB(Experiment):
 
         self.__nudge1 = params.get('nudge1', 1.0, type=float)
         self.__nudge2 = params.get('nudge2', 0.0, type=float)
-        self.__nudge_fb_weight = params.get('nudge_fb_weight', 3.0, type=float)
+        self.__nudge_fb_weight = params.get('nudge_fb_weight', 2.0, type=float)
         self.__n_pyr_layer1 = params.get('n_pyr_layer1', 2, type=int)
         self.__n_pyr_layer2 = params.get('n_pyr_layer2', 3, type=int)
         self.__n_pyr_layer3 = params.get('n_pyr_layer3', 2, type=int)
         self._self_prediction_steps = params.get('self_prediction_steps', 400, type=int)
         self._training_steps = params.get('training_steps', 190, type=int)
-        self._after_training_steps = params.get('after_training_steps', 10, type=int)
+        self._after_training_steps = params.get('after_training_steps', 110, type=int)
 
         self._metrics[KEY_LAYER_1] = np.empty(shape=(2, 0))
         self._metrics[KEY_LAYER_2] = np.empty(shape=(3, 0))
@@ -633,13 +633,13 @@ class NudgeExperFB(Experiment):
                   caption="Activations of the two output neurons in response to nudging events. Compare w/ Panel 13. Although the relative activations look good at the end, the activation of pyr1 has decreased.",
                   precision=4,
                   series=[
-                      Serie("Neuron 1", [self._metrics[KEY_OUTPUT_LAYER_VALUES][0][399],  # 0.6535
-                                         self._metrics[KEY_OUTPUT_LAYER_VALUES][0][400],  # 0.7165
-                                         self._metrics[KEY_OUTPUT_LAYER_VALUES][0][598],  # 0.7310
-                                         self._metrics[KEY_OUTPUT_LAYER_VALUES][0][599]]),  # 0.7309
-                      Serie("Neuron 2", [self._metrics[KEY_OUTPUT_LAYER_VALUES][1][399],  # 0.6051,
-                                         self._metrics[KEY_OUTPUT_LAYER_VALUES][1][400],  # 0.5213,
-                                         self._metrics[KEY_OUTPUT_LAYER_VALUES][1][598],  # 0.5000,
+                      Serie("Neuron 1", [self._metrics[KEY_OUTPUT_LAYER_VALUES][0][self._self_prediction_steps-1],  # 0.6535
+                                         self._metrics[KEY_OUTPUT_LAYER_VALUES][0][self._self_prediction_steps],  # 0.7165
+                                         self._metrics[KEY_OUTPUT_LAYER_VALUES][0][self._self_prediction_steps + self._training_steps -1],  # 0.7310
+                                         self._metrics[KEY_OUTPUT_LAYER_VALUES][0][self._self_prediction_steps + self._training_steps + self._after_training_steps -1]]),  # 0.7309
+                      Serie("Neuron 2", [self._metrics[KEY_OUTPUT_LAYER_VALUES][1][self._self_prediction_steps-1],  # 0.6051,
+                                         self._metrics[KEY_OUTPUT_LAYER_VALUES][1][self._self_prediction_steps],  # 0.5213,
+                                         self._metrics[KEY_OUTPUT_LAYER_VALUES][1][self._self_prediction_steps + self._training_steps + self._after_training_steps -1],  # 0.5000,
                                          self._metrics[KEY_OUTPUT_LAYER_VALUES][1][599]])  # 0.5002
                   ],
                   categories=["Before Nudge","Nudged", "After learning", "Nudged removed"],
