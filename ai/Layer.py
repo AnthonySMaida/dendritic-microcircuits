@@ -85,7 +85,7 @@ class Layer:
             self.pyrs[i].basal_mp = np.dot(self.pyrs[i].W_PP_ff, temp)
             self.pyrs[i].update_pyr_soma_ff()
 
-    def update_pyrs_apical_soma_fb(self, higher_layer: "Layer"):
+    def update_pyrs_apical_soma_fb(self, higher_layer: "Layer", disable_apical_fb = False):
         """propagates input from apical dends to soma"""
         fb_acts = higher_layer.pyr_soma_acts
         inhib_acts = self.inhib_soma_acts  # inhibs in current layer
@@ -97,9 +97,10 @@ class Layer:
             self.pyrs[i].apical_act = logsig(self.pyrs[i].apical_mp)
             self.pyrs[i].apical_hat = 0.5 * self.pyrs[i].apical_mp  # approximation to Eqn (14)
             self.pyrs[i].apical_hat_act = logsig(self.pyrs[i].apical_hat)
-            self.pyrs[i].soma_mp = self.pyrs[i].basal_minus_soma_mp + self.pyrs[i].apical_minus_soma_mp
-#            self.pyrs[i].soma_mp = ((self.pyrs[i].basal_mp - self.pyrs[i].soma_mp)
-#                                    + (self.pyrs[i].apical_mp - self.pyrs[i].soma_mp))
+            if disable_apical_fb:
+                self.pyrs[i].soma_mp = self.pyrs[i].basal_minus_soma_mp
+            else:
+                self.pyrs[i].soma_mp = self.pyrs[i].basal_minus_soma_mp + self.pyrs[i].apical_minus_soma_mp
             self.pyrs[i].soma_act = logsig(self.pyrs[i].soma_mp)
 
     ########################

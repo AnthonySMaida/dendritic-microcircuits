@@ -8,4 +8,5 @@ class KEYS(StrEnum):
     NUDGE_EXPERIMENT_FB = "NudgeExperimentFB"
     NUDGE_EXPERIMENT_FB_2 = "NudgeExperimentFB2"
     NUDGE_EXPERIMENT_FB_3 = "NudgeExperimentFB3"
+    NUDGE_EXPERIMENT_FB_4 = "NudgeExperimentFB4"
     XOR_EXPERIMENT = "XorExperiment"

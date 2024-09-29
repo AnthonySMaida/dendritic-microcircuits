@@ -43,7 +43,7 @@ package "ai" {
             + {abstract} run(*args, **kwargs)
         }
 
-        class "NudgeExperiment" implements "Experiment" {
+        class "BasicNudgeExper" implements "Experiment" {
             ~ _nudge1: float
             ~ _nudge2: float
             + __init__(wt_init_seed: int, beta: float, learning_rate: float, nudge1: float, nudge2: float)
@@ -57,7 +57,42 @@ package "ai" {
             + run(self_prediction_steps: int, training_steps: int, after_training_steps: int)
         }
 
-        class "XorExperiment" implements "Experiment" {
+        class "NudgeExperFB" implements "Experiment" {
+            ~ _nudge1: float
+            ~ _nudge2: float
+            + __init__(params: MultiDict)
+            + build_network(*args, **kwargs)
+            - __do_ff_sweep()
+            - __do_fb_sweep(use_nudge=False)
+            ~ _train_1_step(use_nudge: bool, **kwargs)
+            - __train_1_step_rule_16b_and_rule_13(use_nudge=False, use_rule_pi=True, use_rule_ip=False)
+            - __nudge_output_layer()
+            ~ _hook_post_train_step()
+            ~ _train_1_step(self, use_nudge: bool, **kwargs)
+            + extract_metrics(): List[Graph]
+            ~ _run_init()
+            ~ _run_self_predict()
+            ~ _run_train()
+            ~ _run_after_training()
+            + run()
+        }
+
+        class "NudgeExperFB2" implements "NudgeExperFB" {
+            ~ _run_train()
+        }
+
+        class "NudgeExperFB3" implements "NudgeExperFB" {
+            ~ _run_train()
+            ~ _run_after_training()
+        }
+
+         class "NudgeExperFB4" implements "NudgeExperFB" {
+            ~ _run_train()
+            ~ _run_after_training()
+            - --__do_fb_sweep(use_nudge=False)
+        }
+
+       class "XorExperiment" implements "Experiment" {
             - _X: np.ndarray
             - _Y: np.ndarray
 

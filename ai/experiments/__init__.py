@@ -8,6 +8,7 @@ from .KEYS import KEYS
 from .NudgeExperFB import NudgeExperFB
 from .NudgeExperFB2 import NudgeExperFB2
 from .NudgeExperFB3 import NudgeExperFB3
+from .NudgeExperFB4 import NudgeExperFB4
 from .XorExperiment import XorExperiment
 
 
@@ -62,6 +63,12 @@ EXPERIMENTS: dict[KEYS, ExperimentMetaData] = {
                                                                      "of the FF rule. Rule 16b is turned off during training to test if learning improves."
                                                                      ),
                                                    class_=NudgeExperFB3),
+    KEYS.NUDGE_EXPERIMENT_FB_4: ExperimentMetaData(title="Nudge Experiment w/ FB and w/out lat learning for training and after training. Turns off apical pyr feedback in after train.",
+                                                   short_description="This experiment is like 'Nudge Experiment with FB' but turns off lateral inhibitory learning during the training phase and after training phase.",
+                                                   long_description=("Examines the hypothesis that Rule 16b in the hidden layer prevents communication of the nudge signal to the trigger region "
+                                                                     "of the FF rule. Rule 16b is turned off during training to test if learning improves."
+                                                                     ),
+                                                   class_=NudgeExperFB4),
     KEYS.XOR_EXPERIMENT: ExperimentMetaData(title="XOR Experiment",
                                             short_description=("The 'XOR' problem is known to require two weight layers."
                                                                "This experiment tests if a two weight-layer model can learn the problem."

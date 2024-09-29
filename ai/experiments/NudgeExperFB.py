@@ -71,6 +71,9 @@ class NudgeExperFB(Experiment):
         self._metrics[KEY_L2_BASAL_MINUS_SOMA_PYR_MP] = np.empty(shape=(3, 0))
         self._metrics[KEY_L2_APICAL_MINUS_SOMA_PYR_MP] = np.empty(shape=(3, 0))
 
+    def build_network(self, *args, **kwargs):
+        self.build_small_three_layer_network(self.__n_pyr_layer1, self.__n_pyr_layer2, self.__n_pyr_layer3)
+
     def __do_ff_sweep(self):
         """Standard FF sweep"""
 
@@ -82,12 +85,12 @@ class NudgeExperFB(Experiment):
                 layer.update_pyrs_basal_and_soma_ff(prev)
             layer.update_dend_mps_via_ip()
 
-    def __do_fb_sweep(self, use_nudge=False):  # this version assumes the interneurons have nudging feedback connections
+    def __do_fb_sweep(self, use_nudge=False):  # this version assumes interneurons have nudging feedback connections
         """Standard FB sweep"""
         nudge_fb_weight = self.__nudge_fb_weight
         for prev, layer in iter_with_prev(reversed(self.layers)):  # [l3, l2, l1]
             if prev is None:  # Skip first layer (L3)
-                continue      # Would pass do the same thing?
+                continue      # Go to the next iteration.
             if layer.id_num == 2:  # handles the nudging FB connections to Layer 2. Only sends FB to 2 inhibs.
                 if use_nudge:
                     layer.inhibs[0].wtd_input_from_nudge = nudge_fb_weight * prev.pyrs[0].soma_act  # for data collection
@@ -102,7 +105,16 @@ class NudgeExperFB(Experiment):
                     layer.inhibs[0].wtd_input_from_nudge = 0.0
                     layer.inhibs[1].wtd_input_from_nudge = 0.0
             # update current layer pyrs using somatic pyr acts from previous layer and inhib acts from current layer
-            layer.update_pyrs_apical_soma_fb(prev)  # in 2nd iter, prev = l3 and layer = l2
+            # in 2nd iter, prev = l3 and layer = l2
+            layer.update_pyrs_apical_soma_fb(prev)
+
+    def _train_1_step(self, use_nudge: bool, **kwargs):  # Signature matches abstract method b/c *args can be empty.
+        """
+        This is the concrete version of the abstract train-1-step defined in superclass Experiment.
+        :param use_nudge:
+        :return:
+        """
+        self.__train_1_step_rule_16b_and_rule_13(use_nudge=use_nudge, **kwargs)  # defined in superclass
 
     def __train_1_step_rule_16b_and_rule_13(self,
                                             use_nudge=False,
@@ -313,14 +325,6 @@ class NudgeExperFB(Experiment):
             create_column_vector(*map(lambda p: p.soma_act, l2.inhibs)),
             axis=1)
 
-    def _train_1_step(self, use_nudge: bool, **kwargs):  # Signature matches abstract method b/c *args can be empty.
-        """
-        This is the concrete version of the abstract train-1-step defined in superclass Experiment.
-        :param use_nudge:
-        :return:
-        """
-        self.__train_1_step_rule_16b_and_rule_13(use_nudge=use_nudge, **kwargs)  # defined in superclass
-
     def _run_init(self):
         self._logger.info("START: Performing nudge experiment with rules 16b and 13.")
         self.__do_ff_sweep()  # prints state
@@ -329,16 +333,13 @@ class NudgeExperFB(Experiment):
         self._logger.info("Finished 1st FB sweep: nudge_experiment")
 
     def _run_self_predict(self):
-        self.train(self._self_prediction_steps, use_nudge=False)
+        self.train(self._self_prediction_steps, use_nudge=False)  # train() is defined in Experiment.py
 
     def _run_train(self):
         self.train(self._training_steps, use_nudge=True)
 
     def _run_after_training(self):
         self.train(self._after_training_steps, use_nudge=False)
-
-    def build_network(self, *args, **kwargs):
-        self.build_small_three_layer_network(self.__n_pyr_layer1, self.__n_pyr_layer2, self.__n_pyr_layer3)
 
     def extract_metrics(self):
         data_l1 = self._metrics[KEY_LAYER_1]

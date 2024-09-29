@@ -103,25 +103,43 @@ class Experiment:
 
         self._logger.info("Finished building 3-layer model.")
 
+    """
+    Experiment Class:
+        public   train()
+        abstract protected _train_1_step()
+                           calls _train_1_step() in lower class
+        abstract protected _train_1_step()
+        
+    NudgeExperFB Class:
+        private   __do_fb_sweep() <==
+        protected _train_1_step()
+                  calls __train_1_step_rule_16b_and_rule_13() in current class
+        private   __train_1_step_rule_16b_and_rule_13()
+        protected _run_init()          
+                  calls: __do_fb_sweep()
+        private   _run_train()
+                  calls: train() in Experiment class
+    """
+
     def train(self, n_steps: int, *args, **kwargs):
         """
         Previously called: train_data
         Train 1 step.
         :param n_steps: int num of training steps
         :param args: No args.
-        :param kwargs: nudge_predicate (True or False), to indicate if nudging happens.
+        :param kwargs: nudge_predicate (True or False), indicates if nudging happens.
         :return:
         """
         for _ in range(n_steps):
             self._hook_pre_train_step()
-            self._train_1_step(*args, **kwargs)  # do training.
+            self._train_1_step(*args, **kwargs)  # do training. Abstract method at this level.
             self._training_steps_completed += 1
             self._hook_post_train_step()
 
     @abstractmethod
     def _train_1_step(self, *args, **kwargs):  # I would have never figured out the signature.
         """
-        Formerly called "train()". Abstract method implemented in subclass.
+        Formerly called "train()". Concrete version implemented in subclass.
         """
         raise NotImplementedError
 
