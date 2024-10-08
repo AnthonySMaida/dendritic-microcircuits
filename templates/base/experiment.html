@@ -1,9 +1,5 @@
 {% extends 'base/base.html' %}
 
-{% block head %}
-  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-{% endblock %}
-
 {% block container %}
   <div id="container-graph"></div>
   <form id="container-params">
@@ -23,5 +19,5 @@
 {% block postbody %}
   <script src="{{ url_for('static', filename='graph_types/column.js') }}"></script>
   <script src="{{ url_for('static', filename='graph_types/line.js') }}"></script>
-  <script src="{{ url_for('static', filename='script.js') }}"></script>
+  <script type="module" src="{{ url_for('static', filename='script.js') }}"></script>
 {% endblock %}
