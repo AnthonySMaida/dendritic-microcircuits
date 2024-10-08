@@ -1,3 +1,5 @@
+import ApexCharts from 'apexcharts'
+
 const container = document.getElementById('container-graph')
 const form = document.getElementById('container-params')
 
@@ -86,3 +88,7 @@ function getData(endpoint) {
   const params = new URLSearchParams(getFormValues())
   fetch(`/data/${ endpoint }?${ params }`).then(r => r.ok ? r.json().then(handleApiData) : r.text().then(catchApiErrors))
 }
+
+// Inject the getData function into the window object so it can be called from the HTML
+// Because modules are isolated, we can't call functions from the HTML if not explicitly exported
+window.getData = getData
